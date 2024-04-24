@@ -30,6 +30,8 @@ void Net::setup(CfgNet _cfgNet) {
         if (mvp.config.cfgReadGetValue("clientSsid", tmp) && mvp.config.cfgReadGetValue("clientPass", tmp)) {
             mvp.config.cfgReadGetValue("clientSsid", cfgNet.clientSsid);
             mvp.config.cfgReadGetValue("clientPass", cfgNet.clientPass);
+            mvp.config.cfgReadGetValue("clientConnectRetries", cfgNet.clientConnectRetries);
+            mvp.config.cfgReadGetValue("forceClientMode", cfgNet.forceClientMode);
             mvp.logger.write(CfgLogger::Level::INFO, "NetCfg loaded.");
         }
     }
@@ -52,28 +54,55 @@ void Net::loop() {
     if (status == Status::AP)
         dnsServer.processNextRequest();
 
-    // Webpage, controller communication, data transfer
+    // Webpage, communication
     netWeb.loop();
-    netCom.loop();
+    if (status == Status::CLIENT) 
+        netCom.loop();
 }
 
-void Net::editClientConnection(String newSsid, String newPass) {
-    // Any input not conforming IEEE is ignored later on
-    clientConnectFails = 0;
-    cfgNet.clientConnectForever = false;
+bool Net::editClientConnection(String newSsid, String newPass) {
 
-    cfgNet.clientSsid = newSsid;
-    cfgNet.clientPass = newPass;
+    bool success = false;
+    success = cfgNet.setWifiCredentials(newSsid, newPass);
 
-    mvp.config.cfgWritePrepare();
-    mvp.config.cfgWriteAddValue("clientSsid", newSsid);
-    mvp.config.cfgWriteAddValue("clientPass", newPass);
-    mvp.config.cfgWriteClose("cfgNet");
+    if (success) {
+        clientConnectFails = 0;
+        clientConnectSuccess = false;
+        mvp.logger.write(CfgLogger::Level::INFO, "SSID and pass updated.");
+        startWifi();
+    }
 
-    mvp.logger.write(CfgLogger::Level::INFO, "SSID and pass updated.");
-
-    startWifi();
+    return success;
 }
+
+bool Net::editCfg(String varName, String newValueA, String newValueB) {
+
+    bool success = false;
+    switch (mvp.helper.hashStringDjb2(varName.c_str())) {
+        case mvp.helper.hashStringDjb2("newSsid"):
+            success = editClientConnection(newValueA, newValueB);
+            break;
+        case mvp.helper.hashStringDjb2("clientConnectRetries"):
+            success = cfgNet.setClientConnectRetries(newValueA.toInt());
+            break;
+        case mvp.helper.hashStringDjb2("forceClientMode"):
+            success = cfgNet.setForceClientMode((newValueA.toInt() == 0) ? false : true);
+            break;
+    }
+
+    if (success) {
+        // save cfg
+        mvp.config.cfgWritePrepare();
+        mvp.config.cfgWriteAddValue("clientSsid", cfgNet.clientSsid);
+        mvp.config.cfgWriteAddValue("clientPass", cfgNet.clientPass);
+        mvp.config.cfgWriteAddValue("clientConnectRetries", cfgNet.clientConnectRetries);
+        mvp.config.cfgWriteAddValue("forceClientMode", cfgNet.forceClientMode);
+        mvp.config.cfgWriteClose("cfgNet");
+        mvp.logger.write(CfgLogger::Level::INFO, "cfgNet updated.");
+    }
+    return success;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +119,7 @@ void Net::startWifi() {
 void Net::startAp() {
     // Start AP with no password
     WiFi.mode(WIFI_AP);
-    if (!WiFi.softAP(cfgNet.apSsid)) {
+    if (!WiFi.softAP(apSsid)) {
         status = Status::NONE;
         mvp.logger.write(CfgLogger::Level::ERROR, "Error starting AP.");
         return;
@@ -105,14 +134,14 @@ void Net::startAp() {
 
     // Set system status
     status = Status::AP;
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started, %s, %s", cfgNet.apSsid.c_str(), WiFi.softAPIP().toString().c_str());
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started, %s, %s", apSsid.c_str(), WiFi.softAPIP().toString().c_str());
 }
 
 
 void Net::startClient() {
     WiFi.mode(WIFI_STA);
 
-    // Wifi events                                                                                                              // TODO !!! ESP32/8266
+// ESP32/ESP8266 have different  Wifi events                                                                                                              // TODO !!! test
 #ifdef ESP8266
     WiFi.onStationModeDisconnected(std::bind(&Net::WiFiStationDisconnected, this)); // disconnectedEventHandler = 
     WiFi.onStationModeGotIP(std::bind(&Net::WiFiGotIP, this));  // gotIpEventHandler = 
@@ -126,20 +155,20 @@ void Net::startClient() {
 
 void Net::connectClient() {
     WiFi.begin(cfgNet.clientSsid, cfgNet.clientPass);
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s %s", cfgNet.clientSsid, cfgNet.clientPass);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s %s", cfgNet.clientSsid.c_str(), cfgNet.clientPass.c_str());
 }
 
 void Net::WiFiGotIP() {
     status = Status::CLIENT;
     clientConnectFails = 0;
     // Reconnect endlessly to a previously sucessfully connected network (until reboot)
-    cfgNet.clientConnectForever = true;
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connection established: %s", const_cast<char*>(WiFi.localIP().toString().c_str() ));
+    clientConnectSuccess = true;
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connection established: %s", WiFi.localIP().toString().c_str() );
 }
 
 void Net::WiFiStationDisconnected() {
     status = Status::CONNECTING;
-    if (cfgNet.clientConnectForever) {
+    if (clientConnectSuccess || cfgNet.forceClientMode) {
         mvp.logger.write(CfgLogger::Level::WARNING, "Network disconnected.");
         connectClient();
     } else if (++clientConnectFails < cfgNet.clientConnectRetries) {

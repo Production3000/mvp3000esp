@@ -38,22 +38,39 @@ limitations under the License.
 
 
 struct CfgNet {
-    String clientSsid = ""; // IEEE 1-32 chars
-    String clientPass = ""; // IEEE 8-63 chars
-
-    uint8_t clientConnectRetries = 3;
-    // DANGER, clientConnectForever could make the device inaccessable for the user
-    // Is used to reconnect endlessly to a previously sucessfully connected network (until reboot)
-    boolean clientConnectForever = false;
-
-    String apSsid = "device" + String(ESPX.getChipId());
 
     CfgNetCom cfgNetCom;
 
-    // Init defaults
-    CfgNet() { };
-    // Init with custom client connect retries
-    CfgNet(uint8_t _clientConnectRetries) : clientConnectRetries(_clientConnectRetries) { };
+    String clientSsid = ""; // IEEE 1-32 chars
+    String clientPass = ""; // IEEE 8-63 chars
+    uint8_t clientConnectRetries = 3;
+
+    // DANGER, forceClientMode could make the device inaccessable for the user without flashing it
+    // Usefull when network settings are correct for sure but likely offline during power on
+    //  false on power on: try network settings clientConnectRetries times
+    //      on success set clientConnectSuccess to true
+    //      on fail fallback to AP
+    //  false with clientConnectSuccess true on connection lost: try endlessly to previously verified network settings
+    //  true on power on: try network settings endlessly
+    boolean forceClientMode = false;
+
+    bool setWifiCredentials(String newSsid, String newPass) {
+        clientSsid = newSsid;
+        clientPass = newPass;
+        return true;
+    };
+
+    bool setClientConnectRetries(uint8_t _clientConnectRetries) {
+        if (_clientConnectRetries == 0)
+            return false;
+        clientConnectRetries = _clientConnectRetries;
+        return true;
+    };
+
+    bool setForceClientMode(boolean _forceClientMode) {
+        forceClientMode = _forceClientMode;
+        return true;
+    };
 };
 
 
@@ -61,15 +78,10 @@ class Net {
     private:
         DNSServer dnsServer;
 
-        // Counter for client conenct fails
+        // Counter for client connect fails
         uint8_t clientConnectFails = 0;
+        boolean clientConnectSuccess = false;
     
-        // #ifdef ESP8266
-        //     WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
-        // #else
-        //     WiFiEventFuncCb gotIpEventHandler, disconnectedEventHandler;
-        // #endif
-
         void connectClient();
         void WiFiGotIP();
         void WiFiStationDisconnected();
@@ -93,11 +105,14 @@ class Net {
         };
         Status status = Status::CONNECTING;
 
+        String apSsid = "device" + String(ESPX.getChipId());
+
         void setup(CfgNet _cfgNet);
 
         void loop();
 
-        void editClientConnection(String newSsid, String newPass);
+        bool editClientConnection(String newSsid, String newPass);
+        bool editCfg(String varName, String newValue, String newValueX);
 
         boolean connectedAsClient() { return (status == Status::CLIENT); }
 

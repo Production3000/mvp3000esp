@@ -33,12 +33,11 @@ class EspClassX {
             return chipId;
         };
 
-        int8_t getHeapFragmentation() {                                                                                         // TODO
-            // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/heap_debug.html#heap-information
-            // total 100, used 99, free 1 => 0% -- free-1 / used
-            // total 100, used 50, free 50 => 100% -- free-1 / used
-            // total 100, used 50, free 50 => 100% -- free-1 / used
-            return -1; 
+        int8_t getHeapFragmentation() {
+            // There are supposedly different definitions of fragmentation
+            //  Fragmentation = 1 - largest free block / total free memory
+            //  25% fragmentation with 1 kB free means 250 B can be allocated in one shot  
+            return 100 - heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) * 100 / ESP.getFreeHeap();
         }
 
         String getResetReason() {

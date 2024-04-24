@@ -100,18 +100,15 @@ void Led::checkChangeStatus() {
 }
 
 void Led::on() {
-    digitalWrite(cfgLed.pin, LOW);
+    digitalWrite(cfgLed.pin, ONSTATE);
     this->state = true;
 }
 
 void Led::off() {
-    digitalWrite(cfgLed.pin, HIGH);
+    digitalWrite(cfgLed.pin, OFFSTATE);
     this->state = false;
 }
 
 void Led::toggle() {
-    if (this->state)
-        off();
-    else
-        on();
+    (this->state) ? off() : on();
 }

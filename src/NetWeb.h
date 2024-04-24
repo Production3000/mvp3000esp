@@ -61,12 +61,8 @@ class NetWeb {
         void sendStart();
         void sendClose();
 
-
         void serveRequestMain();
         void serveRequestMainHead();
-        // void serveRequestPageElements();
-
-        void requestEditWifi();
 
 
         void measureOffset();
@@ -76,10 +72,9 @@ class NetWeb {
 
         
         void requestEditConfigValue();
-        void requestResetDevice();
+        bool requestConfirmSensorId();
 
         void responsePrepareRestart();
-        void requestRestart();
 
     public:
         void setup();
@@ -88,6 +83,9 @@ class NetWeb {
         void sendFormatted(const char* formatString, ...);
 
         void responseRedirect(const char* message);
+
+
+        // void registerPageElement(String moduleName, TPageElementFunction func);
 
 };
 

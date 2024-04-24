@@ -37,17 +37,55 @@ limitations under the License.
 #endif
 
 struct CfgNetCom {
+    // using mfn = void(*)(uint16_t _);
+    // struct Setting{
+    //     String key;
+    //     int value;
+    //     mfn fn;
+    // };
+    // Setting settings[4] =  {
+    //     {"discoveryPort", discoveryPort, [](uint16_t _dP) { Serial.println("No Fn"); }},
+    //     {"mqttPort", mqttPort, [](uint16_t _mP) { Serial.println("No Fn"); }},
+    //     // {"mqttForcedBroker", mqttForcedBroker},
+    //     // {"mqttTopicSuffix", mqttTopicSuffix}
+    // };
+
+    // String getkeyof(Setting& f) { return f.key; }
+    // uint16_t getvalueof(Setting& f) { return f.value; }
+    // mfn getfunctionof(Setting& f) { return f.fn; }
 
     uint16_t discoveryPort = 4211; // Search local network for MQTT broker
+
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
-
     String mqttForcedBroker = ""; // test.mosquitto.org
-    String mqttTopicSuffix = "mysensor";
+    String mqttTopicSuffix = "myesp";
 
-    String mqttTopic() { 
-        char topic[64];
-        snprintf(topic, 64, "MVP3000_%d_%s", ESPX.getChipId(), mqttTopicSuffix);
-        return String(topic);
+    bool setDiscoveryPort(uint16_t _discoveryPort) {
+        if (_discoveryPort < 1024)
+            return false;
+        discoveryPort = _discoveryPort;
+        return true;
+    };
+
+    bool setMqttPort(uint16_t _mqttPort) {
+        if (_mqttPort < 1024)
+            return false;
+        mqttPort = _mqttPort;
+        return true;
+    };
+
+    bool setMqttForcedBroker(String _mqttForcedBroker) {
+        if ((_mqttForcedBroker.length() > 0) && (_mqttForcedBroker.length() < 6)) // allow empty to remove
+            return false;
+        mqttForcedBroker = _mqttForcedBroker;
+        return true;
+    };
+
+    bool setMqttTopicSuffix(String _mqttTopicSuffix) {
+        if (_mqttTopicSuffix.length() < 5)
+            return false;
+        mqttTopicSuffix = _mqttTopicSuffix;
+        return true;
     };
 };
 
@@ -58,7 +96,7 @@ class NetCom {
         WiFiClient wifiClient;
         MqttClient mqttClient = NULL;
 
-        IPAddress mqttBrokerIp = INADDR_NONE;
+        IPAddress mqttBrokerIp = INADDR_NONE; // compare with == operator, there is
 
         uint16_t brokerInterval = 5000;
         millisDelay brokerDelay;
@@ -80,7 +118,12 @@ class NetCom {
 
         String controllerConnectedString() { return (mqttBrokerIp != INADDR_NONE) ? String(mqttBrokerIp[0]) + "." + mqttBrokerIp[1] + "." + mqttBrokerIp[2] + "." + mqttBrokerIp[3] : "not connected" ; }
 
+        String mqttTopicPrefix = "MVP3000_" + String(ESPX.getChipId()) + "_";
+
         void mqttWrite(const char *message);
+
+
+        bool editCfg(String varName, String newValue);
 };
 
 #endif

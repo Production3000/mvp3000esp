@@ -27,8 +27,6 @@ limitations under the License.
 #include "Net.h"
 #include "SensorHandler.h"
 
-#include "_SensorBaseclass.h"
-
 
 struct MVP3000CFG {
     CfgNet cfgNet;

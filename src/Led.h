@@ -40,6 +40,15 @@ class Led {
     private:
         boolean state = false;
 
+// ESP32/ESP8266 have inverted high/low for on/off
+#ifdef ESP8266
+        uint8_t ONSTATE = LOW;
+        uint8_t OFFSTATE = HIGH;
+#else
+        uint8_t ONSTATE = HIGH;
+        uint8_t OFFSTATE = LOW;
+#endif
+
         CfgLed cfgLed;
 
         enum class Timing: int16_t {

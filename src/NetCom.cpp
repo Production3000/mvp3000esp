@@ -43,6 +43,7 @@ void NetCom::setup(CfgNetCom _cfgNetCom) {
         String tmp;
         if (mvp.config.cfgReadGetValue("mqttForcedBroker", tmp)) {
             mvp.config.cfgReadGetValue("mqttForcedBroker", cfgNetCom.mqttForcedBroker);
+            mvp.config.cfgReadGetValue("mqttTopicSuffix", cfgNetCom.mqttTopicSuffix);
             mvp.config.cfgReadGetValue("discoveryPort", cfgNetCom.discoveryPort);
             mvp.config.cfgReadGetValue("mqttPort", cfgNetCom.mqttPort);
             mvp.logger.write(CfgLogger::Level::INFO, "NetComCfg loaded.");
@@ -57,7 +58,7 @@ void NetCom::setup(CfgNetCom _cfgNetCom) {
 };
 
 void NetCom::loop() {
-    // Should only called if device is online, AP or connected wifi
+    // Called from net.loop() only if network is up and in client mode
     if (!mvp.net.connectedAsClient())
         return;
 
@@ -82,6 +83,38 @@ void NetCom::loop() {
     }
 }
 
+bool NetCom::editCfg(String varName, String newValue) {
+
+    bool success = false;
+    switch (mvp.helper.hashStringDjb2(varName.c_str())) {
+        case mvp.helper.hashStringDjb2("discoveryPort"):
+            success = cfgNetCom.setDiscoveryPort(newValue.toInt());
+            break;
+        case mvp.helper.hashStringDjb2("mqttForcedBroker"): 
+            success = cfgNetCom.setMqttForcedBroker(newValue);
+            break;
+        case mvp.helper.hashStringDjb2("mqttPort"): 
+            success = cfgNetCom.setMqttPort(newValue.toInt());
+            break;
+        case mvp.helper.hashStringDjb2("mqttTopicSuffix"):
+            success = cfgNetCom.setMqttTopicSuffix(newValue);
+            break;
+    }
+
+    if (success) {
+        // save cfg
+        mvp.config.cfgWritePrepare();
+        mvp.config.cfgWriteAddValue("discoveryPort", cfgNetCom.discoveryPort);
+        mvp.config.cfgWriteAddValue("mqttForcedBroker", cfgNetCom.mqttForcedBroker);
+        mvp.config.cfgWriteAddValue("mqttPort", cfgNetCom.mqttPort);
+        mvp.config.cfgWriteAddValue("mqttTopicSuffix", cfgNetCom.mqttTopicSuffix);
+        mvp.config.cfgWriteClose("cfgNetCom");
+        mvp.logger.write(CfgLogger::Level::INFO, "cfgNetCom updated.");
+    }
+    return success;
+}
+
+
 
 void NetCom::udpDiscoverMqtt() {
     // Send DIscover SERVer to broadcast
@@ -101,14 +134,14 @@ void NetCom::udpReceiveMessage() {
     // Terminate char string
     packetBuffer[len] = '\0';
 
-    switch (mvp.helper.djb2HashString(packetBuffer)) {
-        case mvp.helper.djb2HashString("RESERV"): // RESERV Discovery response from server received
+    switch (mvp.helper.hashStringDjb2(packetBuffer)) {
+        case mvp.helper.hashStringDjb2("RESERV"): // RESERV Discovery response from server received
             // Remember controller IP, stop interval, registering with broker is done in next loop
             mqttBrokerIp = udp.remoteIP();
             brokerDelay.stop();
             mvp.logger.write(CfgLogger::Level::INFO, "Discovery response recieved.");
             break;
-        case mvp.helper.djb2HashString("DISENS"): // DISENS Discovery request received, send discovery response
+        case mvp.helper.hashStringDjb2("DISENS"): // DISENS Discovery request received, send discovery response
             udpSendMessage("RESENS", udp.remoteIP());
             mvp.logger.write(CfgLogger::Level::INFO, "Discovery request recieved.");
             break;
@@ -135,8 +168,8 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
     }
 
     // Send UDP packet
-    udp.beginPacket(remoteIp, cfgNetCom.discoveryPort);
-    // udp.write(message);                                                                                              // TODO: Check ESP32/8266
+    if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort))
+        mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");                              // TODO: Check ESP32/8266
     for (uint16_t i = 0; i < strlen(message); i++) {
         udp.write((uint8_t)message[i]);
     }
@@ -146,12 +179,13 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 
 
 void NetCom::mqttConnect() {
-    if ((cfgNetCom.mqttForcedBroker.length() == 0))
-        // Connect to discovered broker
-        mqttClient.connect(mqttBrokerIp, cfgNetCom.mqttPort); 
-    else
+    mvp.logger.write(CfgLogger::Level::INFO, "sending to to broker.");
+    if ((cfgNetCom.mqttForcedBroker.length() > 0))
         // Connect to forced broker
         mqttClient.connect(cfgNetCom.mqttForcedBroker.c_str(), cfgNetCom.mqttPort);
+    else
+        // Connect to discovered broker
+        mqttClient.connect(mqttBrokerIp, cfgNetCom.mqttPort); 
 
     mvp.logger.write(CfgLogger::Level::INFO, "Connect request sent to broker.");
 }
@@ -162,7 +196,7 @@ void NetCom::mqttWrite(const char *message) {
         return;
 
     // Send message
-    mqttClient.beginMessage(cfgNetCom.mqttTopic());
+    mqttClient.beginMessage(mqttTopicPrefix + cfgNetCom.mqttTopicSuffix);
     mqttClient.print(message);
     mqttClient.endMessage();
 }

@@ -32,8 +32,8 @@ class Helper {
 
         // The djb2 hash function by Dan Bernstein to use in switch statement
         // constexpr needs to be defined in .h
-        constexpr uint32_t djb2HashString(const char* str, uint8_t h = 0) {
-            return !str[h] ? 5381 : (djb2HashString(str, h+1) * 33) ^ str[h];
+        constexpr uint32_t hashStringDjb2(const char* str, uint8_t h = 0) {
+            return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
         };
         
 };
