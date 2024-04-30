@@ -25,10 +25,9 @@ limitations under the License.
 #endif
 #include <DNSServer.h> // for captive portal
 
-
+#include "Config.h"
 #include "NetCom.h"
 #include "NetWeb.h"
-
 #include "ESPX.h"
 #ifdef ESP8266
     extern EspClass ESPX = ESP;
@@ -37,13 +36,11 @@ limitations under the License.
 #endif
 
 
-struct CfgNet {
-
-    CfgNetCom cfgNetCom;
+struct CfgNet : public Cfg  {
 
     String clientSsid = ""; // IEEE 1-32 chars
     String clientPass = ""; // IEEE 8-63 chars
-    uint8_t clientConnectRetries = 3;
+    uint16_t clientConnectRetries = 3;
 
     // DANGER, forceClientMode could make the device inaccessable for the user without flashing it
     // Usefull when network settings are correct for sure but likely offline during power on
@@ -54,22 +51,31 @@ struct CfgNet {
     //  true on power on: try network settings endlessly
     boolean forceClientMode = false;
 
+    CfgNet() {
+        cfgName = "cfgNet";
+        // Saved settings
+        addSetting("clientConnectRetries", &clientConnectRetries, [&](uint16_t _x) { if (_x > 100) return false; else clientConnectRetries = _x; return true; }); // Limit to 100, any more is 'forever'
+        // addSetting("mqttPort", &mqttPort, [&](uint16_t _x) { if (_x < 1) return false; else mqttPort = _x; return true; }); // port above 1024
+        addSetting("clientSsid", &clientSsid, [&](String _x) { clientSsid = _x; return true; } ); // Check is in extra function
+        addSetting("clientPass", &clientPass, [&](String _x) { clientPass = _x; return true; }); // Check is in extra function
+        addSetting("forceClientMode", &forceClientMode, [&](boolean _x) { forceClientMode = _x; return true; });
+    }
+
     bool setWifiCredentials(String newSsid, String newPass) {
-        clientSsid = newSsid;
-        clientPass = newPass;
-        return true;
-    };
+        // Remove network
+        if (newSsid.length() == 0) {
+            clientSsid = "";
+            clientPass = "";
+            return true;
+        }
+        // Edit network
+        if ((newSsid.length() >= 1) && (newSsid.length() <= 32) && (newPass.length() >= 8) && (newPass.length() <= 63)) {
+            clientSsid = newSsid;
+            clientPass = newPass;
+            return true;
+        }
 
-    bool setClientConnectRetries(uint8_t _clientConnectRetries) {
-        if (_clientConnectRetries == 0)
-            return false;
-        clientConnectRetries = _clientConnectRetries;
-        return true;
-    };
-
-    bool setForceClientMode(boolean _forceClientMode) {
-        forceClientMode = _forceClientMode;
-        return true;
+        return false;
     };
 };
 
@@ -107,12 +113,12 @@ class Net {
 
         String apSsid = "device" + String(ESPX.getChipId());
 
-        void setup(CfgNet _cfgNet);
+        void setup();
 
         void loop();
 
         bool editClientConnection(String newSsid, String newPass);
-        bool editCfg(String varName, String newValue, String newValueX);
+        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
 
         boolean connectedAsClient() { return (status == Status::CLIENT); }
 

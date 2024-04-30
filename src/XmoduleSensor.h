@@ -14,14 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-#ifndef MVP3000_SENSORNEWHANDLER
-#define MVP3000_SENSORNEWHANDLER
+#ifndef MVP3000_XMODULESENSOR   
+#define MVP3000_XMODULESENSOR
 
 #include <Arduino.h>
 #include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
 
+#include "Config.h"
+#include "Xmodule.h"
 
-struct CfgSensorHandler {
+
+struct CfgXmoduleSensor : Cfg {
+
+    uint16_t sampleAveraging = 10; // Before values are reported
+    uint16_t averagingOffsetScaling = 25;
+    uint16_t reportingInterval = 0; // [ms], set to 0 to ignore
+
+    // Saved settings
+    CfgXmoduleSensor() {
+        cfgName = "cfgXmoduleSensor";
+        addSetting("sampleAveraging", &sampleAveraging, [&](uint16_t _x) { if (_x == 0) return false; else sampleAveraging = _x; return true; }); // at least 1
+        addSetting("averagingOffsetScaling", &averagingOffsetScaling, [&](uint16_t _x) { if (_x == 0) return false; else averagingOffsetScaling = _x; return true; }); // at least 1
+        addSetting("reportingInterval", &reportingInterval, [&](uint16_t _x) { reportingInterval = _x; return true; });
+    };
+
 
     // Number of values recorded per measurement, for example one each for temperature, humidity, pressure -> 3
     uint8_t dataValueCount = 0;
@@ -30,13 +46,10 @@ struct CfgSensorHandler {
     // More like much less, max 1000 for single value?
     uint16_t dataStoreLength = 10;
 
-    uint8_t sampleAveraging = 10; // Before values are stored                                                                      // TODO set via network
-    uint8_t sampleAveragingOffsetScaling = 25;
 
     // Float conversion, int = float * 10^exponent
     int8_t *floatToIntExponent;
 
-    uint16_t reportingInterval = 0; // [ms], set to 0 to ignore                                                                     // TODO set via network
 
     String infoDescription = "undefined";
 
@@ -45,11 +58,27 @@ struct CfgSensorHandler {
     uint8_t dataMatrixColumnCount = 255;
 
 
-    // Dummy constructor needed for some reason                                                                                    // TODO can we get rid of this
-    CfgSensorHandler() {};
 
-    // Init with value count, no decimal shift for floats with exponent 0 
-    CfgSensorHandler(uint8_t _dataValueCount) : dataValueCount(_dataValueCount) {
+    // Only in code, not via web
+    
+    void setFloatToIntExponent(int8_t* _floatToIntExponent) {
+        for (uint8_t i = 0; i < dataValueCount; i++) {
+            floatToIntExponent[i] = _floatToIntExponent[i];
+        }
+    }
+    void setFloatToIntExponentAll(int8_t _singleFloatToIntExponent) {
+        for (uint8_t i = 0; i < dataValueCount; i++) {
+            floatToIntExponent[i] = _singleFloatToIntExponent;
+        }
+    }
+
+    void setMatrixColumnCount(uint8_t _dataMatrixColumnCount) {
+        dataMatrixColumnCount = _dataMatrixColumnCount;
+    }
+
+    void initValueCount(uint8_t _dataValueCount) {
+        dataValueCount = _dataValueCount;
+
         // Redefine floatToInt exponent
         delete [] floatToIntExponent;
         floatToIntExponent = new int8_t[dataValueCount];
@@ -59,37 +88,18 @@ struct CfgSensorHandler {
 
         // Dynamically reduce stored measurements depending on values measured                                                      // TODO
         // Overhead factor to take other memory uses into account
-        // cfgSensorHandler.dataStoreLength = dataStoreMax / cfgSensorHandler.dataValueCount / 1.2;
-    };
-
-
-    void setAveraging(uint8_t _sampleAveraging) {
-        sampleAveraging = max(_sampleAveraging, (uint8_t)1); // at least 1
-    };
-
-    void setFloatToIntExponent(int8_t* _floatToIntExponent) {
-        for (uint8_t i = 0; i < dataValueCount; i++) {
-            floatToIntExponent[i] = _floatToIntExponent[i];
-        }
-    };
-    void setFloatToIntExponentAll(int8_t _singleFloatToIntExponent) {
-        for (uint8_t i = 0; i < dataValueCount; i++) {
-            floatToIntExponent[i] = _singleFloatToIntExponent;
-        }
-    };
-
-    void setMatrixColumnCount(uint8_t _dataMatrixColumnCount) {
-        dataMatrixColumnCount = _dataMatrixColumnCount;
-    };
+        // cfgXmoduleSensor.dataStoreLength = dataStoreMax / cfgXmoduleSensor.dataValueCount / 1.2;
+    }
 
 };
 
 
-class SensorHandler {
-    private:
-        CfgSensorHandler cfgSensorHandler;
 
-        const char *cfgFileName = "cfgSensorHandler";
+class XmoduleSensor : public Xmodule {
+    private:
+        CfgXmoduleSensor cfgXmoduleSensor;
+
+        const char *cfgFileName = "cfgXmoduleSensorArray";
 
         // Measurement storage 2D array
         int32_t **dataStore;
@@ -98,7 +108,7 @@ class SensorHandler {
 
         // Position in array, is one ahead after the measurement
         uint8_t dataStoreHead;
-        // uint8_t circularIndex(uint8_t value) { return (cfgSensorHandler.dataStoreLength + value) % cfgSensorHandler.dataStoreLength; };
+        // uint8_t circularIndex(uint8_t value) { return (cfgXmoduleSensor.dataStoreLength + value) % cfgXmoduleSensor.dataStoreLength; };
         // int32_t *currentMeasurement() { return dataStore[circularIndex(dataStoreHead - 1)]; }
         // int32_t currentMeasurementMillis() { return dataStoreTime[circularIndex(dataStoreHead - 1)]; }
 
@@ -134,11 +144,19 @@ class SensorHandler {
         void saveOffsetScaling();
 
         void addSampleOffsetScaling(int32_t *newSample);
-        
-    public:
 
-        void setup(CfgSensorHandler _cfgSensorHandler);
+
+
+    public:
+        // Constructor with value count
+        XmoduleSensor(uint8_t valueCount) { cfgXmoduleSensor.initValueCount(valueCount); };
+
+        void setup();
         void loop();
+        void netWebContentModule();
+        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
+
+        ///
 
         void addSample(float_t *newSample);
         void addSample(int32_t *newSample);
@@ -150,9 +168,7 @@ class SensorHandler {
 
         // bool isPeriodic(uint8_t length);
 
-        void printWeb();
         void webResetOffset();
-
 };
 
 #endif

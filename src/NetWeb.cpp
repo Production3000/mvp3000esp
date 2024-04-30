@@ -20,28 +20,16 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-// https://arduino.stackexchange.com/questions/56517/formatting-strings-in-arduino-for-output
-// https://www.forward.com.au/pfod/ArduinoProgramming/SafeString/index.html
-
-
-// TODO simplify!!! https://randomnerdtutorials.com/esp32-web-server-spiffs-spi-flash-file-system/
-
-
 void NetWeb::setup() {
     // Folders/requests
-    server.on("/", std::bind(&NetWeb::serveRequestMain, this));
-    server.on("/save", std::bind(&NetWeb::requestEditConfigValue, this));
-    server.onNotFound(std::bind(&NetWeb::serveRequestMain, this));
-
-    server.on("/measureOffset", std::bind(&NetWeb::measureOffset, this));                                                  
-    server.on("/measureScaling", std::bind(&NetWeb::measureScaling, this));
-    server.on("/resetOffset", std::bind(&NetWeb::resetOffset, this));
-    server.on("/resetScaling", std::bind(&NetWeb::resetScaling, this));
+    server.on("/", std::bind(&NetWeb::serveRequest, this));
+    server.on("/save", std::bind(&NetWeb::serveForm, this));
+    server.on("/savecheck", std::bind(&NetWeb::serveFormCheckId, this));
+    server.onNotFound(std::bind(&NetWeb::serveRequest, this));
 
     // Start server, independent of wifi status, main will only be called when connected
     server.begin();
 }
-
 
 void NetWeb::loop() {
     // Called from net.loop() only if network is up
@@ -51,54 +39,95 @@ void NetWeb::loop() {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
 
-// void NetWeb::registerPageElement(String moduleName, TPageElementFunction func) {
-
-//     server.on("/measureOffset", std::bind(&NetWeb::measureOffset, this));    
-
-//     if (pageElementCount < MAX_PAGE_ELEMENTS) {
-//         pageElements[pageElementCount++] = func;
-//     } else {
-//         mvp.logger.write(CfgLogger::Level::ERROR, "Web page element array is full.");
-//     }
-// }
-
-
-// void NetWeb::serveRequestPageElements() {
-//     // Send data in chunks, but use pointer here so other functions do not need to know length
-//     char* message = new char[WEB_CHUNK_LENGTH];
-
-//     // Loop through all pageElements
-//     for (uint8_t i = 0; i < pageElementCount; i++) {
-//         // Loop through all strings of each pageElement
-//         for (uint8_t j = 0; j < MAX_PE_STRING_COUNT; j++) {
-//             pageElements[i](j, message, WEB_CHUNK_LENGTH);
-//             // Break when returned string is empty
-//             if (strlen(message) == 0)
-//                 break;
-//             server.sendContent(message);
-//         }
-//     }
-// }
-
-
-
-void NetWeb::serveRequestMain() {
+void NetWeb::serveRequest() {
     // Prepare and head
-    sendStart();
-    // Serve page content
-    serveRequestMainHead();
-    // serveRequestPageElements();
-    // Close page
-    sendClose();
+    contentStart();
 
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Serving root to: %s",  server.client().remoteIP().toString().c_str());
+    // Serve main/module content
+    if ((server.args() == 1) && (server.argName(0) == "m") && (mvp.helper.isValidInteger(server.arg(0))) && (server.arg(0).toInt() < mvp.moduleCount)) {
+        mvp.xmodules[server.arg(0).toInt()]->netWebContentModule();
+    } else {
+        contentHome();
+    }
+
+    // Close page
+    contentClose();
+
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Serving page to: %s",  server.client().remoteIP().toString().c_str());
+}
+
+void NetWeb::serveForm() {
+    if (server.args() < 1) {
+        responseRedirect("Input error!");
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
+        return;
+    }
+
+    auto lambdaKey = [&](int i) { return server.argName(i); };
+    auto lambdaValue = [&](int i) { return server.arg(i); };
+
+    // MVP3000 settings
+    bool success = mvp.net.editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+    if (!success)
+        success = mvp.net.netCom.editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+
+    if (!success)
+        switch (mvp.helper.hashStringDjb2(server.argName(0).c_str())) {                                          // TODO separate actions
+
+            // Maintenance actions
+            case mvp.helper.hashStringDjb2("restart"): 
+                responsePrepareRestart();
+                ESP.restart();
+                break;
+
+            case mvp.helper.hashStringDjb2("resetdevice"):
+                responsePrepareRestart();
+                mvp.config.factoryResetDevice(); // calls ESP.restart();
+                break;
+        }
+
+    if (success) {
+        responseRedirect("Settings saved!");
+        return;
+    }
+
+    // Loop through modules while success is not true
+    for (uint8_t i = 0; i < mvp.moduleCount; i++) {       
+        // Use lambdas to read args
+        success = mvp.xmodules[i]->editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+        if (success)
+            return;
+    }
+
+    // All failed
+    responseRedirect("Input error!");
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
+}
+
+
+
+void NetWeb::serveFormCheckId() {
+    // Minimum two arguments: action and deviceId
+    if (server.args() < 2) {
+        responseRedirect("Id check failed.");
+        return;
+    }
+    // deviceId is last input element
+    uint8_t lastInput = server.args() - 1;
+    if ( (server.argName(lastInput) != "deviceId") || (!mvp.helper.isValidInteger(server.arg(lastInput))) || (server.arg(lastInput).toInt() != ESPX.getChipId()) ) {
+        responseRedirect("Id check failed.");
+        return;
+    }
+
+    serveForm();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::sendStart() {
+void NetWeb::contentStart() {
     // Open connection
     server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     server.sendHeader("Pragma", "no-cache");
@@ -118,7 +147,7 @@ void NetWeb::sendStart() {
     postMessage = "";
 }
 
-void NetWeb::sendClose() {
+void NetWeb::contentClose() {
     // HTMK close page tags
     server.sendContent("</body></html>");
     // Close connection
@@ -126,20 +155,7 @@ void NetWeb::sendClose() {
     server.client().stop();
 }
 
-void NetWeb::sendFormatted(const char* messageFormatString, ...) {
-    char message[WEB_CHUNK_LENGTH];
-    va_list args;
-    va_start(args, messageFormatString);
-    vsnprintf(message, sizeof(message), messageFormatString, args);
-    va_end(args);
-
-    server.sendContent(message);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////
-
-void NetWeb::serveRequestMainHead() {
+void NetWeb::contentHome() {
     // System                                                                                   // TODO display last warnings/errors
     sendFormatted("\
         <h3>System</h3> <ul> \
@@ -156,11 +172,11 @@ void NetWeb::serveRequestMainHead() {
         <h3>Network</h3> <ul> \
         <li>Fallback AP SSID: '%s'</li> \
         <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/save' method='post'> SSID <input name='newSsid' value='%s'> Passphrase <input type='password' name='newPass' value='%s'> <input type='submit' value='Save'> </form> </li> \
-        <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' value='%d' min='1' max='255'> <input type='submit' value='Save'> </form> </li>",
+        <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%d' min='1' max='255'> <input type='submit' value='Save'> </form> </li>",
         mvp.net.apSsid.c_str(), mvp.net.cfgNet.clientSsid.c_str(), mvp.net.cfgNet.clientPass.c_str(), mvp.net.cfgNet.clientConnectRetries);
     sendFormatted("\
         <li>Force client mode. WARNING: If credentials are wrong the device will be inaccessable via network, thus require re-flashing! \
-         <form action='/save' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %s value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>",
+         <form action='/savecheck' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %s value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>",
         (mvp.net.cfgNet.forceClientMode == true) ? "checked" : "" );
 
     // MQTT communication
@@ -175,81 +191,32 @@ void NetWeb::serveRequestMainHead() {
 
 
     // Modules
-    mvp.sensorHandler.printWeb();
-
+    sendFormatted("<h3>Modules</h3> <ul>");
+    for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+        sendFormatted("<li><a href='?m=%d'>%s</a></li>", i, mvp.xmodules[i]->description.c_str());
+    }
+    sendFormatted("</ul>");
 
     // Maintenance
     sendFormatted("\
         <h3>Maintenance</h3> <ul> \
         <li> <form action='/save' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li> \
-        <li> <form action='/save' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>");
+        <li> <form action='/savecheck' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>");
 
 }
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetWeb::sendFormatted(const char* messageFormatString, ...) {
+    char message[WEB_CHUNK_LENGTH];
+    va_list args;
+    va_start(args, messageFormatString);
+    vsnprintf(message, sizeof(message), messageFormatString, args);
+    va_end(args);
 
-
-bool NetWeb::requestConfirmSensorId() {
-    // Minimum two arguments: action and deviceId
-    if (server.args() < 2)
-        return false;
-
-    // deviceId is last input element
-    uint8_t lastInput = server.args() - 1;
-    if ( (server.argName(lastInput) != "deviceId") || (!mvp.helper.isValidInteger(server.arg(lastInput))) || (server.arg(lastInput).toInt() != ESPX.getChipId()) )
-        return false;
-
-    return true;
+    server.sendContent(message);
 }
-
-void NetWeb::requestEditConfigValue() {
-    if (server.args() < 1) {
-        responseRedirect("Input error!");
-        return;
-    }
-
-    bool success = false;
-    switch (mvp.helper.hashStringDjb2(server.argName(0).c_str())) {
-
-        // Network
-        case mvp.helper.hashStringDjb2("forceClientMode"):
-            if (!requestConfirmSensorId())
-                break;
-        case mvp.helper.hashStringDjb2("clientConnectRetries"):
-        case mvp.helper.hashStringDjb2("newSsid"):
-            success = mvp.net.editCfg(server.argName(0), server.arg(0), (server.args() == 2) ? server.arg(1) : ""); // pass second form input or empty string
-            break;
-
-        // MQTT Communication
-        case mvp.helper.hashStringDjb2("discoveryPort"):
-        case mvp.helper.hashStringDjb2("mqttForcedBroker"):
-        case mvp.helper.hashStringDjb2("mqttPort"): 
-        case mvp.helper.hashStringDjb2("mqttTopicSuffix"): 
-            success = mvp.net.netCom.editCfg(server.argName(0), server.arg(0));
-            break;
-
-        // Maintenance
-        case mvp.helper.hashStringDjb2("restart"): 
-            responsePrepareRestart();
-            ESP.restart();
-            break;
-
-        case mvp.helper.hashStringDjb2("resetdevice"):
-            if (!requestConfirmSensorId())
-                break;
-            responsePrepareRestart();
-            mvp.config.factoryResetDevice(); // calls ESP.restart();
-            break;
-    }
-
-    // User info
-    responseRedirect((success) ? "Settings saved!" : "Input error!");
-}
-
 
 void NetWeb::responseRedirect(const char* message) {
     // Message to serve on next page load 
@@ -264,33 +231,4 @@ void NetWeb::responsePrepareRestart() {
     server.send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
     // Wait for redirect to be actually sent
     delay(25);
-}
-
-
-
-
-
-void NetWeb::measureOffset() {
-    mvp.sensorHandler.measureOffset();
-    responseRedirect("Measuring offset, this may take a few seconds ...");
-}
-
-void NetWeb::measureScaling() { 
-    // Generally check web input
-    if ( (server.args() == 2) &&  (server.argName(0) == "valueNumber") && (server.argName(1) == "targetValue") ) {
-        // Function checks bounds of valueNumber
-        if (mvp.sensorHandler.measureScaling(server.arg(0).toInt(), server.arg(1).toInt())) {
-            responseRedirect("Measuring scaling, this may take a few seconds ...");
-            return;
-        }
-    }
-    responseRedirect("Input error!");
-}
-void NetWeb::resetOffset() {
-    mvp.sensorHandler.resetOffset();
-    responseRedirect("Offset reset.");
-}
-void NetWeb::resetScaling() {
-    mvp.sensorHandler.resetScaling();
-    responseRedirect("Scaling reset.");
 }

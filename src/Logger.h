@@ -63,7 +63,7 @@ class Logger {
 
         boolean errorReported = false;
 
-        void setup(CfgLogger _cfgLogger);
+        void setup();
        
         // Plain test output
         void write(CfgLogger::Level targetLevel, const char *message);

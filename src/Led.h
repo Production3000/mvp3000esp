@@ -70,7 +70,7 @@ class Led {
         void toggle();
 
     public:
-        void setup(CfgLed _cfgLed);
+        void setup();
         void loop();
 };
 

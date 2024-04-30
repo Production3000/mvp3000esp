@@ -28,6 +28,93 @@ limitations under the License.
 #include <ArduinoJson.h>
 
 #include "Logger.h"
+#include "Helper.h"
+
+
+struct Cfg {
+
+    String cfgName = "template";
+
+    Helper helper;
+
+    template <typename T>                                       // TODO somehow use pointers to put all Settings in single array
+    struct Setting {
+        uint32_t hash;
+        T *value;
+        std::function<bool(T)> set;
+        Setting() {}; // Default constructor needed for some reason
+        Setting(uint32_t _hash,T *_value, std::function<bool(T)> _set) { hash = _hash; value = _value; set = _set; }
+    };
+
+    static const uint8_t MAX_SETTINGS = 5;
+    uint8_t settingsBoolCount = 0;
+    Setting<boolean> settingsBool[MAX_SETTINGS];
+    uint8_t settingsIntCount = 0;
+    Setting<uint16_t> settingsInt[MAX_SETTINGS];
+    uint8_t settingsStringCount = 0;
+    Setting<String> settingsString[MAX_SETTINGS];
+
+    void addSetting(String key,  boolean *value, std::function<bool(boolean)> set) {
+        settingsBool[settingsBoolCount] = Setting<boolean>(helper.hashStringDjb2(key.c_str()), value, set);
+        settingsBoolCount++;
+    }
+    void addSetting(String key,  uint16_t *value, std::function<bool(uint16_t)> set) {
+        settingsInt[settingsIntCount] = Setting<uint16_t>(helper.hashStringDjb2(key.c_str()), value, set);
+        settingsIntCount++;
+    }
+    void addSetting(String key,  String *value, std::function<bool(String)> set) {
+        settingsString[settingsStringCount] = Setting<String>(helper.hashStringDjb2(key.c_str()), value, set);
+        settingsStringCount++;
+    }
+
+    bool updateFromWeb(String key, String value) {
+        uint32_t hash = helper.hashStringDjb2(key.c_str());
+        for (uint8_t i = 0; i < settingsBoolCount; i++) {
+            if (settingsBool[i].hash == hash)
+                return settingsBool[i].set((value.toInt() != 0));
+        }
+        for (uint8_t i = 0; i < settingsIntCount; i++) {
+            if (settingsInt[i].hash == hash)
+                return settingsInt[i].set((uint16_t)value.toInt());
+        }
+        for (uint8_t i = 0; i < settingsStringCount; i++) {
+            if (settingsString[i].hash == hash)
+                return settingsString[i].set(value);
+        }
+        return false;
+    }
+
+    void updateFromJson(JsonDocument &jsonDoc) {
+        for (uint8_t i = 0; i < settingsBoolCount; i++) {
+            String hashString = String(settingsBool[i].hash);
+            if (jsonDoc.containsKey(hashString)) {
+                settingsBool[i].set(jsonDoc[hashString].as<boolean>());
+            }
+        }
+        for (uint8_t i = 0; i < settingsIntCount; i++) {
+            String hashString = String(settingsInt[i].hash);
+            if (jsonDoc.containsKey(hashString)) {
+                settingsInt[i].set(jsonDoc[hashString].as<uint16_t>());
+            }
+        }
+        for (uint8_t i = 0; i < settingsStringCount; i++) {
+            String hashString = String(settingsString[i].hash);
+            if (jsonDoc.containsKey(hashString)) {
+                settingsString[i].set(jsonDoc[hashString].as<String>());
+            }
+        }
+    }
+
+    void exportToJson(JsonDocument &jsonDoc) {
+        for (uint8_t i = 0; i < settingsBoolCount; i++)
+            jsonDoc[String(settingsBool[i].hash)] = *settingsBool[i].value; // Dereference
+        for (uint8_t i = 0; i < settingsIntCount; i++)
+            jsonDoc[String(settingsInt[i].hash)] = *settingsInt[i].value; // Dereference
+        for (uint8_t i = 0; i < settingsStringCount; i++)
+            jsonDoc[String(settingsString[i].hash)] = *settingsString[i].value; // Dereference
+    }
+
+};
 
 
 class Config {
@@ -37,6 +124,7 @@ class Config {
         boolean fileSystemOK = false;
         bool isReadyFS();
 
+
         bool readFile(const char *filename, std::function<bool(File& file)> writerFunc);
         bool writeFile(const char *filename, std::function<bool(File& file)> writerFunc);
 
@@ -44,17 +132,19 @@ class Config {
         
         void setup();
 
+        void readCfg(Cfg &cfg);
+        void writeCfg(Cfg cfg);
+
         // void removeCustomCfg(const char *cfgName);
         void removeCfg(const char *fileName);
         void factoryResetDevice();
 
-
+        bool readFileToJson(const char *fileName);
+        void writeJsonToFile(const char *fileName);
 
         // Templates need to be in the header to be included every time, or explicitly called in cpp to exist everywhere 
         // https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor
 
-        bool cfgReadPrepare(const char *fileName);
-        void cfgReadClose() { jsonDoc.clear(); };
         template <class T> // Single value variables of any type except char*, char[n]
         bool cfgReadGetValue(const char *varName, T &dest) {
             if (!jsonDoc.containsKey(varName) || !jsonDoc[varName].is<T>())
@@ -62,13 +152,6 @@ class Config {
             dest = jsonDoc[varName].as<T>(); // .as<T>() needd for String type
             return true;
         };
-        // template <class T> // Single value of char[n]
-        // bool cfgReadGetValueChar(const char *varName, T &dest) {
-        //     String tmp;
-        //     boolean success = cfgReadGetValue(varName, tmp);
-        //     strncpy(dest, tmp.c_str(), sizeof(dest));
-        //     return success;
-        // };
 
         template <class T> // Arrays
         bool cfgReadGetValue(const char *varName, T &dest, uint8_t arraySize) {
@@ -86,11 +169,9 @@ class Config {
             }
         };
 
-        void cfgWritePrepare();        
-        void cfgWriteClose(const char *fileName);
         template <class T> // Single value variables of any type
         void cfgWriteAddValue(const char *varName, T content) {
-            jsonDoc[varName] = content;
+            jsonDoc[String(varName)] = content;
         };
         template <class T> // Arrays
         void cfgWriteAddValue(const char *varName, T *content, uint8_t arraySize) {

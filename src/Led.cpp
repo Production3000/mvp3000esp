@@ -19,8 +19,7 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
-void Led::setup(CfgLed _cfgLed) {
-    cfgLed = _cfgLed;
+void Led::setup() {
 
     if (!cfgLed.enabled) {
         mvp.logger.write(CfgLogger::Level::INFO, "Led disabled.");

@@ -20,8 +20,7 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-void Logger::setup(CfgLogger _cfgLogger) {
-    cfgLogger = _cfgLogger;
+void Logger::setup() {
 
     // Do nothing if turned off
     if (cfgLogger.target == CfgLogger::Target::NONE)

@@ -34,22 +34,9 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-void NetCom::setup(CfgNetCom _cfgNetCom) {
-    cfgNetCom = _cfgNetCom;
-
-    // Load save credentials
-    if (mvp.config.cfgReadPrepare("cfgNetCom")) {
-        // Make sure saved ssid and pass are both readable before overwriting defaults
-        String tmp;
-        if (mvp.config.cfgReadGetValue("mqttForcedBroker", tmp)) {
-            mvp.config.cfgReadGetValue("mqttForcedBroker", cfgNetCom.mqttForcedBroker);
-            mvp.config.cfgReadGetValue("mqttTopicSuffix", cfgNetCom.mqttTopicSuffix);
-            mvp.config.cfgReadGetValue("discoveryPort", cfgNetCom.discoveryPort);
-            mvp.config.cfgReadGetValue("mqttPort", cfgNetCom.mqttPort);
-            mvp.logger.write(CfgLogger::Level::INFO, "NetComCfg loaded.");
-        }
-    }
-    mvp.config.cfgReadClose();
+void NetCom::setup() {
+    // Read config
+    mvp.config.readCfg(cfgNetCom);
 
     // Redefine needed with network, otherweise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
@@ -83,38 +70,13 @@ void NetCom::loop() {
     }
 }
 
-bool NetCom::editCfg(String varName, String newValue) {
-
-    bool success = false;
-    switch (mvp.helper.hashStringDjb2(varName.c_str())) {
-        case mvp.helper.hashStringDjb2("discoveryPort"):
-            success = cfgNetCom.setDiscoveryPort(newValue.toInt());
-            break;
-        case mvp.helper.hashStringDjb2("mqttForcedBroker"): 
-            success = cfgNetCom.setMqttForcedBroker(newValue);
-            break;
-        case mvp.helper.hashStringDjb2("mqttPort"): 
-            success = cfgNetCom.setMqttPort(newValue.toInt());
-            break;
-        case mvp.helper.hashStringDjb2("mqttTopicSuffix"):
-            success = cfgNetCom.setMqttTopicSuffix(newValue);
-            break;
-    }
-
-    if (success) {
-        // save cfg
-        mvp.config.cfgWritePrepare();
-        mvp.config.cfgWriteAddValue("discoveryPort", cfgNetCom.discoveryPort);
-        mvp.config.cfgWriteAddValue("mqttForcedBroker", cfgNetCom.mqttForcedBroker);
-        mvp.config.cfgWriteAddValue("mqttPort", cfgNetCom.mqttPort);
-        mvp.config.cfgWriteAddValue("mqttTopicSuffix", cfgNetCom.mqttTopicSuffix);
-        mvp.config.cfgWriteClose("cfgNetCom");
-        mvp.logger.write(CfgLogger::Level::INFO, "cfgNetCom updated.");
-    }
+bool NetCom::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
+    // Try to update cfg, save if successful
+    bool success = cfgNetCom.updateFromWeb(argName(0), arg(0));
+    if (success)
+        mvp.config.writeCfg(cfgNetCom);
     return success;
 }
-
-
 
 void NetCom::udpDiscoverMqtt() {
     // Send DIscover SERVer to broadcast

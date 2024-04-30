@@ -23,13 +23,16 @@ extern MVP3000 mvp;
 const uint8_t valueCount = 2;
 
 int32_t data[valueCount];
-CfgSensorHandler cfgSensorHandler = CfgSensorHandler(valueCount);
-MVP3000CFG mvp3000cfg = MVP3000CFG(cfgSensorHandler);
 
+XmoduleSensor xmoduleSensor(valueCount);
 
 void setup() {
+
+
+    mvp.addXmodule(&xmoduleSensor);
+
     // Init
-    mvp.setup(mvp3000cfg);
+    mvp.setup();
 }
 
 void loop() {
@@ -44,7 +47,7 @@ void loop() {
 
     // Add new data
     // The values are averaged, expected output is close to 15, -150, 1500, -15, ... 
-    mvp.sensorHandler.addSample(data);
+    xmoduleSensor.addSample(data);
 
     // Do not ever use blocking delay in actual code
     delay(50);

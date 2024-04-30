@@ -36,17 +36,7 @@ limitations under the License.
 
 class NetWeb {
 
-    public:
-        typedef std::function<void(uint8_t, char*& , uint16_t)> TPageElementFunction;
-
     private:
-
-        static const uint8_t MAX_PAGE_ELEMENTS = 4;  // Maximum number of functions
-        static const uint8_t MAX_PE_STRING_COUNT = 16;  // Maximum number of strings in each function
-        std::array<TPageElementFunction, MAX_PAGE_ELEMENTS> pageElements;
-        uint8_t pageElementCount = 0;
-
-        static const uint16_t WEB_CHUNK_LENGTH = 1024;
 
         #ifdef ESP8266
             ESP8266WebServer server;
@@ -54,38 +44,34 @@ class NetWeb {
             WebServer server;
         #endif
 
-        // Message to serve on next page load 
+        static const uint16_t WEB_CHUNK_LENGTH = 1024;
+
+        // Message to serve on next page load after form save
         const char *postMessage = "";
 
+        void serveRequest();
+        void serveForm();
+        void serveFormCheckId();
+        // serveModuleForm() defined in modules
 
-        void sendStart();
-        void sendClose();
-
-        void serveRequestMain();
-        void serveRequestMainHead();
-
-
-        void measureOffset();
-        void measureScaling();
-        void resetOffset();
-        void resetScaling();
-
-        
-        void requestEditConfigValue();
-        bool requestConfirmSensorId();
+        void contentStart();
+        void contentClose();
+        void contentHome();
+        // moduleHome() defined in modules
 
         void responsePrepareRestart();
 
     public:
+
+typedef std::function<void(int)> XXfun;
+void testfun(std::function<void(int)> asd) { }
+
         void setup();
         void loop();
 
         void sendFormatted(const char* formatString, ...);
 
         void responseRedirect(const char* message);
-
-
-        // void registerPageElement(String moduleName, TPageElementFunction func);
 
 };
 

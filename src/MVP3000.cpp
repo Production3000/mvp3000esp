@@ -19,16 +19,17 @@ limitations under the License.
 MVP3000 mvp;
 
 
-void MVP3000::setup(MVP3000CFG mvp3000cfg) {
+void MVP3000::setup() {
     // Start logging first obviously
-    logger.setup(mvp3000cfg.cfgLogger);
+    logger.setup();
     // Prepare flash to allow loading of saved configs
     config.setup();
-
-    led.setup(mvp3000cfg.cfgLed);
-
-    net.setup(mvp3000cfg.cfgNet);
-    sensorHandler.setup(mvp3000cfg.cfgSensorHandler);
+    led.setup();
+    net.setup();
+    // Modules
+    for (uint8_t i = 0; i < moduleCount; i++) {
+        xmodules[i]->setup();
+    }
 }
 
 void MVP3000::loop() {
@@ -37,8 +38,20 @@ void MVP3000::loop() {
 
     led.loop();
     net.loop();
+    // Modules
+    for (uint8_t i = 0; i < moduleCount; i++) {
+        xmodules[i]->loop();
+    }
+}
 
-    sensorHandler.loop();
+void MVP3000::addXmodule(Xmodule *xmodule) {
+    if (moduleCount >= MAX_MODULES) {
+        return;
+    }
+
+    xmodules[moduleCount] = xmodule;
+    // modules[moduleCount]->setup();
+    moduleCount++;
 }
 
 

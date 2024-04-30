@@ -25,20 +25,9 @@ limitations under the License.
 #include "Led.h"
 #include "Config.h"
 #include "Net.h"
-#include "SensorHandler.h"
 
-
-struct MVP3000CFG {
-    CfgNet cfgNet;
-    CfgLogger cfgLogger;
-    CfgLed cfgLed;
-    CfgSensorHandler cfgSensorHandler;
-
-    // Init without sensor
-    MVP3000CFG() {};
-    // Init with sensor
-    MVP3000CFG(CfgSensorHandler _cfgSensorHandler) : cfgSensorHandler(_cfgSensorHandler) {};
-};
+#include "Xmodule.h"
+#include "XmoduleSensor.h"
 
 
 class MVP3000 {
@@ -56,7 +45,11 @@ class MVP3000 {
         Led led;
         Logger logger;
         Net net;
-        SensorHandler sensorHandler;
+
+        // Modules
+        static const uint8_t MAX_MODULES = 5;  // Maximum number of modules allowed
+        uint8_t moduleCount = 0;
+        Xmodule *xmodules[MAX_MODULES];
 
         enum class Status: uint8_t {
             GOOD = 0,
@@ -71,8 +64,10 @@ class MVP3000 {
         uint16_t loopDuration_ms = 0;
 
 
-        void setup(MVP3000CFG mvp3000cfg);
+        void setup();
         void loop();
+
+        void addXmodule(Xmodule *XmoduleSensor);
 
 
         // Forward internal functions for simplicity

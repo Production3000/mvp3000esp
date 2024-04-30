@@ -20,29 +20,16 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-void Net::setup(CfgNet _cfgNet) {
-    cfgNet = _cfgNet;
-
-    // Load save credentials
-    if (mvp.config.cfgReadPrepare("cfgNet")) {
-        // Make sure saved ssid and pass are both readable before overwriting defaults
-        String tmp;
-        if (mvp.config.cfgReadGetValue("clientSsid", tmp) && mvp.config.cfgReadGetValue("clientPass", tmp)) {
-            mvp.config.cfgReadGetValue("clientSsid", cfgNet.clientSsid);
-            mvp.config.cfgReadGetValue("clientPass", cfgNet.clientPass);
-            mvp.config.cfgReadGetValue("clientConnectRetries", cfgNet.clientConnectRetries);
-            mvp.config.cfgReadGetValue("forceClientMode", cfgNet.forceClientMode);
-            mvp.logger.write(CfgLogger::Level::INFO, "NetCfg loaded.");
-        }
-    }
-    mvp.config.cfgReadClose();
+void Net::setup() {
+    // Read config
+    mvp.config.readCfg(cfgNet);
 
     // Start wifi
     startWifi();
 
     // Init modules
     netWeb.setup();
-    netCom.setup(cfgNet.cfgNetCom);
+    netCom.setup();
 }
  
 void Net::loop() {
@@ -60,11 +47,27 @@ void Net::loop() {
         netCom.loop();
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////
+
+bool Net::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
+    // Special case wifi credentials first
+    boolean success = false;
+    if ((args == 2) && (argName(0) == "newSsid"))
+        success = editClientConnection(arg(0), arg(1));
+    // Try to update cfg
+    if (!success)
+        success = cfgNet.updateFromWeb(argName(0), arg(0));
+
+    // Save cfg on success
+    if (success)
+        mvp.config.writeCfg(cfgNet);
+    return success;
+};
+
 bool Net::editClientConnection(String newSsid, String newPass) {
 
-    bool success = false;
-    success = cfgNet.setWifiCredentials(newSsid, newPass);
-
+    bool success = cfgNet.setWifiCredentials(newSsid, newPass);
     if (success) {
         clientConnectFails = 0;
         clientConnectSuccess = false;
@@ -74,35 +77,6 @@ bool Net::editClientConnection(String newSsid, String newPass) {
 
     return success;
 }
-
-bool Net::editCfg(String varName, String newValueA, String newValueB) {
-
-    bool success = false;
-    switch (mvp.helper.hashStringDjb2(varName.c_str())) {
-        case mvp.helper.hashStringDjb2("newSsid"):
-            success = editClientConnection(newValueA, newValueB);
-            break;
-        case mvp.helper.hashStringDjb2("clientConnectRetries"):
-            success = cfgNet.setClientConnectRetries(newValueA.toInt());
-            break;
-        case mvp.helper.hashStringDjb2("forceClientMode"):
-            success = cfgNet.setForceClientMode((newValueA.toInt() == 0) ? false : true);
-            break;
-    }
-
-    if (success) {
-        // save cfg
-        mvp.config.cfgWritePrepare();
-        mvp.config.cfgWriteAddValue("clientSsid", cfgNet.clientSsid);
-        mvp.config.cfgWriteAddValue("clientPass", cfgNet.clientPass);
-        mvp.config.cfgWriteAddValue("clientConnectRetries", cfgNet.clientConnectRetries);
-        mvp.config.cfgWriteAddValue("forceClientMode", cfgNet.forceClientMode);
-        mvp.config.cfgWriteClose("cfgNet");
-        mvp.logger.write(CfgLogger::Level::INFO, "cfgNet updated.");
-    }
-    return success;
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////

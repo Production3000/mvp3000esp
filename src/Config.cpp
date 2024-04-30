@@ -56,7 +56,27 @@ bool Config::isReadyFS() {
     return false;
 }
 
-bool Config::cfgReadPrepare(const char *fileName) {
+void Config::readCfg(Cfg &cfg) {
+    if (!readFileToJson(cfg.cfgName.c_str()))
+        return;
+    // Import settings from JSON
+    cfg.updateFromJson(jsonDoc);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config loaded: %s", cfg.cfgName.c_str());
+    jsonDoc.clear(); 
+}
+
+void Config::writeCfg(Cfg cfg) {
+    if (!jsonDoc.isNull()) {
+        mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
+        jsonDoc.clear();
+    }
+    // Export settings to JSON
+    cfg.exportToJson(jsonDoc);
+    // Write to file
+    writeJsonToFile(cfg.cfgName.c_str());
+}
+
+bool Config::readFileToJson(const char *fileName) {
     // Check if all other operations are done (this is mainly usefull while coding)
     if (!jsonDoc.isNull()) {
         mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
@@ -90,15 +110,7 @@ bool Config::cfgReadPrepare(const char *fileName) {
     });
 }
 
-void Config::cfgWritePrepare() {
-    if (jsonDoc.isNull())
-        return;
-
-    mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
-    jsonDoc.clear();
-};
-
-void Config::cfgWriteClose(const char *fileName) {
+void Config::writeJsonToFile(const char *fileName) {
     // Skip empty cfg
     if (jsonDoc.isNull()) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Empty cfg, cancel saving: %s", fileName);
@@ -108,6 +120,7 @@ void Config::cfgWriteClose(const char *fileName) {
     writeFile(fileName, [&](File& jsonFile) -> bool {
         return serializeJson(jsonDoc, jsonFile) != 0;
     });
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config written: %s", fileName);
 
     // Clean up for next
     jsonDoc.clear();
@@ -118,7 +131,7 @@ void Config::removeCfg(const char *fileName) {
         return;
     // Remove file
     SPIFFS.remove(fileName);
-};
+}
 
 void Config::factoryResetDevice() {
     if (!isReadyFS())
@@ -173,7 +186,6 @@ bool Config::readFile(const char *fileName, std::function<bool(File& file)> read
     return result;
 }
 
-
 bool Config::writeFile(const char *fileName, std::function<bool(File& file)> writerFunc) {   
     if (!fileSystemOK)
         return false;
@@ -219,7 +231,7 @@ void testJsonConversion() {
     // float_t yfloat;
     // mvp.config.cfgWriteAddValue("xuint", xuint);
     // mvp.config.cfgWriteAddValue("xfloat", xfloat);
-    // mvp.config.cfgReadPrepare("dummyprint");
+    // mvp.config.readFileToJson("dummyprint");
     // mvp.config.cfgReadGetValue("xuint", yuint);
     // mvp.config.cfgReadGetValue("xfloat", yfloat);
     // Serial.print(yuint);
@@ -237,7 +249,7 @@ void testJsonConversion() {
     // mvp.config.cfgWriteAddValue("xarray", xarray, 3);
     // mvp.config.cfgWriteAddValue("xuarray", xuarray, 3);
     // mvp.config.cfgWriteAddValue("xfarray", xfarray, 3);
-    // mvp.config.cfgReadPrepare("dummyprint");
+    // mvp.config.readFileToJson("dummyprint");
     // mvp.config.cfgReadGetValue("xarray", yarray, 3);
     // mvp.config.cfgReadGetValue("xuarray", yuarray, 3);
     // mvp.config.cfgReadGetValue("xfarray", yfarray, 3);
@@ -273,7 +285,7 @@ void testJsonConversion() {
     mvp.config.cfgWriteAddValue("xcchar", xcchar);
     mvp.config.cfgWriteAddValue("xbchar", xbchar);
     // mvp.config.cfgWriteAddValue("xstring", xstring);
-    mvp.config.cfgReadPrepare("dummyprint");
+    mvp.config.readFileToJson("dummyprint");
     // mvp.config.cfgReadGetValue("xcchar", ycchar);
     // mvp.config.cfgReadGetValue("xbchar", ybchar);
     // mvp.config.cfgReadGetValue("xpchar", ypchar);
@@ -287,6 +299,6 @@ void testJsonConversion() {
 
 
     Serial.println("");
-    mvp.config.cfgWriteClose();
+    mvp.config.writeJsonToFile();
 }
 */
