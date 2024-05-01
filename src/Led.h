@@ -26,9 +26,6 @@ limitations under the License.
 #include <Arduino.h>
 #include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
 
-// Replace millisDelay, there are no hardware timers on ESP8266
-// Replace with own in helper                               // TODO
-
 
 struct CfgLed {             
     byte pin = BUILTIN_LED;

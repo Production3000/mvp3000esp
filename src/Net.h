@@ -38,6 +38,8 @@ limitations under the License.
 
 struct CfgNet : public Cfg  {
 
+    // Modifiable settings saved to SPIFF
+
     String clientSsid = ""; // IEEE 1-32 chars
     String clientPass = ""; // IEEE 8-63 chars
     uint16_t clientConnectRetries = 3;

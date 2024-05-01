@@ -56,16 +56,16 @@ bool Config::isReadyFS() {
     return false;
 }
 
-void Config::readCfg(Cfg &cfg) {
+void Config::readCfg(cfgStructJsonInterface &cfg) {
     if (!readFileToJson(cfg.cfgName.c_str()))
         return;
     // Import settings from JSON
-    cfg.updateFromJson(jsonDoc);
+    cfg.importFromJson(jsonDoc);
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config loaded: %s", cfg.cfgName.c_str());
     jsonDoc.clear(); 
 }
 
-void Config::writeCfg(Cfg cfg) {
+void Config::writeCfg(cfgStructJsonInterface &cfg) {
     if (!jsonDoc.isNull()) {
         mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
         jsonDoc.clear();
@@ -111,8 +111,9 @@ bool Config::readFileToJson(const char *fileName) {
 }
 
 void Config::writeJsonToFile(const char *fileName) {
-    // Skip empty cfg
+    // Empty cfg, remove file if any
     if (jsonDoc.isNull()) {
+        removeCfg(fileName);
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Empty cfg, cancel saving: %s", fileName);
         return;
     }

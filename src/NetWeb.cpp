@@ -222,7 +222,7 @@ void NetWeb::responseRedirect(const char* message) {
     // Message to serve on next page load 
     postMessage = message;
     // Redirect to avoid post reload, 303 temporary
-    server.sendHeader("Location", "/");
+    server.sendHeader("Location", ((server.args() == 1) && (server.argName(0) == "m")) ? "/?m=" + server.arg(0) : "/");
     server.send(303);
 }
 

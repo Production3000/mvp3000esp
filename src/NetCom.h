@@ -40,12 +40,13 @@ limitations under the License.
 
 struct CfgNetCom : public Cfg {
 
+    // Modifiable settings saved to SPIFF
+
     uint16_t discoveryPort = 4211; // Search local network for MQTT broker
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
     String mqttForcedBroker = ""; // test.mosquitto.org
     String mqttTopicSuffix = "myesp";
 
-    // Saved settings
     CfgNetCom() {
         cfgName = "cfgNetCom";
         addSetting("discoveryPort", &discoveryPort, [&](uint16_t _x) { if (_x < 1024) return false; else discoveryPort = _x; return true; }); // port above 1024
@@ -53,7 +54,6 @@ struct CfgNetCom : public Cfg {
         addSetting("mqttForcedBroker", &mqttForcedBroker, [&](String _x) { if ((_x.length() > 0) && (_x.length() < 6)) return false; else mqttForcedBroker = _x; return true; } ); // allow empty to remove
         addSetting("mqttTopicSuffix", &mqttTopicSuffix, [&](String _x) { if (_x.length() < 5) return false; else mqttTopicSuffix = _x; return true; }); // min 5 chars
     }
-
 };
 
 

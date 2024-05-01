@@ -131,7 +131,7 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 
     // Send UDP packet
     if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort))
-        mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");                              // TODO: Check ESP32/8266
+        mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");
     for (uint16_t i = 0; i < strlen(message); i++) {
         udp.write((uint8_t)message[i]);
     }

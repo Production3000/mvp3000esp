@@ -115,7 +115,7 @@ void Net::startAp() {
 void Net::startClient() {
     WiFi.mode(WIFI_STA);
 
-// ESP32/ESP8266 have different  Wifi events                                                                                                              // TODO !!! test
+// ESP32/ESP8266 have different  Wifi events
 #ifdef ESP8266
     WiFi.onStationModeDisconnected(std::bind(&Net::WiFiStationDisconnected, this)); // disconnectedEventHandler = 
     WiFi.onStationModeGotIP(std::bind(&Net::WiFiGotIP, this));  // gotIpEventHandler = 

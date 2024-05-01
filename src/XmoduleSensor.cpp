@@ -23,13 +23,14 @@ extern MVP3000 mvp;
 void XmoduleSensor::setup() {
     description = "Sensor Module";
 
-    // Read config
-    mvp.config.readCfg(cfgXmoduleSensor);
-
     if (cfgXmoduleSensor.dataValueCount == 0) {
         mvp.logger.write(CfgLogger::Level::ERROR, "Data value count is zero.");
         return;
     }
+
+    // Read config
+    mvp.config.readCfg(cfgXmoduleSensor);
+    mvp.config.readCfg(dataProcessing);
 
     // This is dynamic allocation, however it is done only once at startup so at least there is no fragmentation over time
     // Memory is not freed, on class destruction:
@@ -55,17 +56,6 @@ void XmoduleSensor::setup() {
     dataMin = new int32_t[cfgXmoduleSensor.dataValueCount];
 
     initDataStore();
-
-    // Offset and scaling
-    delete [] offset;
-    offset = new int32_t[cfgXmoduleSensor.dataValueCount];
-    delete [] scaling;
-    scaling = new float_t[cfgXmoduleSensor.dataValueCount];
-
-    initOffset();
-    initScaling();
-
-    loadOffsetScaling();
 
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorDelay.start(cfgXmoduleSensor.reportingInterval);
@@ -104,21 +94,25 @@ void XmoduleSensor::netWebContentModule() {
         <h3>Data Handling</h3> <ul> \
         <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%d' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li> \
         <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%d' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li> \
-        <li>Reporting interval, minimum time for fast sensors, zero is ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%d' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li>",
+        <li>Reporting interval, minimum time for fast sensors, zero is ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%d' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>",
         cfgXmoduleSensor.sampleAveraging, cfgXmoduleSensor.averagingOffsetScaling, cfgXmoduleSensor.reportingInterval);
 
     // Table for offset, scaling, float2int
-    mvp.net.netWeb.sendFormatted("<h3>Sensor, Offset, Scaling</h3> <table> <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>");
+    mvp.net.netWeb.sendFormatted("<h3>Sensor Details</h3> <table> <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>");
     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
         // Type, units, default and current offset/scaling
         mvp.net.netWeb.sendFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2e</td> <td>%d</td> </tr>",
-            i+1, "x", "x", offset[i], scaling[i], cfgXmoduleSensor.floatToIntExponent[i]);
+            i+1, "x", "x", dataProcessing.offset.value[i], dataProcessing.scaling.value[i], dataProcessing.sampleToIntExponent.value[i]);
     }
     mvp.net.netWeb.sendFormatted("\
         <tr> <td colspan='3'></td> \
         <td> <form action='/save' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td> \
         <td> <form action='/save' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%d'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td> \
-        <td></td> </tr>  <tr> <td colspan='3'></td> \
+        <td></td> </tr>",
+        cfgXmoduleSensor.dataValueCount);
+        
+    mvp.net.netWeb.sendFormatted(" \
+        <tr> <td colspan='3'></td> \
         <td> <form action='/save' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td> \
         <td> <form action='/save' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td> \
         <td></td> </tr> </table>",
@@ -126,10 +120,6 @@ void XmoduleSensor::netWebContentModule() {
 };
 
 bool XmoduleSensor::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
-
-    Serial.println(argName(0));
-    Serial.println(arg(0));
-
     // Try to update cfg, save if successful
     bool success = cfgXmoduleSensor.updateFromWeb(argName(0), arg(0));
     if (success) {
@@ -137,9 +127,6 @@ bool XmoduleSensor::editCfgNetWeb(int args, std::function<String(int)> argName, 
         mvp.net.netWeb.responseRedirect("Setting saved.");
         return true;
     }
-
-
-    Serial.println("asd");
     
     success = true;
     switch (mvp.helper.hashStringDjb2(argName(0).c_str())) {                                                             // TODO separate actions
@@ -169,11 +156,7 @@ bool XmoduleSensor::editCfgNetWeb(int args, std::function<String(int)> argName, 
             break;
         default:
             success = false;
-            Serial.println("qwe");
     }
-
-    
-    Serial.println("yxc");
 
     return success;
 }
@@ -203,65 +186,6 @@ void XmoduleSensor::initDataStore() {
     newDataStored = false;
 }
 
-void XmoduleSensor::initOffset() { for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) offset[i] = 0; }
-void XmoduleSensor::initScaling() {
-    for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-        scaling[i] = 1.0f;
-    }
-}
-
-void XmoduleSensor::resetOffset() { 
-    initOffset();
-    // Save changes
-    saveOffsetScaling();
- }
-void XmoduleSensor::resetScaling() {
-    initScaling();
-    // Save changes
-    saveOffsetScaling();
-}
-
-void XmoduleSensor::loadOffsetScaling() {                                                                   // TODO move all this into cfg
-    // Load saved values
-    if (mvp.config.readFileToJson(cfgFileName)) {
-        // Confirm stored array is of correct length, relevant only after flashing the device
-        uint8_t storedValueCount;
-        mvp.config.cfgReadGetValue("valueCount", storedValueCount);
-        if (storedValueCount != cfgXmoduleSensor.dataValueCount) {
-            mvp.config.removeCfg(cfgFileName);
-            return;
-        }
-
-        mvp.config.cfgReadGetValue("offset", offset, storedValueCount);
-        mvp.config.cfgReadGetValue("scaling", scaling, storedValueCount);
-    }
-    // mvp.config.cfgReadClose();
-}
-void XmoduleSensor::saveOffsetScaling() {
-    // Check if values are actually custom
-    boolean customOffset = false;
-    boolean customScaling = false;
-    for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-        if(offset[i] != 0)
-            customOffset = true;
-        if(scaling[i] != 1.0f)
-            customScaling = true;
-    }
-
-    if (!customOffset && ! customScaling){
-        // All generic values, remove saved config file
-        mvp.config.removeCfg(cfgFileName);
-        return;
-    }
-
-    // mvp.config.cfgWritePrepare();
-    mvp.config.cfgWriteAddValue("valueCount", cfgXmoduleSensor.dataValueCount);
-    if (customOffset)
-        mvp.config.cfgWriteAddValue("offset", offset, cfgXmoduleSensor.dataValueCount);
-    if (customScaling)
-        mvp.config.cfgWriteAddValue("scaling", scaling, cfgXmoduleSensor.dataValueCount);
-    mvp.config.writeJsonToFile(cfgFileName);
-}
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -302,12 +226,16 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
     return true;
 }
 
-
-
-void XmoduleSensor::webResetOffset() {
-    resetOffset();
-    mvp.net.netWeb.responseRedirect("Offset reset.");
+void XmoduleSensor::resetOffset() {
+    dataProcessing.offset.reset();
+    mvp.config.writeCfg(dataProcessing);
 }
+
+void XmoduleSensor::resetScaling() {
+    dataProcessing.scaling.reset();
+    mvp.config.writeCfg(dataProcessing);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -315,7 +243,7 @@ void XmoduleSensor::addSample(float_t *newSample) {
     // Convert float to int, shift by decimals
     int32_t newSampleInt[cfgXmoduleSensor.dataValueCount];
     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-        newSampleInt[i] = newSample[i] * pow10(cfgXmoduleSensor.floatToIntExponent[i]);
+        newSampleInt[i] = newSample[i] * pow10(dataProcessing.sampleToIntExponent.value[i]);
     }
     addSample(newSampleInt);
 }
@@ -330,7 +258,7 @@ void XmoduleSensor::addSample(int32_t *newSample) {
 
     // Add new values to existing sums, remember max/min extremes
     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-        int32_t newSampleScaled = nearbyintf((float_t)(newSample[i] + offset[i]) * scaling[i]);
+        int32_t newSampleScaled = nearbyintf((float_t)(newSample[i] + dataProcessing.offset.value[i]) * dataProcessing.scaling.value[i]);
         avgDataSum[i] += newSampleScaled;
         if (newSampleScaled < dataMin[i])
             dataMin[i] = newSampleScaled;
@@ -392,19 +320,19 @@ void XmoduleSensor::addSampleOffsetScaling(int32_t *newSample) {
         if (offsetRunning) {
             for (uint8_t j = 0; j < cfgXmoduleSensor.dataValueCount; j++) {
                 // OFFSET = -1 * sum/times
-                offset[j] = - nearbyintf(avgDataSum[j] / cfgXmoduleSensor.averagingOffsetScaling);
+                dataProcessing.offset.value[j] = - nearbyintf(avgDataSum[j] / cfgXmoduleSensor.averagingOffsetScaling);
             }
             offsetRunning = false;
         }
         if (scalingRunning) {
             // SCALING = TARGETVALUE / (sum/times + OFFSET)
-            scaling[scalingValueIndex] = (float_t)scalingTargetValue / ( (avgDataSum[scalingValueIndex] / cfgXmoduleSensor.averagingOffsetScaling) + offset[scalingValueIndex] );
+            dataProcessing.scaling.value[scalingValueIndex] = (float_t)scalingTargetValue / ( (avgDataSum[scalingValueIndex] / cfgXmoduleSensor.averagingOffsetScaling) + dataProcessing.offset.value[scalingValueIndex] );
             scalingRunning = false;
             scalingTargetValue = NULL;
             scalingValueIndex = NULL;
         }
 
-        saveOffsetScaling();
+        mvp.config.writeCfg(dataProcessing);
 
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Offset/Scaling measurement done in %d ms.", millis() - avgDataTime);
 
