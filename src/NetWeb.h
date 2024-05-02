@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_NETWEB
@@ -35,6 +35,13 @@ limitations under the License.
 
 
 class NetWeb {
+    public:
+
+        void setup();
+        void loop();
+
+        void sendFormatted(const char* formatString, ...); // Used in modules contentHome, string length limited to WEB_CHUNK_LENGTH
+        void responseRedirect(const char* message); // Used in modules editCfg, startAction
 
     private:
 
@@ -49,29 +56,18 @@ class NetWeb {
         // Message to serve on next page load after form save
         const char *postMessage = "";
 
-        void serveRequest();
-        void serveForm();
-        void serveFormCheckId();
-        // serveModuleForm() defined in modules
-
+        // Serve web page content (get)
+        void serveRequest(); // Calls contentModule defined in modules
         void contentStart();
         void contentClose();
         void contentHome();
-        // moduleHome() defined in modules
+
+        // Handle form action (post)
+        void editCfg(boolean checkId); // Calls editCfg defined in modules
+        void startAction(boolean checkId);  // Calls startAction defined in modules
+        bool formInputCheckId();
 
         void responsePrepareRestart();
-
-    public:
-
-typedef std::function<void(int)> XXfun;
-void testfun(std::function<void(int)> asd) { }
-
-        void setup();
-        void loop();
-
-        void sendFormatted(const char* formatString, ...);
-
-        void responseRedirect(const char* message);
 
 };
 
