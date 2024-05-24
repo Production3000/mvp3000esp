@@ -20,6 +20,21 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
+// Value count given by noise types
+const uint8_t valueCount = 5;
+
+// Init sensor module
+XmoduleSensor xmoduleSensor(valueCount);
+
+// Add a description of the sensor for the web interface
+String infoName = "Noise Generator";
+String infoDescription = "A variety of common and more or less deterministic noise patterns are simulated. This sensor is a good starting point to explore the MVP3000 Evaluation scripts.";
+String sensorTypes[valueCount] = {"Alternating", "Sawtooth", "Zick-zack", "Random walk", "Gauss dist."};
+String sensorUnits[valueCount] = {"au", "au", "au", "au", "au"};
+
+// Local data variable
+int32_t data[valueCount];
+
 // See https://cplusplus.com/reference/random/normal_distribution/
 std::default_random_engine generator;
 std::normal_distribution<double_t> distribution(50.0, 20.0); // mean value, standard deviation
@@ -28,23 +43,23 @@ std::normal_distribution<double_t> distribution(50.0, 20.0); // mean value, stan
 // random(3) = rndval % 3 and returns 0,1,2
 // random(1, 4) = random(3) + 1 and returns 1,2,3
 
-// Value count given by noise types
-const uint8_t valueCount = 5;
-
-int32_t data[valueCount];
-CfgSensorHandler cfgSensorHandler = CfgSensorHandler(valueCount);
-MVP3000CFG mvp3000cfg = MVP3000CFG(cfgSensorHandler);
-
 uint32_t counter = 0;
 boolean data2 = false;
 uint8_t data4 = 0;
 
 void setup() {
-    // Turn off averaging on the ESP to not mess with the generated noise
-    mvp3000cfg.cfgSensorHandler.setAveraging(1);
+    // Set the sensor descriptions
+    xmoduleSensor.cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
 
-    // Init
-    mvp.setup(mvp3000cfg);
+    // Turn off averaging on the ESP to not mess with the generated noise
+    // Any value set via the web interface overrides this, make sure to factory reset the device before working with noise
+    xmoduleSensor.cfgXmoduleSensor.sampleAveraging = 1;
+
+    // Add the sensor module to the mvp framework
+    mvp.addXmodule(&xmoduleSensor);
+
+    // Start mvp framework
+    mvp.setup();
 
     // Generates 'sensor' data with deterministic noise patterns
     // Alternating values
@@ -63,8 +78,9 @@ void setup() {
 }
 
 void loop() {
-    // Do stuff, handle new data
+    // Do the work
     mvp.loop();
+
 
     // Alternating values
     data[0] = -data[0];
@@ -79,9 +95,11 @@ void loop() {
     // Gauss random
     data[4] = int32_t(distribution(generator) - data4);
 
-    mvp.sensorHandler.addSample(data);
-
     counter++;
+
+
+    // Add new data
+    xmoduleSensor.addSample(data);
 
     // Do not ever use blocking delay in actual code
     delay(20);

@@ -56,7 +56,7 @@ bool Config::isReadyFS() {
     return false;
 }
 
-void Config::readCfg(cfgStructJsonInterface &cfg) {
+void Config::readCfg(CfgStructJsonInterface &cfg) {
     if (!readFileToJson(cfg.cfgName.c_str()))
         return;
     // Import settings from JSON
@@ -65,7 +65,7 @@ void Config::readCfg(cfgStructJsonInterface &cfg) {
     jsonDoc.clear(); 
 }
 
-void Config::writeCfg(cfgStructJsonInterface &cfg) {
+void Config::writeCfg(CfgStructJsonInterface &cfg) {
     if (!jsonDoc.isNull()) {
         mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
         jsonDoc.clear();

@@ -56,13 +56,14 @@ void XmoduleSensor::loop() {
 //////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleSensor::contentModuleNetWeb() {
-    mvp.net.netWeb.sendFormatted("<h1>Module</h1>");
+    mvp.net.netWeb.sendFormatted("<h1>Sensor Module</h1>");
 
     // Sensor info
     mvp.net.netWeb.sendFormatted("\
         <h3>Sensor</h3> <ul> \
-        <li>...: %s </li> </ul>",
-        cfgXmoduleSensor.infoDescription);
+        <li>Product: %s </li>  \
+        <li>Description: %s </li> </ul>",
+        cfgXmoduleSensor.infoName.c_str(), cfgXmoduleSensor.infoDescription.c_str());
 
     // Settings
     mvp.net.netWeb.sendFormatted("\
@@ -77,7 +78,7 @@ void XmoduleSensor::contentModuleNetWeb() {
     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
         // Type, units, default and current offset/scaling
         mvp.net.netWeb.sendFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2e</td> <td>%d</td> </tr>",
-            i+1, "x", "x", dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
+            i+1, cfgXmoduleSensor.sensorTypes[i], cfgXmoduleSensor.sensorUnits[i], dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
     }
     mvp.net.netWeb.sendFormatted("\
         <tr> <td colspan='3'></td> \
@@ -85,7 +86,6 @@ void XmoduleSensor::contentModuleNetWeb() {
         <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%d'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td> \
         <td></td> </tr>",
         cfgXmoduleSensor.dataValueCount);
-
     mvp.net.netWeb.sendFormatted(" \
         <tr> <td colspan='3'></td> \
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td> \
@@ -96,16 +96,14 @@ void XmoduleSensor::contentModuleNetWeb() {
 
 bool XmoduleSensor::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
     // Try to update cfg, save if successful
-    bool success = cfgXmoduleSensor.updateFromWeb(argName(0), arg(0));
-    if (success) {
+    boolean success = cfgXmoduleSensor.updateFromWeb(argName(0), arg(0));
+    if (success)
         mvp.config.writeCfg(cfgXmoduleSensor);
-        mvp.net.netWeb.responseRedirect("Setting saved.");
-    }
     return success;
 }
 
 bool XmoduleSensor::startActionNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
-    bool success = true;
+    boolean success = true;
     switch (mvp.helper.hashStringDjb2(argName(0).c_str())) {
 
         case mvp.helper.hashStringDjb2("measureOffset"):

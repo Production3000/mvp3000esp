@@ -31,38 +31,27 @@ limitations under the License.
 #include "Helper.h"
 
 
-/* 
-struct CfgExample : public Cfg {
-
-    // Modifiable settings saved to SPIFF
-
-    uint16_t someNumber = 22222;
-
-    CfgExample() {
-        // The config name, used as SPIFF file name
-        cfgName = "CfgExample";
-        // Initialize settings for load/save to SPIFF:
-        //  var name string, to allow web-based form input (stored as int though)
-        //  pointer to actual variable
-        //  set function with optional range checks
-        addSetting("someNumber", &someNumber, [&](uint16_t _x) { if (_x < 11111) return false; else someNumber = _x; return true; });
-    }
-
-    // Fixed settings, restored with reboot to value set at compile  
-
-    uint16_t someOtherNumber = 10101;
-};
-*/
-
-struct cfgStructJsonInterface {
+struct CfgStructJsonInterface {
     String cfgName = "template";
 
+    /**
+     * @brief Export the configuration data to a JSON document.
+     * 
+     * @param jsonDoc The JSON document to export the data to.
+     */
     virtual void exportToJson(JsonDocument &jsonDoc) { };
+
+    /**
+     * @brief Import the configuration data from a JSON document.
+     * 
+     * @param jsonDoc The JSON document to import the data from.
+     * @return True if the import was successful, false otherwise.
+     */
     virtual bool importFromJson(JsonDocument &jsonDoc) { return true; };
 };
 
 
-struct Cfg : public cfgStructJsonInterface {
+struct Cfg : public CfgStructJsonInterface {
 
     Helper helper;
 
@@ -161,8 +150,8 @@ class Config {
         
         void setup();
 
-        void readCfg(cfgStructJsonInterface &cfg);
-        void writeCfg(cfgStructJsonInterface &cfg);
+        void readCfg(CfgStructJsonInterface &cfg);
+        void writeCfg(CfgStructJsonInterface &cfg);
 
         // void removeCustomCfg(const char *cfgName);
         void removeCfg(const char *fileName);

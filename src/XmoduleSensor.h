@@ -47,25 +47,42 @@ struct CfgXmoduleSensor : Cfg {
 
     void initValueCount(uint8_t _dataValueCount) {
         dataValueCount = _dataValueCount;
+
+        delete [] sensorTypes;
+        sensorTypes = new String[dataValueCount];
+        delete [] sensorUnits;
+        sensorUnits = new String[dataValueCount];
+        for (u_int8_t i = 0; i < dataValueCount; i++) {
+            sensorTypes[i] = "n/a";
+            sensorUnits[i] = "n/a";
+        }
     }
 
     // Fixed settings, restored with reboot to value set at compile
 
-    String infoDescription = "TODO";
+    String infoName = "n/a";
+    String infoDescription = "n/a";
+    String *sensorTypes;
+    String *sensorUnits;
+    void setSensorInfo(String _infoName,String _infoDescription, String *_sensorTypes, String *_sensorUnits) {
+        setSensorInfo(_infoName, _infoDescription);
+        sensorTypes = _sensorTypes;
+        sensorUnits = _sensorUnits;
+    }
+    void setSensorInfo(String _infoName,String _infoDescription) {
+        infoName = _infoName;
+        infoDescription = _infoDescription;
+    }
 
-    // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
-    // More likely much less, max 1000 for single value?
-    uint16_t dataStoreLength = 10;
-
-    // Used for output only
     // Data is a matrix with a row length, if dataMatrixColumnCount == dataValueCount it is obviously a single row
+    // Used for output only
     uint8_t dataMatrixColumnCount = 255;
 };
 
 
 //////////////////////////////////////////////////////////////////////////////////
 
-struct DataProcessing : public cfgStructJsonInterface {
+struct DataProcessing : public CfgStructJsonInterface {
     DataProcessing() { cfgName = "cfgDataProcessing"; }
 
     template <typename T>
@@ -206,7 +223,7 @@ struct DataCollection {
         offset = _offset;
         scaling = _scaling;
 
-        // Dynamically reduce stored measurements depending on values measured                                                      // TODO
+        // Dynamically reduce stored measurements depending on values measured                               // TODO
         // Overhead factor to take other memory uses into account
         // dataStoreLength = dataStoreMax / cfgXmoduleSensor.dataValueCount / 1.2;
 
@@ -314,6 +331,8 @@ struct DataCollection {
 
 class XmoduleSensor : public Xmodule {
     public:
+        CfgXmoduleSensor cfgXmoduleSensor;
+
         // Constructor to re-init arrays for changed value count
         XmoduleSensor(uint8_t valueCount) {
             cfgXmoduleSensor.initValueCount(valueCount);
@@ -321,12 +340,12 @@ class XmoduleSensor : public Xmodule {
             dataCollection.initValueCount(valueCount, &cfgXmoduleSensor.sampleAveraging, dataProcessing.offset.values, dataProcessing.scaling.values);
         };
 
-        void setup();
-        void loop();
+        void setup() override;
+        void loop() override;
 
-        void contentModuleNetWeb();
-        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
-        bool startActionNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
+        void contentModuleNetWeb() override;
+        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override;
+        bool startActionNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override;
 
         // Module custom functions
 
@@ -346,10 +365,13 @@ class XmoduleSensor : public Xmodule {
         void resetOffset();
         void resetScaling();
 
+        void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
+            dataProcessing.sampleToIntExponent.set(_sampleToIntExponent);
+        };
+
         // bool isPeriodic(uint8_t length);
 
     private:
-        CfgXmoduleSensor cfgXmoduleSensor;
         DataProcessing dataProcessing;
         DataCollection dataCollection;
 

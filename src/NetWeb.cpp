@@ -74,10 +74,10 @@ void NetWeb::contentStart() {
     server.send(200, "text/html", "");
 
     // HTML head, styles, title, start body and postMessage
-    sendFormatted("<!DOCTYPE html> <html lang='en'> <head> <title>MVP3000 - ID %d</title> \
+    sendFormatted("<!DOCTYPE html> <html lang='en'> <head> <title>MVP3000 - Device ID %d</title> \
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script> \
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head> \
-    <body> <h1>MVP3000 - Sensor %d</h1> <h3 style='color: red;'>%s</h3>", ESPX.getChipId(), ESPX.getChipId(), postMessage);
+    <body> <h1>MVP3000 - Device ID %d</h1> <h3 style='color: red;'>%s</h3>", ESPX.getChipId(), ESPX.getChipId(), postMessage);
 }
 
 void NetWeb::contentClose() {
@@ -90,7 +90,7 @@ void NetWeb::contentClose() {
 }
 
 void NetWeb::contentHome() {
-    // System                                                                                   // TODO display last warnings/errors
+    // System
     sendFormatted("\
         <h3>System</h3> <ul> \
         <li>ID: %d</li> \
@@ -127,7 +127,10 @@ void NetWeb::contentHome() {
     // Modules list
     sendFormatted("<h3>Modules</h3> <ul>");
     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-        sendFormatted("<li><a href='?m=%d'>%s</a></li>", i, mvp.xmodules[i]->description.c_str());
+        if (mvp.xmodules[i]->enableContentModuleNetWeb)
+            sendFormatted("<li><a href='?m=%d'>%s</a></li>", i, mvp.xmodules[i]->description.c_str());
+        else
+            sendFormatted("<li>%s</li>", mvp.xmodules[i]->description.c_str());
     }
     sendFormatted("</ul>");
 

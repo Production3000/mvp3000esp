@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #include "Logger.h"
@@ -33,22 +33,22 @@ void Logger::setup() {
 
     if (cfgLogger.target == CfgLogger::Target::NETWORK)
         write(CfgLogger::Level::WARNING, "Logging to network not implemented.");
-    
+
     write(CfgLogger::Level::INFO, "Logger initialized.");
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void Logger::write(CfgLogger::Level targetLevel, const char *message) {
+void Logger::write(CfgLogger::Level targetLevel, const char *message) {                                 // TODO feature: store last error messages and warnings and serve via web
     if (!checkTargetLevel(targetLevel))
-        return;                                                                           // TODO store last error messages and warnings and serve via web
+        return;
 
     // Serial output
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH))
         serialWrite(targetLevel, message);
     // MQTT output
-    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) 
+    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))
         mvp.net.netCom.mqttWrite(message);
 }
 
@@ -56,7 +56,7 @@ void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t 
     String message = "";
     for (uint8_t i = 0; i < dataLength; i++) {
         // Outputs:
-        //  1,2,3,4,5,6; for rowLength is max uint8/255 
+        //  1,2,3,4,5,6; for rowLength is max uint8/255
         //  1,2,3;4,5,6; for rowLength is 3
         // dataMatrixColumnCount defaults to 255, which is the maximum length of a single row
         message += String(dataArray[i]);
@@ -71,7 +71,7 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatStri
     va_start(args, formatString);
     vsnprintf(message, sizeof(message), formatString, args);
     va_end(args);
-    
+
     write(targetLevel, message);
 }
 
