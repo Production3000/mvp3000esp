@@ -29,7 +29,7 @@ XmoduleSensor xmoduleSensor(valueCount);
 String infoName = "BASIC";
 String infoDescription = "The BASIC is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
 String sensorTypes[valueCount] = {"T", "rH"};
-String sensorUnits[valueCount] = {"°C", "%"};
+String sensorUnits[valueCount] = {"\xB0""C", "%"}; // degree is non-ASCII
 
 // Local data variable
 int32_t data[valueCount];

@@ -122,7 +122,7 @@ void NetWeb::contentHome() {
         <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%s'> <input type='submit' value='Save'> </form> </li> \
         <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
         <li>Topic: <br> <form action='/save' method='post'> %s <input name='mqttTopicSuffix' value='%s' minlength='5'> <input type='submit' value='Save'> </form> </li> </ul>",
-        mvp.net.netCom.controllerConnectedString(), mvp.net.netCom.cfgNetCom.discoveryPort, mvp.net.netCom.cfgNetCom.mqttForcedBroker, mvp.net.netCom.cfgNetCom.mqttPort, mvp.net.netCom.mqttTopicPrefix.c_str(), mvp.net.netCom.cfgNetCom.mqttTopicSuffix);
+        mvp.net.netCom.controllerConnectedString().c_str(), mvp.net.netCom.cfgNetCom.discoveryPort, mvp.net.netCom.cfgNetCom.mqttForcedBroker, mvp.net.netCom.cfgNetCom.mqttPort, mvp.net.netCom.mqttTopicPrefix.c_str(), mvp.net.netCom.cfgNetCom.mqttTopicSuffix);
 
 
     // Modules list
