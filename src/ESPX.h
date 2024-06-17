@@ -20,6 +20,8 @@ limitations under the License.
 #include <Arduino.h>
 
 
+#ifdef ESP32
+
 class EspClassX {
     public:
 
@@ -80,5 +82,7 @@ class EspClassX {
         }
 
 };
+
+#endif
 
 #endif
