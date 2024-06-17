@@ -43,9 +43,6 @@ void setup() {
 
     // Start mvp framework
     mvp.setup();
-
-    // Start mvp framework
-    mvp.setup();
 }
 
 void loop() {

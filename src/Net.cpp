@@ -115,10 +115,10 @@ void Net::startAp() {
 void Net::startClient() {
     WiFi.mode(WIFI_STA);
 
-// ESP32/ESP8266 have different  Wifi events
+// ESP32/ESP8266 have different Wifi events
 #ifdef ESP8266
-    WiFi.onStationModeDisconnected(std::bind(&Net::WiFiStationDisconnected, this)); // disconnectedEventHandler = 
-    WiFi.onStationModeGotIP(std::bind(&Net::WiFiGotIP, this));  // gotIpEventHandler = 
+    disconnectedEventHandler = WiFi.onStationModeDisconnected(std::bind(&Net::WiFiStationDisconnected, this));
+    gotIpEventHandler = WiFi.onStationModeGotIP(std::bind(&Net::WiFiGotIP, this));
 #else
     WiFi.onEvent([&](WiFiEvent_t event, WiFiEventInfo_t info) { WiFiStationDisconnected(); }, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     WiFi.onEvent([&](WiFiEvent_t event, WiFiEventInfo_t info) { WiFiGotIP(); }, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
@@ -141,14 +141,14 @@ void Net::WiFiGotIP() {
 }
 
 void Net::WiFiStationDisconnected() {
+    Serial.println("WiFiStationDisconnected");
     status = Status::CONNECTING;
     if (clientConnectSuccess || cfgNet.forceClientMode) {
-        mvp.logger.write(CfgLogger::Level::WARNING, "Network disconnected.");
+        mvp.logger.write(CfgLogger::Level::INFO, "Network disconnected.");
         connectClient();
     } else if (++clientConnectFails < cfgNet.clientConnectRetries) {
         connectClient();
-    }
-    else {
+    } else {
         mvp.logger.write(CfgLogger::Level::INFO, "Client connect limit reached.");
         startAp();
     }

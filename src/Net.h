@@ -30,7 +30,7 @@ limitations under the License.
 #include "NetWeb.h"
 #include "ESPX.h"
 #ifdef ESP8266
-    extern EspClass ESPX = ESP;
+    extern EspClass ESPX;
 #else
     extern EspClassX ESPX;
 #endif
@@ -97,6 +97,11 @@ class Net {
         void startWifi();
         void startAp();
         void startClient();
+
+// ESP32/ESP8266 have different Wifi events
+#ifdef ESP8266
+        WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
+#endif
 
     public:
 

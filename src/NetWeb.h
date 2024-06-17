@@ -28,7 +28,7 @@ limitations under the License.
 
 #include "ESPX.h"
 #ifdef ESP8266
-    extern EspClass ESPX = ESP;
+    extern EspClass ESPX;
 #else
     extern EspClassX ESPX;
 #endif

@@ -95,11 +95,12 @@ void NetWeb::contentHome() {
         <h3>System</h3> <ul> \
         <li>ID: %d</li> \
         <li>Build: %s %s</li> \
-        <li>Memory: %d/%d free, fragmentation %d%%</li> \
+        <li>Memory: %d, fragmentation %d%%</li> \
         <li>Uptime: %s</li> \
         <li>Last restart reason: %s</li> \
+        <li>CPU frequency: %d MHz</li> \
         <li>Main loop duration: %d ms</li> </ul>",
-        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESP.getHeapSize(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), mvp.loopDuration_ms);
+        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESPX.getCpuFreqMHz(), mvp.loopDuration_ms);
 
     // Network
     sendFormatted("\

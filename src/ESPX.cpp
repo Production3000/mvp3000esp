@@ -16,7 +16,6 @@ limitations under the License.
 
 #include "ESPX.h"
 
-
 // Replicates selected functions available only in ESP8266 to ESP32 to simplify code later on
 #ifdef ESP8266
     EspClass ESPX = ESP;
