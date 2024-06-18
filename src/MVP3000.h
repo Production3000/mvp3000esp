@@ -52,23 +52,20 @@ class MVP3000 {
         Xmodule *xmodules[MAX_MODULES];
 
         enum class Status: uint8_t {
-            GOOD = 0,
-            CONNECTING = 1, // Wifi not connected
-            INIT = 2, // Init state after RESET button press, set
-            BOOT = 3, // Standard state when booting up
-            ERROR = 4 // Critical error
+            GOOD = 0, // Everything is fine
+            INIT = 1, // Standard state when booting up until wifi up
+            ERROR = 2 // Critical error
         };
-        Status status = Status::BOOT;
-        Status getStatus() { return status; };
+        Status status = Status::INIT;
 
-        uint16_t loopDuration_ms = 0;
-
+        uint16_t loopDurationMean_ms = 0;
+        uint16_t loopDurationMax_ms = 0;
+        uint16_t loopDurationMin_ms = std::numeric_limits<uint16_t>::max();
 
         void setup();
         void loop();
 
         void addXmodule(Xmodule *XmoduleSensor);
-
 
         // Forward internal functions for simplicity
         void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };

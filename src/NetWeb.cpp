@@ -99,8 +99,8 @@ void NetWeb::contentHome() {
         <li>Uptime: %s</li> \
         <li>Last restart reason: %s</li> \
         <li>CPU frequency: %d MHz</li> \
-        <li>Main loop duration: %d ms</li> </ul>",
-        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESPX.getCpuFreqMHz(), mvp.loopDuration_ms);
+        <li>Main loop duration: %d / %d / %d ms (mean/min/max)</li> </ul>",
+        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESPX.getCpuFreqMHz(), mvp.loopDurationMean_ms, mvp.loopDurationMin_ms, mvp.loopDurationMax_ms);
 
     // Network
     sendFormatted("\

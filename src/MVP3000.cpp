@@ -66,18 +66,35 @@ void MVP3000::checkStatus() {
         return;
     }
 
-    // Other cases???
+    if ((mvp.net.status == Net::Status::CLIENT) || (mvp.net.status == Net::Status::AP))
+        status = Status::GOOD;
+    else
+        status = Status::INIT;
 }
 
 void MVP3000::updateLoopDuration() {
+    // Only start measuring loop duration after wifi is up, as it adds a single long duration and messes with max value
+    if (status != Status::GOOD)
+        return;
+
     // Skip first loop iteration, nothing to calculate
     if (loopLast_ms > 0) {
-        if (loopDuration_ms == 0)
+        // Current loop duration
+        uint16_t loopDuration = millis() - loopLast_ms;
+
+        // Update min and max loop duration
+        loopDurationMax_ms = max(loopDurationMax_ms, loopDuration);
+        loopDurationMin_ms = min(loopDurationMin_ms, loopDuration);
+
+        // Calculate mean loop duration
+        if (loopDurationMean_ms == 0)
             // Second loop iteration, kickstart averaging
-            loopDuration_ms = millis() - loopLast_ms;
+            loopDurationMean_ms = loopDuration;
         else
-            // Third and higher loop iteration, rolling average latest five values
-            loopDuration_ms = round((float_t)4/5 * loopDuration_ms + (float_t)1/5 * (millis() - loopLast_ms));
+            // Third and higher loop iteration, rolling average latest ten values
+            loopDurationMean_ms = round((float_t)9/10 * loopDurationMean_ms + (float_t)1/10 * loopDuration);
     }
+
+    // Remember this loop time
     loopLast_ms = millis();
 }
