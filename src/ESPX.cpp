@@ -16,9 +16,12 @@ limitations under the License.
 
 #include "ESPX.h"
 
-// Replicates selected functions available only in ESP8266 to ESP32 to simplify code later on
-#ifdef ESP8266
+// Replicates selected methods available only in ESP8266 to ESP32 to simplify code later on
+// Ensures that the ESPX object is available in the same way on both platforms
+#if defined(ESP8266)
     EspClass ESPX = ESP;
-#else
+#elif defined(ESP32)
     EspClassX ESPX;
+#else // Ensure architecture is correct, just for the sake of it
+    #error "Unsupported platform"
 #endif

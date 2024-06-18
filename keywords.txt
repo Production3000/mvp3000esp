@@ -1,0 +1,10 @@
+MVP3000 KEYWORD1
+addXmodule KEYWORD2
+log KEYWORD2
+loop KEYWORD2
+setup KEYWORD2
+XmoduleSensor KEYWORD1
+addSample KEYWORD2
+cfgXmoduleSensor KEYWORD2
+setSampleToIntExponent KEYWORD2
+setSensorInfo KEYWORD2
