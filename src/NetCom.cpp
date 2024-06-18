@@ -38,7 +38,7 @@ void NetCom::setup() {
     // Read config
     mvp.config.readCfg(cfgNetCom);
 
-    // Redefine needed with network, otherweise mqttClient.connected() crashes
+    // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
     // Start UDP independent of forcedBroker, to allow reverse-discovery of this ESP device
     udp.begin(cfgNetCom.discoveryPort);
@@ -63,7 +63,7 @@ void NetCom::loop() {
                 // Connect to broker
                 mqttConnect();
             } else {
-                // Autodiscover local broker IP only if no forced broker
+                // Auto-discover local broker IP only if no forced broker
                 udpDiscoverMqtt();
             }
         }
@@ -101,11 +101,11 @@ void NetCom::udpReceiveMessage() {
             // Remember controller IP, stop interval, registering with broker is done in next loop
             mqttBrokerIp = udp.remoteIP();
             brokerDelay.stop();
-            mvp.logger.write(CfgLogger::Level::INFO, "Discovery response recieved.");
+            mvp.logger.write(CfgLogger::Level::INFO, "Discovery response received.");
             break;
         case mvp.helper.hashStringDjb2("DISENS"): // DISENS Discovery request received, send discovery response
             udpSendMessage("RESENS", udp.remoteIP());
-            mvp.logger.write(CfgLogger::Level::INFO, "Discovery request recieved.");
+            mvp.logger.write(CfgLogger::Level::INFO, "Discovery request received.");
             break;
     }
 }

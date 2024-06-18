@@ -44,7 +44,7 @@ struct CfgNet : public Cfg  {
     String clientPass = ""; // IEEE 8-63 chars
     uint16_t clientConnectRetries = 3;
 
-    // DANGER, forceClientMode could make the device inaccessable for the user without flashing it
+    // DANGER, forceClientMode could make the device inaccessible for the user without flashing it
     // Usefull when network settings are correct for sure but likely offline during power on
     //  false on power on: try network settings clientConnectRetries times
     //      on success set clientConnectSuccess to true

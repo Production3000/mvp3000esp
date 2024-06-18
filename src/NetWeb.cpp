@@ -110,7 +110,7 @@ void NetWeb::contentHome() {
         <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%d' min='1' max='255'> <input type='submit' value='Save'> </form> </li>",
         mvp.net.apSsid.c_str(), mvp.net.cfgNet.clientSsid.c_str(), mvp.net.cfgNet.clientPass.c_str(), mvp.net.cfgNet.clientConnectRetries);
     sendFormatted("\
-        <li>Force client mode. WARNING: If credentials are wrong the device will be inaccessable via network, thus require re-flashing! \
+        <li>Force client mode. WARNING: If credentials are wrong the device will be inaccessible via network, thus require re-flashing! \
          <form action='/savecheck' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %s value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>",
         (mvp.net.cfgNet.forceClientMode == true) ? "checked" : "" );
 

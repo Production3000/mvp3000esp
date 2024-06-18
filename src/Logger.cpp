@@ -106,7 +106,7 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
         case CfgLogger::Level::WARNING: Serial.print(" [W] "); break;
     }
 
-    // Color-code messages for easier readibility
+    // Color-code messages for easier readability
     // ANSI escape sequences \033[XXXm where XXX is a series of semicolon-separated parameters.
     //  red     31
     //  yellow  33

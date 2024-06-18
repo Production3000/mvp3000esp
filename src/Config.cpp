@@ -43,7 +43,7 @@ void Config::setup() {
     }
 
     SPIFFS.end();
-    mvp.logger.write(CfgLogger::Level::ERROR, "Permantenly failed to mount file system.");
+    mvp.logger.write(CfgLogger::Level::ERROR, "Permanently failed to mount file system.");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ void Config::writeCfg(CfgStructJsonInterface &cfg) {
 }
 
 bool Config::readFileToJson(const char *fileName) {
-    // Check if all other operations are done (this is mainly usefull while coding)
+    // Check if all other operations are done (this is mainly useful while coding)
     if (!jsonDoc.isNull()) {
         mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
         jsonDoc.clear();

@@ -1,6 +1,6 @@
 # Sensor Module
 
-The sensor module recieves sensor data from a user script and processes it. It is then output in CSV format via serial console and optionally published to a MQTT broker.
+The sensor module receives sensor data from a user script and processes it. It is then output in CSV format via serial console and optionally published to a MQTT broker.
 
 ### General Workflow
 
@@ -88,7 +88,7 @@ The number of data samples that should be averaged before the data is reported. 
 
 #### Offset/Scaling averaging
 
-The number of data samples that should be averaged when measureing offset or scaling. Default value is 25 samples.
+The number of data samples that should be averaged when measuring offset or scaling. Default value is 25 samples.
 
     // Set default value to 100 samples
     xmoduleSensor.cfgXmoduleSensor.averagingOffsetScaling = 100;
