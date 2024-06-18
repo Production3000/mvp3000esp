@@ -83,7 +83,7 @@ class NetCom {
         void setup();
         void loop();
 
-        String controllerConnectedString() { return (mqttBrokerIp != INADDR_NONE) ? String(mqttBrokerIp[0]) + "." + mqttBrokerIp[1] + "." + mqttBrokerIp[2] + "." + mqttBrokerIp[3] : "not connected" ; }
+        String controllerConnectedString() { return (mqttClient.connected()) ? "connected" : "not connected" ; }
 
         String mqttTopicPrefix = "MVP3000_" + String(ESPX.getChipId()) + "_";
 

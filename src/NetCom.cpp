@@ -141,13 +141,14 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 
 
 void NetCom::mqttConnect() {
-    mvp.logger.write(CfgLogger::Level::INFO, "sending to to broker.");
+
     if ((cfgNetCom.mqttForcedBroker.length() > 0))
         // Connect to forced broker
         mqttClient.connect(cfgNetCom.mqttForcedBroker.c_str(), cfgNetCom.mqttPort);
     else
         // Connect to discovered broker
-        mqttClient.connect(mqttBrokerIp, cfgNetCom.mqttPort); 
+        // The library is broken for ESP8266, it does not accept the IPAddress type when a port is given
+        mqttClient.connect(mqttBrokerIp.toString().c_str(), cfgNetCom.mqttPort);
 
     mvp.logger.write(CfgLogger::Level::INFO, "Connect request sent to broker.");
 }

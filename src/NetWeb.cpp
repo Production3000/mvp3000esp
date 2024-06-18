@@ -100,7 +100,7 @@ void NetWeb::contentHome() {
         <li>Last restart reason: %s</li> \
         <li>CPU frequency: %d MHz</li> \
         <li>Main loop duration: %d / %d / %d ms (mean/min/max)</li> </ul>",
-        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESPX.getCpuFreqMHz(), mvp.loopDurationMean_ms, mvp.loopDurationMin_ms, mvp.loopDurationMax_ms);
+        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESP.getCpuFreqMHz(), mvp.loopDurationMean_ms, mvp.loopDurationMin_ms, mvp.loopDurationMax_ms);
 
     // Network
     sendFormatted("\
@@ -122,7 +122,7 @@ void NetWeb::contentHome() {
         <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%s'> <input type='submit' value='Save'> </form> </li> \
         <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
         <li>Topic: <br> <form action='/save' method='post'> %s <input name='mqttTopicSuffix' value='%s' minlength='5'> <input type='submit' value='Save'> </form> </li> </ul>",
-        mvp.net.netCom.controllerConnectedString().c_str(), mvp.net.netCom.cfgNetCom.discoveryPort, mvp.net.netCom.cfgNetCom.mqttForcedBroker, mvp.net.netCom.cfgNetCom.mqttPort, mvp.net.netCom.mqttTopicPrefix.c_str(), mvp.net.netCom.cfgNetCom.mqttTopicSuffix);
+        mvp.net.netCom.controllerConnectedString().c_str(), mvp.net.netCom.cfgNetCom.discoveryPort, mvp.net.netCom.cfgNetCom.mqttForcedBroker.c_str(), mvp.net.netCom.cfgNetCom.mqttPort, mvp.net.netCom.mqttTopicPrefix.c_str(), mvp.net.netCom.cfgNetCom.mqttTopicSuffix);
 
 
     // Modules list
