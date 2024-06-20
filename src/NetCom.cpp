@@ -38,35 +38,61 @@ void NetCom::setup() {
     // Read config
     mvp.config.readCfg(cfgNetCom);
 
+    if (!cfgNetCom.mqttEnabled)
+        return;
+
+    comState = COM_STATE_TYPE::WAITING;
+
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
-    // Start UDP independent of forcedBroker, to allow reverse-discovery of this ESP device
+
+    // Start UDP even if external forcedBroker is set, to allow reverse-discovery of this ESP device
     udp.begin(cfgNetCom.discoveryPort);
 };
 
 void NetCom::loop() {
-    // Called from net.loop() only if network is up and in client mode
-    if (!mvp.net.connectedAsClient())
-        return;
+    // Called from net.loop() only if wifi is up and in client mode
 
-    // Check for UDP packet, handle it
-    if (udp.parsePacket())
-        udpReceiveMessage();
-
-    if (!mqttClient.connected()) {
-        // Interval never started or just finished
-        if (!brokerDelay.isRunning() || brokerDelay.justFinished()) {
-            // Start interval
-            brokerDelay.start(brokerInterval);
-
-            if ((mqttBrokerIp != INADDR_NONE) || (cfgNetCom.mqttForcedBroker.length() > 0)) {
-                // Connect to broker
-                mqttConnect();
+    switch (comState) {
+        case COM_STATE_TYPE::CONNECTED:
+            // Check if state is still connected
+            if (mqttClient.connected()) {
+                // Check for UDP packet, in that case handle it
+                if (udp.parsePacket())
+                    udpReceiveMessage();
             } else {
-                // Auto-discover local broker IP only if no forced broker
-                udpDiscoverMqtt();
+                comState = COM_STATE_TYPE::WAITING;
+                mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
             }
-        }
+            break;
+
+        case COM_STATE_TYPE::WAITING:
+            if (!mqttClient.connected()) {
+                // Only work to do if interval not yet started or just finished
+                if (!brokerDelay.isRunning() || brokerDelay.justFinished()) {
+                    // Connect to forced broker or discover broker on local network
+                    if ((mqttBrokerIp != INADDR_NONE) || (cfgNetCom.mqttForcedBroker.length() > 0)) {
+                        // Connect to broker
+                        mqttConnect();
+                    } else {
+                        // Auto-discover local broker IP only if no forced broker
+                        udpDiscoverMqtt();
+                    }
+                    // (Re)start interval
+                    brokerDelay.start(brokerInterval);
+                }
+            } else {
+                comState = COM_STATE_TYPE::CONNECTED;
+                brokerDelay.stop();
+                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
+            }
+            break;
+        
+        case COM_STATE_TYPE::DISABLED: // Nothing to do
+            break;
+
+        default:
+            break;
     }
 }
 
@@ -141,21 +167,20 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 
 
 void NetCom::mqttConnect() {
-
     if ((cfgNetCom.mqttForcedBroker.length() > 0))
         // Connect to forced broker
         mqttClient.connect(cfgNetCom.mqttForcedBroker.c_str(), cfgNetCom.mqttPort);
     else
         // Connect to discovered broker
-        // The library is broken for ESP8266, it does not accept the IPAddress type when a port is given
+        // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
         mqttClient.connect(mqttBrokerIp.toString().c_str(), cfgNetCom.mqttPort);
 
     mvp.logger.write(CfgLogger::Level::INFO, "Connect request sent to broker.");
 }
 
 void NetCom::mqttWrite(const char *message) {
-    // Need to be online and connected
-    if (!mvp.net.connectedAsClient() || !mqttClient.connected()) 
+    // Check if MQTT is connected
+    if (comState != COM_STATE_TYPE::CONNECTED)
         return;
 
     // Send message

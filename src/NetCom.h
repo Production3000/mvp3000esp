@@ -40,6 +40,10 @@ limitations under the License.
 
 struct CfgNetCom : public Cfg {
 
+    // Fixed settings
+
+    boolean mqttEnabled = true;
+
     // Modifiable settings saved to SPIFF
 
     uint16_t discoveryPort = 4211; // Search local network for MQTT broker
@@ -59,6 +63,12 @@ struct CfgNetCom : public Cfg {
 
 class NetCom {
     private:
+        enum class COM_STATE_TYPE: uint8_t {
+            CONNECTED = 0,
+            WAITING = 1,
+            DISABLED = 2
+        };
+        COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLED;
 
         WiFiClient wifiClient;
         MqttClient mqttClient = NULL;
@@ -83,7 +93,7 @@ class NetCom {
         void setup();
         void loop();
 
-        String controllerConnectedString() { return (mqttClient.connected()) ? "connected" : "not connected" ; }
+        String controllerConnectedString() { return (comState == COM_STATE_TYPE::CONNECTED) ? "connected" : (comState == COM_STATE_TYPE::WAITING) ? "connecting" : "disabled" ; }
 
         String mqttTopicPrefix = "MVP3000_" + String(ESPX.getChipId()) + "_";
 

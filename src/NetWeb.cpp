@@ -117,7 +117,7 @@ void NetWeb::contentHome() {
     // MQTT communication
     sendFormatted("\
         <h3>MQTT Communication</h3> <ul> \
-        <li>Broker: %s </li> \
+        <li>Status: %s </li> \
         <li>Auto-discovery port local broker: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
         <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%s'> <input type='submit' value='Save'> </form> </li> \
         <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
