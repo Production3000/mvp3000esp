@@ -33,18 +33,23 @@ void Net::setup() {
 }
  
 void Net::loop() {
-    // Nothing to do without network
-    if ((status != Status::CLIENT) && (status != Status::AP))
-        return;
-    
-    // Captive portal only for AP
-    if (status == Status::AP)
-        dnsServer.processNextRequest();
+    switch (netState) {
+        case NET_STATE_TYPE::CLIENT:
+            // Communication only for client
+            netCom.loop();
+            break;
+        case NET_STATE_TYPE::AP:
+            // Captive portal only for AP
+            dnsServer.processNextRequest();
+            break;
+            
+        default:
+            // Nothing to do without network
+            return;
+    }
 
-    // Webpage, communication
+    // Web interface for all
     netWeb.loop();
-    if (status == Status::CLIENT) 
-        netCom.loop();
 }
 
 
@@ -82,7 +87,7 @@ bool Net::editClientConnection(String newSsid, String newPass) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void Net::startWifi() {
-    status = Status::CONNECTING;
+    netState = NET_STATE_TYPE::CONNECTING;
     // Start as client or force AP if ssid/pass not IEEE conform
     if ((cfgNet.clientSsid.length() > 0) && (cfgNet.clientPass.length() >= 8))
         startClient();
@@ -94,20 +99,19 @@ void Net::startAp() {
     // Start AP with no password
     WiFi.mode(WIFI_AP);
     if (!WiFi.softAP(apSsid)) {
-        status = Status::NONE;
+        netState = NET_STATE_TYPE::ERROR;
         mvp.logger.write(CfgLogger::Level::ERROR, "Error starting AP.");
         return;
     }
 
     // Start captive portal
     if (!dnsServer.start(53, "*", WiFi.softAPIP())) {
-        status = Status::NONE;
+        netState = NET_STATE_TYPE::ERROR;
         mvp.logger.write(CfgLogger::Level::ERROR, "Error starting captive portal.");
         return;
     }
 
-    // Set system status
-    status = Status::AP;
+    netState = NET_STATE_TYPE::AP;
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started, %s, %s", apSsid.c_str(), WiFi.softAPIP().toString().c_str());
 }
 
@@ -133,7 +137,7 @@ void Net::connectClient() {
 }
 
 void Net::WiFiGotIP() {
-    status = Status::CLIENT;
+    netState = NET_STATE_TYPE::CLIENT;
     clientConnectFails = 0;
     // Reconnect endlessly to a previously sucessfully connected network (until reboot)
     clientConnectSuccess = true;
@@ -142,7 +146,7 @@ void Net::WiFiGotIP() {
 
 void Net::WiFiStationDisconnected() {
     Serial.println("WiFiStationDisconnected");
-    status = Status::CONNECTING;
+    netState = NET_STATE_TYPE::CONNECTING;
     if (clientConnectSuccess || cfgNet.forceClientMode) {
         mvp.logger.write(CfgLogger::Level::INFO, "Network disconnected.");
         connectClient();

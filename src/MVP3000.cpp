@@ -66,7 +66,7 @@ void MVP3000::checkStatus() {
         return;
     }
 
-    if ((mvp.net.status == Net::Status::CLIENT) || (mvp.net.status == Net::Status::AP))
+    if ((mvp.net.netState == Net::NET_STATE_TYPE::CLIENT) || (mvp.net.netState == Net::NET_STATE_TYPE::AP))
         status = Status::GOOD;
     else
         status = Status::INIT;

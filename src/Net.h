@@ -104,19 +104,28 @@ class Net {
 #endif
 
     public:
+        enum class NET_STATE_TYPE: uint8_t {
+            CLIENT = 0,
+            CONNECTING = 1,
+            AP = 2,
+            DISABLED = 3,
+            ERROR = 4
+        };
+        NET_STATE_TYPE netState = NET_STATE_TYPE::DISABLED;
+
 
         CfgNet cfgNet;
 
         NetWeb netWeb;
         NetCom netCom;
 
-        enum Status: uint8_t {
-            NONE = 0,
-            CLIENT = 1,
-            CONNECTING = 2,
-            AP = 3,
-        };
-        Status status = Status::CONNECTING;
+        // enum Status: uint8_t {
+        //     NONE = 0,
+        //     CLIENT = 1,
+        //     CONNECTING = 2,
+        //     AP = 3,
+        // };
+        // Status status = Status::CONNECTING;
 
         String apSsid = "device" + String(ESPX.getChipId());
 
@@ -126,9 +135,6 @@ class Net {
 
         bool editClientConnection(String newSsid, String newPass);
         bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
-
-        boolean connectedAsClient() { return (status == Status::CLIENT); }
-
 };
 
 #endif
