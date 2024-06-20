@@ -47,7 +47,7 @@ void Led::loop() {
 void Led::checkChangeStatus() {
     Timing targetTiming;
 
-    if (mvp.status == MVP3000::Status::ERROR) { // Blink fast for error
+    if (mvp.state == MVP3000::STATE_TYPE::ERROR) { // Blink fast for error
         targetTiming = Timing::FAST;
     } else {
         switch (mvp.net.netState) { // Otherwise indicate Wifi status

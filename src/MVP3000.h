@@ -39,6 +39,12 @@ class MVP3000 {
         void updateLoopDuration();
 
     public:
+        enum class STATE_TYPE: uint8_t {
+            GOOD = 0, // Everything is fine
+            INIT = 1, // Standard state when booting up until wifi up
+            ERROR = 2 // Critical error
+        };
+        STATE_TYPE state = STATE_TYPE::INIT;
 
         Config config;
         Helper helper;
@@ -46,26 +52,20 @@ class MVP3000 {
         Logger logger;
         Net net;
 
+        void setup();
+        void loop();
+
         // Modules
         static const uint8_t MAX_MODULES = 5;  // Maximum number of modules allowed
         uint8_t moduleCount = 0;
         Xmodule *xmodules[MAX_MODULES];
 
-        enum class Status: uint8_t {
-            GOOD = 0, // Everything is fine
-            INIT = 1, // Standard state when booting up until wifi up
-            ERROR = 2 // Critical error
-        };
-        Status status = Status::INIT;
+        void addXmodule(Xmodule *XmoduleSensor);
 
+        // Loop duration statistics
         uint16_t loopDurationMean_ms = 0;
         uint16_t loopDurationMax_ms = 0;
         uint16_t loopDurationMin_ms = std::numeric_limits<uint16_t>::max();
-
-        void setup();
-        void loop();
-
-        void addXmodule(Xmodule *XmoduleSensor);
 
         // Forward internal functions for simplicity
         void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };

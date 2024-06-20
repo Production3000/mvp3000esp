@@ -57,24 +57,24 @@ void MVP3000::addXmodule(Xmodule *xmodule) {
 
 void MVP3000::checkStatus() {
     // Never leave error state
-    if (status == Status::ERROR)
+    if (state == STATE_TYPE::ERROR)
         return;
 
     // Error was logged
     if (mvp.logger.errorReported) {
-        status = Status::ERROR;
+        state = STATE_TYPE::ERROR;
         return;
     }
 
     if ((mvp.net.netState == Net::NET_STATE_TYPE::CLIENT) || (mvp.net.netState == Net::NET_STATE_TYPE::AP))
-        status = Status::GOOD;
+        state = STATE_TYPE::GOOD;
     else
-        status = Status::INIT;
+        state = STATE_TYPE::INIT;
 }
 
 void MVP3000::updateLoopDuration() {
-    // Only start measuring loop duration after wifi is up, as it adds a single long duration and messes with max value
-    if (status != Status::GOOD)
+    // Only start measuring loop duration after wifi is up, as this adds a single long duration and messes with max value
+    if (state != STATE_TYPE::GOOD)
         return;
 
     // Skip first loop iteration, nothing to calculate
