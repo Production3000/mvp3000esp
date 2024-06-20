@@ -45,37 +45,37 @@ void Led::loop() {
 }
 
 void Led::checkChangeStatus() {
-    Timing targetTiming;
+    LED_TIMING_TYPE targetTiming;
 
     if (mvp.state == MVP3000::STATE_TYPE::ERROR) { // Blink fast for error
-        targetTiming = Timing::FAST;
+        targetTiming = LED_TIMING_TYPE::FAST;
     } else {
         switch (mvp.net.netState) { // Otherwise indicate Wifi status
             case Net::NET_STATE_TYPE::AP:
-                targetTiming = Timing::SLOW;
+                targetTiming = LED_TIMING_TYPE::SLOW;
                 break;
             case Net::NET_STATE_TYPE::CLIENT:
-                targetTiming = Timing::ON;
+                targetTiming = LED_TIMING_TYPE::ON;
                 break;
             case Net::NET_STATE_TYPE::CONNECTING:
-                targetTiming = Timing::MEDIUM;
+                targetTiming = LED_TIMING_TYPE::MEDIUM;
                 break;
             case Net::NET_STATE_TYPE::ERROR:
-                targetTiming = Timing::FAST;
+                targetTiming = LED_TIMING_TYPE::FAST;
                 break;
         }
     }
 
     // Nothing to do if not changed
-    if (targetTiming == currentTiming)
+    if (targetTiming == ledTiming)
         return;
 
     switch (targetTiming) {
-        case Timing::OFF:
+        case LED_TIMING_TYPE::OFF:
             off();
             ledDelay.stop();
             break;
-        case Timing::ON:
+        case LED_TIMING_TYPE::ON:
             on();
             ledDelay.stop();
             break;
@@ -83,7 +83,7 @@ void Led::checkChangeStatus() {
             // Best fit for transition, toggle LED if:
             //  target delay is shorter than old delay and has already passed
             //  target delay is longer than old delay and half has already passed
-            if ( (ledDelay.getStartTime() > (uint16_t)targetTiming) || ( (ledDelay.getStartTime() > (uint16_t)targetTiming / 2) && ((uint16_t)targetTiming < (uint16_t)currentTiming) ) )
+            if ( (ledDelay.getStartTime() > (uint16_t)targetTiming) || ( (ledDelay.getStartTime() > (uint16_t)targetTiming / 2) && ((uint16_t)targetTiming < (uint16_t)ledTiming) ) )
                 toggle();
 
             // Restart with new delay
@@ -93,21 +93,21 @@ void Led::checkChangeStatus() {
     }
 
     // Remember current status
-    currentTiming = targetTiming;
+    ledTiming = targetTiming;
 
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Led timing changed to: %d ms", targetTiming);
 }
 
 void Led::on() {
     digitalWrite(cfgLed.pin, ONSTATE);
-    this->state = true;
+    currentState = true;
 }
 
 void Led::off() {
-    digitalWrite(cfgLed.pin, OFFSTATE);
-    this->state = false;
+    digitalWrite(cfgLed.pin, !ONSTATE);
+    currentState = false;
 }
 
 void Led::toggle() {
-    (this->state) ? off() : on();
+    (currentState) ? off() : on();
 }

@@ -35,28 +35,25 @@ struct CfgLed {
 
 class Led {
     private:
-        boolean state = false;
-
-// ESP32/ESP8266 have inverted high/low for on/off
-#ifdef ESP8266
-        uint8_t ONSTATE = LOW;
-        uint8_t OFFSTATE = HIGH;
-#else
-        uint8_t ONSTATE = HIGH;
-        uint8_t OFFSTATE = LOW;
-#endif
-
-        CfgLed cfgLed;
-
-        enum class Timing: int16_t {
+        enum class LED_TIMING_TYPE: int16_t {
             OFF = -1, // Power on: NULL --> off
             ON = 0, // Wifi connected and no other system errors
             FAST = 100, // Critical system error
             MEDIUM = 500, // Connecting
             SLOW = 2000, // Init/AP state after RESET button press
         };
+        LED_TIMING_TYPE ledTiming = LED_TIMING_TYPE::OFF;
 
-        Timing currentTiming = Timing::OFF;
+// ESP32/ESP8266 have inverted high/low for on/off
+#ifdef ESP32
+        uint8_t ONSTATE = HIGH;
+#else
+        uint8_t ONSTATE = LOW;
+#endif
+
+        boolean currentState = false;
+
+        CfgLed cfgLed;
 
         millisDelay ledDelay;
 
