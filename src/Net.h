@@ -98,7 +98,7 @@ class Net {
         void startAp();
         void startClient();
 
-// ESP32/ESP8266 have different Wifi events
+// ESP8266 needs definition of Wifi events
 #ifdef ESP8266
         WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
 #endif
@@ -113,24 +113,14 @@ class Net {
         };
         NET_STATE_TYPE netState = NET_STATE_TYPE::DISABLED;
 
-
         CfgNet cfgNet;
 
         NetWeb netWeb;
         NetCom netCom;
 
-        // enum Status: uint8_t {
-        //     NONE = 0,
-        //     CLIENT = 1,
-        //     CONNECTING = 2,
-        //     AP = 3,
-        // };
-        // Status status = Status::CONNECTING;
-
         String apSsid = "device" + String(ESPX.getChipId());
 
         void setup();
-
         void loop();
 
         bool editClientConnection(String newSsid, String newPass);
