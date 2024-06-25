@@ -57,7 +57,11 @@ void NetWeb::serveRequest() {
     // Close page
     contentClose();
 
+    // Client IP is obviously empty after stop()
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Serving page to: %s",  server.client().remoteIP().toString().c_str());
+
+    // Stop connection, not sure if needed
+    server.client().stop();
 }
 
 void NetWeb::contentStart() {
@@ -86,7 +90,6 @@ void NetWeb::contentClose() {
 
     // Close connection
     server.sendContent("");
-    server.client().stop();
 }
 
 void NetWeb::contentHome() {
