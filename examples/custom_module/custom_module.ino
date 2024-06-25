@@ -34,7 +34,7 @@ void loop() {
     // Do the work
     mvp.loop();
 
-    // Execute custom module code
+    // Execute custom code
 
     // Do not ever use blocking delay in actual code
     delay(50);

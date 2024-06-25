@@ -43,7 +43,7 @@ Example configuration struct with comments:
 The custom module needs to overwrite at least one method:
  *  loop() ... called repeatedly from the main loop of the program
 Four additional methods are optional to overwrite:
- *  setup() ... called once during initialization
+ *  setup() ... called once during initialization, loads 
  *  contentModuleNetWeb() ... called if the user browses to the modules web interface, with module specific HTML content.
  *  editCfgNetWeb() ... called if the user saves a setting via the modules web interface.
  *  startActionNetWeb() ... called if the user initiates an action via the modules web interface.
@@ -56,6 +56,10 @@ Example module with additional comments:
 
             void setup() override {
                 description = "XmoduleExample";
+
+                // Read config
+                mvp.config.readCfg(cfgXmoduleExample);
+
                 // Custom setup code here
             }
 
@@ -70,8 +74,8 @@ Example module with additional comments:
                 // Settings
                 mvp.net.netWeb.sendFormatted("\
                     <h3>Settings</h3> <ul> \
-                    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%d' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> \
-                    <li>Some fixed number: %d </li> </ul>",
+                    <li>Some fixed number: %d </li> \
+                    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%d' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>",
                     cfgXmoduleExample.editableNumber, cfgXmoduleExample.fixedNumber);
 
                 // Actions
@@ -134,7 +138,7 @@ The custom module can easily be integrated with the MVP3000 framework.
         // Do the work
         mvp.loop();
 
-        // Execute custom module code
+        // Execute custom code
 
         // Do not ever use blocking delay in actual code
         delay(50);

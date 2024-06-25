@@ -59,6 +59,10 @@ class XmoduleExample : public Xmodule {
 
         void setup() override {
             description = "XmoduleExample";
+
+            // Read config
+            mvp.config.readCfg(cfgXmoduleExample);
+
             // Custom setup code here
         }
 
@@ -73,8 +77,8 @@ class XmoduleExample : public Xmodule {
             // Settings
             mvp.net.netWeb.sendFormatted("\
                 <h3>Settings</h3> <ul> \
-                <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%d' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> \
-                <li>Some fixed number: %d </li> </ul>",
+                <li>Some fixed number: %d </li> \
+                <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%d' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>",
                 cfgXmoduleExample.editableNumber, cfgXmoduleExample.fixedNumber);
 
             // Actions
