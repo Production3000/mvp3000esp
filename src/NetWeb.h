@@ -40,8 +40,8 @@ class NetWeb {
         void setup();
         void loop();
 
-        void sendFormatted(const char* formatString, ...); // Used in modules contentHome, string length limited to WEB_CHUNK_LENGTH
-        void responseRedirect(const char* message); // Used in modules editCfg, startAction
+        void sendFormatted(const char* formatString, ...); // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
+        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()
 
     private:
 

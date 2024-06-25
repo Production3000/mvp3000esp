@@ -65,9 +65,6 @@ void NetWeb::serveRequest() {
 }
 
 void NetWeb::contentStart() {
-    // Clear message for next load
-    postMessage = "";
-
     // Open connection
     server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     server.sendHeader("Pragma", "no-cache");
@@ -82,6 +79,9 @@ void NetWeb::contentStart() {
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script> \
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head> \
     <body> <h1>MVP3000 - Device ID %d</h1> <h3 style='color: red;'>%s</h3>", ESPX.getChipId(), ESPX.getChipId(), postMessage);
+
+    // Clear message for next load
+    postMessage = "";
 }
 
 void NetWeb::contentClose() {
@@ -262,8 +262,10 @@ void NetWeb::sendFormatted(const char* messageFormatString, ...) {
 void NetWeb::responseRedirect(const char* message) {
     // Message to serve on next page load
     postMessage = message;
+
     // Redirect to avoid post reload, 303 temporary
-    server.sendHeader("Location", ((server.args() == 1) && (server.argName(0) == "m")) ? "/?m=" + server.arg(0) : "/");
+    // For modules this does not redirect to the module but to home
+    server.sendHeader("Location", "/");
     server.send(303);
 }
 
