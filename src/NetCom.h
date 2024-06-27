@@ -66,9 +66,9 @@ class NetCom {
         enum class COM_STATE_TYPE: uint8_t {
             CONNECTED = 0,
             WAITING = 1,
-            DISABLED = 2
+            DISABLEDX = 2
         };
-        COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLED;
+        COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLEDX;
 
         WiFiClient wifiClient;
         MqttClient mqttClient = NULL;
