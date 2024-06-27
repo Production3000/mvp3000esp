@@ -205,25 +205,24 @@ class Helper {
                             // Found the node with the given value
                             if (current == tail) {
                                 // The node is already the last node
-                                return;
                             } else {
                                 // Remove the node from its current position
                                 if (current == head) {
-                                    head = current->next;
-                                    current->next->prev = nullptr;
+                                    head = current->next; // Move the head pointer to the second node
+                                    head->prev = nullptr; // Remove the prev pointer from the new head
                                 } else {
                                     // Neither head nor tail
                                     current->prev->next = current->next; // Link the previous node directly to the next node
                                     current->next->prev = current->prev; // Link the next node directly to the previous node
                                 }
                                 // Insert the node at the end
-                                tail->next = current; // Set the next pointer of the current tail to the moved node
-                                current->prev = tail; // Set the previous pointer of the moved node to the current tail
-                                current->next = nullptr; // Remove the next pointer of the moved node
-                                // Set the tail pointer to the moved node
-                                tail = current;
-                                return;
+                                tail->next = current; // Set the next pointer of the old tail to the node
+                                current->prev = tail; // Set the previous pointer of the node to the old tail
+                                current->next = nullptr; // Remove the next pointer of the node
+                                tail = current; // Move the tail pointer to the node
                             }
+                            // Done
+                            return;
                         }
                         current = current->next;
                     }
@@ -244,7 +243,57 @@ class Helper {
 
                     size--;
                 }
+        };
 
+
+        template <typename T>
+        class NumberArray {
+            public:
+
+                T* values;
+                T resetValue;
+                uint8_t value_size;
+
+                NumberArray() : value_size(0), resetValue(0) { }
+
+                ~NumberArray() {
+                    delete[] values;
+                }
+
+                /**
+                 * Initializes the array with the given size and reset value.
+                 *
+                 * @param _valueSize The size of the array.
+                 * @param _resetValue The value to be used to initialize the array.
+                 */
+                void init(uint8_t _valueSize, T _resetValue) {
+                    value_size = _valueSize;
+                    resetValue = _resetValue;
+                    delete [] values;
+                    values = new T[_valueSize];
+                    clear();
+                }
+
+                /**
+                 * Initializes the array with the reset value.
+                 */
+                void clear() {
+                    loopAll([this](T& value, uint16_t i) {
+                        values[i] = resetValue;
+                    });
+                }
+
+                /**
+                 * Loops through all elements in the linked list starting from oldest and calls the given callback function.
+                 * The callback function can be a captive lambda function.
+                 *
+                 * @param callback The callback function to be called for each element.
+                 */
+                void loopAll(std::function<void(T&, uint16_t)> callback) {
+                    for (uint8_t i = 0; i < value_size; i++) {
+                        callback(values[i], i);
+                    }
+                }
         };
         
 };
