@@ -37,22 +37,21 @@ struct DataProcessing : public CfgStructJsonInterface {
     }
 
     void exportToJson(JsonDocument &jsonDoc) {
-        JsonArray jsonArray = jsonDoc.createNestedArray("offset");
-        offset.loopArray([&](int32_t& value, uint8_t i) { jsonArray.add(value); });
-        if (offset.isDefault()) // No need to save if all values are default
-            jsonDoc.remove("offset");
-
-        JsonArray jsonArray = jsonDoc.createNestedArray("scaling");
-        scaling.loopArray([&](float_t& value, uint8_t i) { jsonArray.add(value); });
-        if (scaling.isDefault()) // No need to save if all values are default
-            jsonDoc.remove("scaling");
+        // No need to save if values are default
+        if (!offset.isDefault()) {
+            JsonArray jsonArray = jsonDoc.createNestedArray("offset");
+            offset.loopArray([&](int32_t& value, uint8_t i) { jsonArray.add(value); });
+        }
+        if (!scaling.isDefault()) {
+            JsonArray jsonArray = jsonDoc.createNestedArray("scaling");
+            scaling.loopArray([&](float_t& value, uint8_t i) { jsonArray.add(value); });
+        }
     }
 
     bool importFromJson(JsonDocument &jsonDoc) {
-        JsonArray jsonArray;
         // Assigns values only if varName exists
         if (jsonDoc.containsKey("offset") && jsonDoc["offset"].is<JsonArray>()) {
-            jsonArray = jsonDoc["offset"].as<JsonArray>();
+            JsonArray jsonArray = jsonDoc["offset"].as<JsonArray>();
 
             // Make sure size is correct to not have memory issues
             if (jsonArray.size() != offset.value_size)
@@ -62,7 +61,7 @@ struct DataProcessing : public CfgStructJsonInterface {
             offset.loopArray([&](int32_t& value, uint8_t i) { value = jsonArray[i].as<int32_t>(); });
         }
         if (jsonDoc.containsKey("scaling") && jsonDoc["scaling"].is<JsonArray>()) {
-            jsonArray = jsonDoc["scaling"].as<JsonArray>();
+            JsonArray jsonArray = jsonDoc["scaling"].as<JsonArray>();
 
             // Make sure size is correct to not have memory issues
             if (jsonArray.size() != scaling.value_size)

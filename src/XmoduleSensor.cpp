@@ -236,7 +236,7 @@ void XmoduleSensor::measureOffsetScalingFinish() {
 
 void XmoduleSensor::resetOffset() {
     // dataProcessing.offset.reset();
-    dataProcessing.offset.resetValues();                                                            // TODO not working !!!!!!!!!
+    dataProcessing.offset.resetValues();
     mvp.config.writeCfg(dataProcessing);
 }
 

@@ -145,6 +145,7 @@ class Config {
 
         bool readFile(const char *filename, std::function<bool(File& file)> writerFunc);
         bool writeFile(const char *filename, std::function<bool(File& file)> writerFunc);
+        void removeFile(const char *fileName);
 
     public:
         
@@ -154,7 +155,6 @@ class Config {
         void writeCfg(CfgStructJsonInterface &cfg);
 
         // void removeCustomCfg(const char *cfgName);
-        void removeCfg(const char *fileName);
         void factoryResetDevice();
 
         bool readFileToJson(const char *fileName);

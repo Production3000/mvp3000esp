@@ -113,7 +113,7 @@ bool Config::readFileToJson(const char *fileName) {
 void Config::writeJsonToFile(const char *fileName) {
     // Empty cfg, remove file if any
     if (jsonDoc.isNull()) {
-        removeCfg(fileName);
+        removeFile(fileName);
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Empty cfg, cancel saving: %s", fileName);
         return;
     }
@@ -127,12 +127,7 @@ void Config::writeJsonToFile(const char *fileName) {
     jsonDoc.clear();
 }
 
-void Config::removeCfg(const char *fileName) {
-    if (!isReadyFS())
-        return;
-    // Remove file
-    SPIFFS.remove(fileName);
-}
+
 
 void Config::factoryResetDevice() {
     if (!isReadyFS())
@@ -149,6 +144,23 @@ void Config::factoryResetDevice() {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Config::removeFile(const char *fileName) {
+    if (!fileSystemOK)
+        return;
+
+    // Remove leading '/', there should be none
+    if (fileName[0] == '/')
+        fileName = fileName + 1;
+    // Add leading '/', copy filename one character shifted, add .json
+    char pathFileName[strlen(fileName) + 1 + 5];
+    pathFileName[0] = '/';
+    strcpy(pathFileName + 1, fileName);
+    strcpy(pathFileName + 1 + strlen(fileName), ".json");
+
+    SPIFFS.remove(pathFileName);
+}
+
 
 bool Config::readFile(const char *fileName, std::function<bool(File& file)> readerFunc) {
     if (!fileSystemOK)
