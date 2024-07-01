@@ -64,7 +64,7 @@ struct Cfg : public CfgStructJsonInterface {
         Setting(uint32_t _hash,T *_value, std::function<bool(T)> _set) { hash = _hash; value = _value; set = _set; }
     };
 
-    static const uint8_t MAX_SETTINGS = 5;
+    static const uint8_t MAX_SETTINGS = 15;
     uint8_t settingsBoolCount = 0;
     Setting<boolean> settingsBool[MAX_SETTINGS];
     uint8_t settingsIntCount = 0;

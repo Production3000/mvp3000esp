@@ -176,76 +176,39 @@ struct DataProcessing : public CfgStructJsonInterface {
 
 //////////////////////////////////////////////////////////////////////////////////
 
+#include "LinkedNAList.h"
+
 struct DataCollection {
     DataCollection() { };
 
     uint8_t dataValueCount = 0;
 
-    uint16_t *averagingCount; // Pointer to cfgXmoduleSensor
-    int32_t *offset; // Pointer to dataProcessing
-    float_t *scaling; // Pointer to dataProcessing
-
     // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
     // More likely much less, max 1000 for single value?
-    uint16_t dataStoreLength = 10;
+    uint16_t dataStoreLength = 5;
+    LinkedNAList<int32_t> dataStore = LinkedNAList<int32_t>(dataStoreLength);
+    Helper::LinkedList<int32_t> dataStoreTime = Helper::LinkedList<int32_t>(dataStoreLength);;
 
-    // Measurement storage 2D array
-    int32_t **dataStore;
-    // Measurement timestamp 1D array
-    int32_t *dataStoreTime;
-
-    // Position in array, is one ahead after the measurement
-    uint8_t dataStoreHead;
-    int32_t *currentMeasurementRaw() { return dataStore[dataStoreHead]; }
-
-    // Only the last measurement is provided as offset-corrected and scaled
-    int32_t *currentMeasurementScaled;
-
-    // Total number of (likely averaged) measurements stored
-    uint32_t measurementCount;
+    // Averaging
+    Helper::NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
+    uint16_t *averagingCount; // Pointer to cfgXmoduleSensor
+    uint8_t avgCounter; // Counter for averaging
+    int32_t avgStartTime; // Time of first measurement in averaging cycle
+    boolean avgCycleFinished; // Flag for new data added to dataStore
 
     // Data statistics
-    int32_t *dataMax;
-    int32_t *dataMin;
+    Helper::NumberArray<int32_t> dataMax;
+    Helper::NumberArray<int32_t> dataMin;
 
-    // Temporary data storage for averaging
-    int32_t *avgDataSum;
-    uint8_t avgDataHead;
 
-    // Time of first measurement in averaging cycle
-    int32_t avgStartTime;
-
-    boolean avgCycleFinished;
-
-    void initValueCount(uint8_t _dataValueCount, uint16_t *_averagingCount, int32_t *_offset, float_t *_scaling) {
+    void initValueCount(uint8_t _dataValueCount, uint16_t *_averagingCount) {
         dataValueCount = _dataValueCount;
         averagingCount = _averagingCount;
-        offset = _offset;
-        scaling = _scaling;
 
-        // Dynamically reduce stored measurements depending on values measured                               // TODO
-        // Overhead factor to take other memory uses into account
-        // dataStoreLength = dataStoreMax / cfgXmoduleSensor.dataValueCount / 1.2;
-
-        dataStore = (int32_t**) malloc(dataStoreLength * sizeof(int32_t*));
-        for (uint8_t i = 0; i < dataStoreLength; i++) {
-            dataStore[i] = (int32_t*) malloc((dataValueCount) * sizeof(int32_t));
-        }
-
-        delete [] dataStoreTime;
-        dataStoreTime = new int32_t[dataStoreLength];
-
-        delete [] currentMeasurementScaled;
-        currentMeasurementScaled = new int32_t[dataValueCount];
-
-        delete [] avgDataSum;
-        avgDataSum = new int32_t[dataValueCount];
-
-        // Max/min values
-        delete [] dataMax;
-        dataMax = new int32_t[dataValueCount];
-        delete [] dataMin;
-        dataMin = new int32_t[dataValueCount];
+        // Init all NumberArrays
+        avgDataSum.init(dataValueCount, 0);
+        dataMax.init(dataValueCount, std::numeric_limits<int32_t>::min());
+        dataMin.init(dataValueCount, std::numeric_limits<int32_t>::max());
 
         reset();
     }
@@ -256,70 +219,49 @@ struct DataCollection {
     }
 
     void reset() {
-        for (uint8_t i = 0; i < dataStoreLength; i++) {
-            for (uint8_t j = 0; j < dataValueCount; j++) {
-                dataStore[i][j] = 0;
-            }
-            dataStoreTime[i] = 0;
-        }
-        dataStoreHead = 0;
-        measurementCount = 0;
+        // Averaging
+        avgDataSum.clear();
+        dataMax.clear();
+        dataMin.clear();
 
-        for (uint8_t i = 0; i < dataValueCount; i++) {
-            avgDataSum[i] = 0;
-            currentMeasurementScaled[i] = 0;
-            dataMax[i] = std::numeric_limits<int32_t>::min();
-            dataMin[i] = std::numeric_limits<int32_t>::max();
-        }
-        avgDataHead = 0;
+        // Counters and such
+        avgCounter = 0;
         avgStartTime = 0;
         avgCycleFinished = false;
+
+        // Data storage
+        dataStore.clear();
+        dataStoreTime.clear();
     }
 
     void addSample(int32_t *newSample) {
         // This is the function to do most of the work
 
         // Add new values to existing sums, remember max/min extremes
-        for (uint8_t i = 0; i < dataValueCount; i++) {
-            avgDataSum[i] += newSample[i];
-            dataMin[i] = min(dataMin[i], newSample[i]);
-            dataMax[i] = max(dataMax[i], newSample[i]);
-        }
+        avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value += newSample[i]; } ); // Add new value for later averaging
+        dataMax.loopArray([&](int32_t& value, uint16_t i) { value = max(value, newSample[i]); } ); // All-time max
+        dataMin.loopArray([&](int32_t& value, uint16_t i) { value = min(value, newSample[i]); } ); // All-time min
 
-        // Restart averaging cycle
-        if (avgDataHead == 0) {
+        // Averaging cycle restarted, init
+        if (avgCounter == 0) {
             avgStartTime =  millis();
             avgCycleFinished = false;
         }
-
         // Increment averaging head
-        avgDataHead++;
+        avgCounter++;
 
         // Check if averaging count is reached
-        if (avgDataHead >= *averagingCount) {
+        if (avgCounter >= *averagingCount) {
 
-            // Write and read of the stored values are not simultaneously, but dataStoreHead should always point to
-            // the correct/current index. Thus, incrementing and check needs to be done just before the new write.
-            // Increment head except for very first measurement
-            if (measurementCount != 0)
-                dataStoreHead++;
-            // Check if end of circular buffer is reached, done at the beginning for any depending data use
-            if (dataStoreHead >= dataStoreLength)
-                dataStoreHead = 0;
+            // Calculate data and time averages and store
+            avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value = nearbyintf( value / *averagingCount ); } );
+            dataStore.appendNumericArray(avgDataSum);
+            dataStoreTime.appendForce(nearbyintf( (avgStartTime + millis()) / 2 ));
 
-            // Calculate and store averages, reset sums and head
-            for (uint8_t j = 0; j < dataValueCount; j++) {
-                dataStore[dataStoreHead][j] = nearbyintf( avgDataSum[j] / *averagingCount );
-                currentMeasurementScaled[j] = nearbyintf( (dataStore[dataStoreHead][j] + offset[j]) * scaling[j] );
-                avgDataSum[j] = 0;
-            }
-            dataStoreTime[dataStoreHead] = nearbyintf( (avgStartTime + millis()) / 2 );
+            // Reset temporary values, counters            
+            avgDataSum.clear();
+            avgCounter = 0;
             avgStartTime = 0;
-
-            // Reset averaging
-            avgDataHead = 0;
-            measurementCount++;
-
             // Flag new data added for further actions in loop()
             avgCycleFinished = true;
         }
@@ -337,7 +279,7 @@ class XmoduleSensor : public Xmodule {
         XmoduleSensor(uint8_t valueCount) {
             cfgXmoduleSensor.initValueCount(valueCount);
             dataProcessing.initValueCount(valueCount);
-            dataCollection.initValueCount(valueCount, &cfgXmoduleSensor.sampleAveraging, dataProcessing.offset.values, dataProcessing.scaling.values);
+            dataCollection.initValueCount(valueCount, &cfgXmoduleSensor.sampleAveraging); // Averaging can change during operation
         };
 
         void setup() override;
@@ -359,6 +301,9 @@ class XmoduleSensor : public Xmodule {
             measurementHandler(decimalShiftedSample);
         };
         void measurementHandler(int32_t *newSample);
+
+        Helper::NumberArray<int32_t> currentMeasurementRaw();
+        Helper::NumberArray<int32_t> currentMeasurementScaled();
 
         void measureOffset();
         bool measureScaling(uint8_t valueNumber, int32_t targetValue);
@@ -388,7 +333,6 @@ class XmoduleSensor : public Xmodule {
         void measureOffsetCalculate();
         void measureScalingCalculate();
         void measureOffsetScalingFinish();
-
 };
 
 #endif

@@ -19,9 +19,6 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include "Config.h"
-#include "Xmodule.h"
-
 #include <MVP3000.h>
 extern MVP3000 mvp;
 

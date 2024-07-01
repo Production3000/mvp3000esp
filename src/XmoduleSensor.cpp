@@ -48,7 +48,7 @@ void XmoduleSensor::loop() {
             sensorDelay.repeat();
 
         // Output data to serial and/or network
-        mvp.logger.writeCSV(CfgLogger::Level::DATA, dataCollection.currentMeasurementScaled, cfgXmoduleSensor.dataValueCount, cfgXmoduleSensor.dataMatrixColumnCount);
+        mvp.logger.writeCSV(CfgLogger::Level::DATA, currentMeasurementScaled().values, cfgXmoduleSensor.dataValueCount, cfgXmoduleSensor.dataMatrixColumnCount);
    }
 }
 
@@ -153,6 +153,24 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+
+Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
+    Helper::NumberArray<int32_t> currentMeasurementRaw = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
+    currentMeasurementRaw.loopArray([&](int32_t& value, uint16_t i) {
+        value = dataCollection.dataStore.getLatest()->data[i];
+    });
+    return currentMeasurementRaw;
+}
+
+Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
+    Helper::NumberArray<int32_t> currentMeasurementScaled = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
+    currentMeasurementScaled.loopArray([&](int32_t& value, uint16_t i) {
+        // SCALED = (RAW + offset) * scaling
+        value = (dataCollection.dataStore.getLatest()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
+    });
+    return currentMeasurementRaw();
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -195,15 +213,17 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
 
 void XmoduleSensor::measureOffsetCalculate() {
     // OFFSET = -1 * sum/times
-    for (uint8_t j = 0; j < cfgXmoduleSensor.dataValueCount; j++) {
-        dataProcessing.offset.values[j] = - dataCollection.currentMeasurementRaw()[j];
-    }
+    currentMeasurementRaw().loopArray([&](int32_t& value, uint16_t i) {
+        dataProcessing.offset.values[i] = - value;
+    });
     measureOffsetScalingFinish();
 }
 
 void XmoduleSensor::measureScalingCalculate() {
     // SCALING = TARGETVALUE / (sum/times + OFFSET)
-    dataProcessing.scaling.values[scalingValueIndex] = (float_t)scalingTargetValue / (dataCollection.currentMeasurementRaw()[scalingValueIndex] + dataProcessing.offset.values[scalingValueIndex] );
+    currentMeasurementRaw().loopArray([&](int32_t& value, uint16_t i) {
+        dataProcessing.scaling.values[i] = (float_t)scalingTargetValue / (value + dataProcessing.offset.values[i]);
+    });
     measureOffsetScalingFinish();
 }
 

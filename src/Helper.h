@@ -36,6 +36,15 @@ class Helper {
             return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
         };
 
+        /**
+         * A simple linked list implementation for the MVP3000 framework.
+         * 
+         * The linked list is a generic class that can store any type of data.
+         * The linked list has a maximum size limit. If the limit is reached, the oldest element is removed automatically or appending stops.
+         * The linked list can also check if it contains a specific value and move the value to the end of the list.
+         * 
+         * @tparam T The type of data to be stored in the linked list.
+         */
         template <typename T>
         class LinkedList {
             private:
@@ -54,7 +63,7 @@ class Helper {
                 /**
                  * Default constructor. The linked list has no size limit and will grow until the memory is full.
                  */
-                LinkedList() : head(nullptr), tail(nullptr), size(0), max_size(std::numeric_limits<uint16_t>::max()) {}
+                LinkedList() : head(nullptr), tail(nullptr), size(0), max_size(10) {}
 
                 // Preferred constructor
                 /**
@@ -68,6 +77,9 @@ class Helper {
                 ~LinkedList() {
                     clear();
                 }
+
+                Node* getFirst() { return head; }
+                Node* getLatest() { return tail; }
 
                 /**
                  * Appends a new element to the linked list.
@@ -164,9 +176,9 @@ class Helper {
                  * 
                  * @param callback The callback function to be called for each element.
                  */       
-                void loopAll(std::function<void(T&, uint16_t)> callback) {
-                    // The above allows to call with captive lambda, loopAll([&](T& value, uint16_t index) { ... });
-                    // This one only allows non-captive lambdas: loopAll(void (*callback)(T&, uint16_t))
+                void loopList(std::function<void(T&, uint16_t)> callback) {
+                    // The above allows to call with captive lambda, loopList([&](T& value, uint16_t index) { ... });
+                    // This one only allows non-captive lambdas: loopList(void (*callback)(T&, uint16_t))
                     Node* current = head;
                     uint16_t i = 0;
                     while (current != nullptr) {
@@ -180,7 +192,7 @@ class Helper {
                  * 
                  * @param callback The callback function to be called for each element.
                  */   
-                void loopAllReverse(std::function<void(T&, uint16_t)> callback) {
+                void loopListReverse(std::function<void(T&, uint16_t)> callback) {
                     Node* current = tail;
                     uint16_t i = 0;
                     while (current != nullptr) {
@@ -256,6 +268,11 @@ class Helper {
 
                 NumberArray() : value_size(0), resetValue(0) { }
 
+                NumberArray(uint8_t _valueSize, T _resetValue) : value_size(_valueSize), resetValue(_resetValue) {
+                    values = new T[_valueSize];
+                    clear();
+                }
+
                 ~NumberArray() {
                     delete[] values;
                 }
@@ -270,7 +287,7 @@ class Helper {
                     value_size = _valueSize;
                     resetValue = _resetValue;
                     delete [] values;
-                    values = new T[_valueSize];
+                    values = new T[value_size];
                     clear();
                 }
 
@@ -278,7 +295,7 @@ class Helper {
                  * Initializes the array with the reset value.
                  */
                 void clear() {
-                    loopAll([this](T& value, uint16_t i) {
+                    loopArray([this](T& value, uint16_t i) {
                         values[i] = resetValue;
                     });
                 }
@@ -289,7 +306,7 @@ class Helper {
                  *
                  * @param callback The callback function to be called for each element.
                  */
-                void loopAll(std::function<void(T&, uint16_t)> callback) {
+                void loopArray(std::function<void(T&, uint16_t)> callback) {
                     for (uint8_t i = 0; i < value_size; i++) {
                         callback(values[i], i);
                     }
