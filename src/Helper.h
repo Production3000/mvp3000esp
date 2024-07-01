@@ -41,7 +41,8 @@ class Helper {
         /**
          * A simple number array implementation for the MVP3000 framework.
          * 
-         * Its provides an array with loop functionality and a clear/reset value function.
+         * Its provides looping functionality, clear/default value function, and a check if it is not all default values.
+         * It can be intialized late with a different size and reset value.
          * 
          * @tparam T The type of data to be stored in the array.
          */
@@ -87,7 +88,7 @@ class Helper {
                  * Initializes the value in the array with the reset value.
                  */
                 void resetValues() {
-                    loopArray([this](T& value, uint16_t i) {
+                    loopArray([this](T& value, uint8_t i) {
                         values[i] = resetValue;
                     });
                 }
@@ -98,10 +99,23 @@ class Helper {
                  *
                  * @param callback The callback function to be called for each element.
                  */
-                void loopArray(std::function<void(T&, uint16_t)> callback) {
+                void loopArray(std::function<void(T&, uint8_t)> callback) {
                     for (uint8_t i = 0; i < value_size; i++) {
                         callback(values[i], i);
                     }
+                }
+
+                /**
+                 * Checks if the array only contains the default reset value.
+                 */
+                bool isDefault() {
+                    bool isDefault = true;
+                    loopArray([&](T& value, uint8_t i) {
+                        if (value != resetValue) {
+                            isDefault = false;
+                        }
+                    });
+                    return isDefault;
                 }
         };
 
@@ -203,8 +217,8 @@ class Helper {
 
                     // Append new node and copy values
                     appendNode(new Node(newValues.value_size));
-                    newValues.loopArray([&](T& newValue, uint16_t i) {
-                        tail->data[i] = newValue;
+                    newValues.loopArray([&](T& value, uint8_t i) {
+                        tail->data[i] = value;
                     });
                 }
 
@@ -326,14 +340,15 @@ class Helper {
                     if (head == nullptr) {
                         return;
                     }
-
                     Node* temp = head;
                     head = head->next; // Move the head pointer to the second node
-                    head->prev = nullptr; // Remove the prev pointer from the new head
                     delete temp;
 
-                    // If no node remains, the tail needs to be set to nullptr as well
-                    if (head == nullptr) {
+                    if (head != nullptr) {
+                        // Remove the prev pointer from the new head
+                        head->prev = nullptr; 
+                    } else {
+                        // If no node remains, the tail needs to be set to nullptr as well
                         tail = nullptr;
                     }
 

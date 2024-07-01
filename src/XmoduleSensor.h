@@ -24,6 +24,9 @@ limitations under the License.
 #include "Config.h"
 #include "Xmodule.h"
 
+#include "XmoduleSensor_DataCollection.h"
+#include "XmoduleSensor_DataProcessing.h"
+
 
 struct CfgXmoduleSensor : Cfg {
 
@@ -82,186 +85,6 @@ struct CfgXmoduleSensor : Cfg {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-struct DataProcessing : public CfgStructJsonInterface {
-    DataProcessing() { cfgName = "cfgDataProcessing"; }
-
-    template <typename T>
-    struct ProcessingArray {
-        uint8_t dataValueSize = 0;
-        int8_t defaultValue;
-        T *values;
-
-        ProcessingArray(){}
-        ProcessingArray(uint8_t _dataValueSize, int8_t _defaultValue) {
-            dataValueSize = _dataValueSize;
-            defaultValue = _defaultValue;
-
-            delete [] values;
-            values = new T[dataValueSize];
-            reset();
-        }
-
-        void reset() {
-            for (uint8_t i = 0; i < dataValueSize; i++)
-                values[i] = static_cast<T>(defaultValue);
-        }
-
-        bool exportToJsonArray(JsonArray &jsonArray) {
-            boolean isCustom = false;
-            for (uint8_t i = 0; i < dataValueSize; i++) {
-                jsonArray.add(values[i]);
-                if (values[i] != defaultValue) // Check if values are non-default
-                    isCustom = true;
-            }
-            return isCustom;
-        }
-
-        bool importFromJsonArray(JsonArray &jsonArray) {
-            // Make sure size is correct to not have memory issues
-            if (jsonArray.size() != dataValueSize)
-                return false;
-            // Assign values
-            uint8_t i = 0;
-            for (JsonVariant value : jsonArray)
-                values[i++] = value.as<T>(); // .as<T>() not defined for some types?
-            return true;
-        }
-
-        void set(T* _values) {
-            for (uint8_t i = 0; i < dataValueSize; i++)
-                values[i] = _values[i];
-        }
-
-    };
-
-    // Float conversion, int = float * 10^exponent
-    ProcessingArray<int8_t> sampleToIntExponent;
-    // Offset, shift data in y direction
-    ProcessingArray<int32_t> offset;
-    // Scaling, strech data in y direction
-    ProcessingArray<float_t> scaling;
-
-    void initDataValueSize(uint8_t dataValueSize) {
-        sampleToIntExponent = ProcessingArray<int8_t>(dataValueSize, 0);
-        offset = ProcessingArray<int32_t>(dataValueSize, 0);
-        scaling = ProcessingArray<float_t>(dataValueSize, 1);
-    }
-
-    void exportToJson(JsonDocument &jsonDoc) {
-        JsonArray jsonArray = jsonDoc.createNestedArray("offset");
-        if (!offset.exportToJsonArray(jsonArray))
-            jsonDoc.remove("offset");
-        jsonArray = jsonDoc.createNestedArray("scaling");
-        if (!scaling.exportToJsonArray(jsonArray))
-            jsonDoc.remove("scaling");
-    }
-
-    bool importFromJson(JsonDocument &jsonDoc) {
-        JsonArray jsonArray;
-        // Assigns values only if varName exists
-        if (jsonDoc.containsKey("offset") && jsonDoc["offset"].is<JsonArray>()) {
-            jsonArray = jsonDoc["offset"].as<JsonArray>();
-            if (!offset.importFromJsonArray(jsonArray))
-                return false;
-        }
-        if (jsonDoc.containsKey("scaling") && jsonDoc["scaling"].is<JsonArray>()) {
-            jsonArray = jsonDoc["scaling"].as<JsonArray>();
-            if (!scaling.importFromJsonArray(jsonArray))
-                return false;
-        }
-        return true;
-    }
-};
-
-
-//////////////////////////////////////////////////////////////////////////////////
-
-struct DataCollection {
-    DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
-
-    // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
-    // More likely much less, max 1000 for single value?
-    uint16_t dataStoreLength = 5;
-    Helper::LinkedList<int32_t, true> dataStore = Helper::LinkedList<int32_t, true>(dataStoreLength);
-    Helper::LinkedList<int32_t> dataStoreTime = Helper::LinkedList<int32_t>(dataStoreLength);;
-
-    // Averaging
-    Helper::NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
-    uint16_t *averagingCountPtr; // Pointer to cfgXmoduleSensor
-    uint8_t avgCounter = 0; // Counter for averaging
-    int32_t avgStartTime = 0; // Time of first measurement in averaging cycle
-    boolean avgCycleFinished = false; // Flag for new data added to dataStore
-
-    // Data statistics
-    Helper::NumberArray<int32_t> dataMax;
-    Helper::NumberArray<int32_t> dataMin;
-
-
-    void initDataValueSize(uint8_t dataValueSize) {
-        // Init all NumberArrays
-        avgDataSum.lateInit(dataValueSize, 0);
-        dataMax.lateInit(dataValueSize, std::numeric_limits<int32_t>::min());
-        dataMin.lateInit(dataValueSize, std::numeric_limits<int32_t>::max());
-    }
-
-    void setAveragingCountPtr(uint16_t *_averagingCount) {
-        averagingCountPtr = _averagingCount;
-        reset();
-    }
-
-    void reset() {
-        // Averaging
-        avgDataSum.resetValues();
-        dataMax.resetValues();
-        dataMin.resetValues();
-
-        // Counters and such
-        avgCounter = 0;
-        avgStartTime = 0;
-        avgCycleFinished = false;
-
-        // Data storage
-        dataStore.clear();
-        dataStoreTime.clear();
-    }
-
-    void addSample(int32_t *newSample) {
-        // This is the function to do most of the work
-
-        // Add new values to existing sums, remember max/min extremes
-        avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value += newSample[i]; } ); // Add new value for later averaging
-        dataMax.loopArray([&](int32_t& value, uint16_t i) { value = max(value, newSample[i]); } ); // All-time max
-        dataMin.loopArray([&](int32_t& value, uint16_t i) { value = min(value, newSample[i]); } ); // All-time min
-
-        // Averaging cycle restarted, init
-        if (avgCounter == 0) {
-            avgStartTime =  millis();
-            avgCycleFinished = false;
-        }
-        // Increment averaging head
-        avgCounter++;
-
-        // Check if averaging count is reached
-        if (avgCounter >= *averagingCountPtr) {
-
-            // Calculate data and time averages and store
-            avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value = nearbyintf( value / *averagingCountPtr ); } );
-            dataStore.append(avgDataSum);
-            dataStoreTime.append(nearbyintf( (avgStartTime + millis()) / 2 ));
-
-            // Reset temporary values, counters            
-            avgDataSum.resetValues();
-            avgCounter = 0;
-            avgStartTime = 0;
-            // Flag new data added for further actions in loop()
-            avgCycleFinished = true;
-        }
-    }
-};
-
-
-//////////////////////////////////////////////////////////////////////////////////
-
 class XmoduleSensor : public Xmodule {
     public:
         CfgXmoduleSensor cfgXmoduleSensor;
@@ -302,7 +125,7 @@ class XmoduleSensor : public Xmodule {
         void resetScaling();
 
         void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
-            dataProcessing.sampleToIntExponent.set(_sampleToIntExponent);
+            dataProcessing.sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
         };
 
         // bool isPeriodic(uint8_t length);
@@ -321,8 +144,6 @@ class XmoduleSensor : public Xmodule {
         int32_t scalingTargetValue;
         uint8_t scalingValueIndex;
 
-        void measureOffsetCalculate();
-        void measureScalingCalculate();
         void measureOffsetScalingFinish();
 };
 

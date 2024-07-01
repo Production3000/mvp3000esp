@@ -144,10 +144,8 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
     dataCollection.addSample(newSample);
 
     if (dataCollection.avgCycleFinished) {
-        if (offsetRunning)
-            measureOffsetCalculate();
-        else if (scalingRunning)
-            measureScalingCalculate();
+        if (offsetRunning || scalingRunning)
+            measureOffsetScalingFinish();
         else // normal measurement
             newDataStored = true;
     }
@@ -157,7 +155,7 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
 
 Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
     Helper::NumberArray<int32_t> currentMeasurementRaw = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
-    currentMeasurementRaw.loopArray([&](int32_t& value, uint16_t i) {
+    currentMeasurementRaw.loopArray([&](int32_t& value, uint8_t i) {
         value = dataCollection.dataStore.getLatest()[i];
     });
     return currentMeasurementRaw;
@@ -165,7 +163,7 @@ Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
 
 Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
     Helper::NumberArray<int32_t> currentMeasurementScaled = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
-    currentMeasurementScaled.loopArray([&](int32_t& value, uint16_t i) {
+    currentMeasurementScaled.loopArray([&](int32_t& value, uint8_t i) {
         // SCALED = (RAW + offset) * scaling
         value = (dataCollection.dataStore.getLatest()[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
     });
@@ -197,8 +195,8 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Scaling measurement valueNumber out of bounds.");
         return false;
     }
-    scalingTargetValue = targetValue;
-    scalingValueIndex = valueNumber - 1;
+    dataProcessing.scalingTargetIndex = valueNumber - 1;
+    dataProcessing.scalingTargetValue = targetValue;
 
     // Stop interval
     sensorDelay.stop();
@@ -211,23 +209,16 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
     return true;
 }
 
-void XmoduleSensor::measureOffsetCalculate() {
-    // OFFSET = -1 * sum/times
-    currentMeasurementRaw().loopArray([&](int32_t& value, uint16_t i) {
-        dataProcessing.offset.values[i] = - value;
-    });
-    measureOffsetScalingFinish();
-}
-
-void XmoduleSensor::measureScalingCalculate() {
-    // SCALING = TARGETVALUE / (sum/times + OFFSET)
-    currentMeasurementRaw().loopArray([&](int32_t& value, uint16_t i) {
-        dataProcessing.scaling.values[i] = (float_t)scalingTargetValue / (value + dataProcessing.offset.values[i]);
-    });
-    measureOffsetScalingFinish();
-}
-
 void XmoduleSensor::measureOffsetScalingFinish() {
+    // Calculate offset or scaling
+    if (offsetRunning) {
+        dataProcessing.setOffset(dataCollection.dataStore.getLatest());
+    } else if (scalingRunning) {
+        dataProcessing.setScaling(dataCollection.dataStore.getLatest());
+    } else {
+        mvp.logger.write(CfgLogger::Level::ERROR, "Offset/Scaling measurement finished without running.");
+        return;
+    }
     offsetRunning = false;
     scalingRunning = false;
 
@@ -244,11 +235,13 @@ void XmoduleSensor::measureOffsetScalingFinish() {
 }
 
 void XmoduleSensor::resetOffset() {
-    dataProcessing.offset.reset();
+    // dataProcessing.offset.reset();
+    dataProcessing.offset.resetValues();
     mvp.config.writeCfg(dataProcessing);
 }
 
 void XmoduleSensor::resetScaling() {
-    dataProcessing.scaling.reset();
+    // dataProcessing.scaling.reset();
+    dataProcessing.scaling.resetValues();
     mvp.config.writeCfg(dataProcessing);
 }
