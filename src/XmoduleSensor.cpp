@@ -167,7 +167,7 @@ Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
         // SCALED = (RAW + offset) * scaling
         value = (dataCollection.dataStore.getLatest()[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
     });
-    return currentMeasurementRaw();
+    return currentMeasurementScaled;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +236,7 @@ void XmoduleSensor::measureOffsetScalingFinish() {
 
 void XmoduleSensor::resetOffset() {
     // dataProcessing.offset.reset();
-    dataProcessing.offset.resetValues();
+    dataProcessing.offset.resetValues();                                                            // TODO not working !!!!!!!!!
     mvp.config.writeCfg(dataProcessing);
 }
 

@@ -51,17 +51,17 @@ class Helper {
             public:
 
                 T* values;
-                T resetValue;
+                T defaultValue;
                 uint8_t value_size;
 
                 /**
                  * Default constructor. The array is empty and has no size.
                  * 
                  * @param _valueSize The size of the array.
-                 * @param _resetValue The value to be used to initialize the values of the array.
+                 * @param _defaultValue The value to be used to initialize the values of the array.
                  */
-                NumberArray() : value_size(0), resetValue(0) { }
-                NumberArray(uint8_t _valueSize, T _resetValue = 0) : value_size(_valueSize), resetValue(_resetValue) {
+                NumberArray() : value_size(0), defaultValue(0) { }
+                NumberArray(uint8_t _valueSize, T _defaultValue = 0) : value_size(_valueSize), defaultValue(_defaultValue) {
                     values = new T[_valueSize];
                     resetValues();
                 }
@@ -74,11 +74,11 @@ class Helper {
                  * (Re-)initializes the array with the given size and reset value during runtime.
                  *
                  * @param _valueSize The size of the array.
-                 * @param _resetValue The value to be used to initialize the values in the array.
+                 * @param _defaultValue The value to be used to initialize the values in the array.
                  */
-                void lateInit(uint8_t _valueSize, T _resetValue = 0) {
+                void lateInit(uint8_t _valueSize, T _defaultValue = 0) {
                     value_size = _valueSize;
-                    resetValue = _resetValue;
+                    defaultValue = _defaultValue;
                     delete [] values;
                     values = new T[value_size];
                     resetValues();
@@ -89,7 +89,7 @@ class Helper {
                  */
                 void resetValues() {
                     loopArray([this](T& value, uint8_t i) {
-                        values[i] = resetValue;
+                        values[i] = defaultValue;
                     });
                 }
 
@@ -111,7 +111,7 @@ class Helper {
                 bool isDefault() {
                     bool isDefault = true;
                     loopArray([&](T& value, uint8_t i) {
-                        if (value != resetValue) {
+                        if (value != defaultValue) {
                             isDefault = false;
                         }
                     });
