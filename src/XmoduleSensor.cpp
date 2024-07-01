@@ -182,7 +182,7 @@ void XmoduleSensor::measureOffset() {
     sensorDelay.stop();
 
     // Restart data collection with new averaging
-    dataCollection.setAveragingCount(&cfgXmoduleSensor.averagingOffsetScaling);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
 
     offsetRunning = true;
     mvp.logger.write(CfgLogger::Level::INFO, "Offset measurement started.");
@@ -204,7 +204,7 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
     sensorDelay.stop();
 
     // Restart data collection with new averaging
-    dataCollection.setAveragingCount(&cfgXmoduleSensor.averagingOffsetScaling);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
 
     scalingRunning = true;
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Scaling measurement of index %d started.", scalingValueIndex);
@@ -236,7 +236,7 @@ void XmoduleSensor::measureOffsetScalingFinish() {
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Offset/Scaling measurement done in %d ms.", millis() - dataCollection.avgStartTime );
 
     // Restart data collection with new averaging
-    dataCollection.setAveragingCount(&cfgXmoduleSensor.sampleAveraging);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.sampleAveraging);
 
     // Restart interval, if set
     if (cfgXmoduleSensor.reportingInterval > 0)

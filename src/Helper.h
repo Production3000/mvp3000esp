@@ -42,6 +42,8 @@ class Helper {
          * A simple number array implementation for the MVP3000 framework.
          * 
          * Its provides an array with loop functionality and a clear/reset value function.
+         * 
+         * @tparam T The type of data to be stored in the array.
          */
         template <typename T>
         class NumberArray {
@@ -51,6 +53,12 @@ class Helper {
                 T resetValue;
                 uint8_t value_size;
 
+                /**
+                 * Default constructor. The array is empty and has no size.
+                 * 
+                 * @param _valueSize The size of the array.
+                 * @param _resetValue The value to be used to initialize the values of the array.
+                 */
                 NumberArray() : value_size(0), resetValue(0) { }
                 NumberArray(uint8_t _valueSize, T _resetValue = 0) : value_size(_valueSize), resetValue(_resetValue) {
                     values = new T[_valueSize];
@@ -62,7 +70,21 @@ class Helper {
                 }
 
                 /**
-                 * Initializes the array with the reset value.
+                 * (Re-)initializes the array with the given size and reset value during runtime.
+                 *
+                 * @param _valueSize The size of the array.
+                 * @param _resetValue The value to be used to initialize the values in the array.
+                 */
+                void lateInit(uint8_t _valueSize, T _resetValue = 0) {
+                    value_size = _valueSize;
+                    resetValue = _resetValue;
+                    delete [] values;
+                    values = new T[value_size];
+                    resetValues();
+                }
+
+                /**
+                 * Initializes the value in the array with the reset value.
                  */
                 void resetValues() {
                     loopArray([this](T& value, uint16_t i) {
@@ -88,20 +110,12 @@ class Helper {
         /**
          * A simple linked list implementation for the MVP3000 framework.
          * 
-         * The linked list is a generic class that can store any type of data.
+         * The linked list is a generic class that can store any type of data, as pointer or value.
          * The linked list has a maximum size limit. If the limit is reached, the oldest element is removed automatically or appending stops.
          * The linked list can also check if it contains a specific value and move the value to the end of the list.
          * 
          * @tparam T The type of data to be stored in the linked list.
          * @tparam StoreByPointer If true, the linked list stores pointers to the data. If false, the linked list stores the data directly. Default is false.
-         * 
-         * 
-         * Example usage:
-         * 
-         * // Create a linked list with a maximum size of 10 elements
-         * 
-         * LinkedList<int> list(10);
-         * 
          */
         template <typename T, bool StoreByPointer = false>
         class LinkedList {
@@ -115,6 +129,7 @@ class Helper {
                     Node(uint8_t _valueSize) {
                         data = new T[_valueSize];
                     }
+
                     ~Node() {
                         if (StoreByPointer) {
                             // Compiler throws an error for StoreByPointer = false even though it should never be called
@@ -155,18 +170,13 @@ class Helper {
 
             public:
                 /**
-                 * Default constructor. The linked list has no size limit and will grow until the memory is full.
-                 */
-                LinkedList() : head(nullptr), tail(nullptr), size(0), max_size(10) {}
-
-                /**
                  * Preferred constructor with a maximum list size limit.
                  * 
-                 * @param _max_size The maximum size of the linked list.
+                 * @param _max_size The maximum size of the linked list. Default is 10.
                  */
+                LinkedList() : head(nullptr), tail(nullptr), size(0), max_size(10) {}
                 LinkedList(uint16_t _max_size) : head(nullptr), tail(nullptr), size(0), max_size(_max_size) {}
 
-                // Destructor
                 ~LinkedList() {
                     clear();
                 }
@@ -175,7 +185,7 @@ class Helper {
                 typename std::conditional<StoreByPointer, T*, T>::type getLatest() { return tail->data; }
 
                 /**
-                 * Appends a new element to the linked list. Removes the oldest element if the list is full.
+                 * Appends a new value to the linked list. Removes the oldest element if the list is full.
                  *
                  * @param value The value to be added to the linked list.
                  */
@@ -250,33 +260,20 @@ class Helper {
                 }
 
                 /**
-                 * Loops through all elements in the linked list starting from oldest and calls the given callback function.
+                 * Loops through all elements in the linked list and calls the given callback function.
                  * The callback function can be a captive lambda function.
                  * 
                  * @param callback The callback function to be called for each element.
+                 * @param reverse If true, the list is looped through in reverse order from latest/tail to first/head entry. Default is false.
                  */       
-                void loopList(std::function<void(T&, uint16_t)> callback) {
+                void loopList(std::function<void(T&, uint16_t)> callback, bool reverse = false) {
                     // The above allows to call with captive lambda, loopList([&](T& value, uint16_t index) { ... });
                     // This one only allows non-captive lambdas: loopList(void (*callback)(T&, uint16_t))
-                    Node* current = head;
+                    Node* current = (reverse) ? tail : head;
                     uint16_t i = 0;
                     while (current != nullptr) {
                         callback(current->data, i++);
-                        current = current->next;
-                    }
-                }
-
-                /**
-                 * Loops through all elements in the linked list starting from newest and calls the given callback function.
-                 * 
-                 * @param callback The callback function to be called for each element.
-                 */   
-                void loopListReverse(std::function<void(T&, uint16_t)> callback) {
-                    Node* current = tail;
-                    uint16_t i = 0;
-                    while (current != nullptr) {
-                        callback(current->data, i++);
-                        current = current->prev;
+                        current = (reverse) ? current->prev : current->next;
                     }
                 }
 

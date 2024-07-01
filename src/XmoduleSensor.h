@@ -87,28 +87,28 @@ struct DataProcessing : public CfgStructJsonInterface {
 
     template <typename T>
     struct ProcessingArray {
-        uint8_t dataValueCount = 0;
+        uint8_t dataValueSize = 0;
         int8_t defaultValue;
         T *values;
 
         ProcessingArray(){}
-        ProcessingArray(uint8_t _dataValueCount, int8_t _defaultValue) {
-            dataValueCount = _dataValueCount;
+        ProcessingArray(uint8_t _dataValueSize, int8_t _defaultValue) {
+            dataValueSize = _dataValueSize;
             defaultValue = _defaultValue;
 
             delete [] values;
-            values = new T[dataValueCount];
+            values = new T[dataValueSize];
             reset();
         }
 
         void reset() {
-            for (uint8_t i = 0; i < dataValueCount; i++)
+            for (uint8_t i = 0; i < dataValueSize; i++)
                 values[i] = static_cast<T>(defaultValue);
         }
 
         bool exportToJsonArray(JsonArray &jsonArray) {
             boolean isCustom = false;
-            for (uint8_t i = 0; i < dataValueCount; i++) {
+            for (uint8_t i = 0; i < dataValueSize; i++) {
                 jsonArray.add(values[i]);
                 if (values[i] != defaultValue) // Check if values are non-default
                     isCustom = true;
@@ -118,7 +118,7 @@ struct DataProcessing : public CfgStructJsonInterface {
 
         bool importFromJsonArray(JsonArray &jsonArray) {
             // Make sure size is correct to not have memory issues
-            if (jsonArray.size() != dataValueCount)
+            if (jsonArray.size() != dataValueSize)
                 return false;
             // Assign values
             uint8_t i = 0;
@@ -128,7 +128,7 @@ struct DataProcessing : public CfgStructJsonInterface {
         }
 
         void set(T* _values) {
-            for (uint8_t i = 0; i < dataValueCount; i++)
+            for (uint8_t i = 0; i < dataValueSize; i++)
                 values[i] = _values[i];
         }
 
@@ -141,10 +141,10 @@ struct DataProcessing : public CfgStructJsonInterface {
     // Scaling, strech data in y direction
     ProcessingArray<float_t> scaling;
 
-    void initValueCount(uint8_t dataValueCount) {
-        sampleToIntExponent = ProcessingArray<int8_t>(dataValueCount, 0);
-        offset = ProcessingArray<int32_t>(dataValueCount, 0);
-        scaling = ProcessingArray<float_t>(dataValueCount, 1);
+    void initDataValueSize(uint8_t dataValueSize) {
+        sampleToIntExponent = ProcessingArray<int8_t>(dataValueSize, 0);
+        offset = ProcessingArray<int32_t>(dataValueSize, 0);
+        scaling = ProcessingArray<float_t>(dataValueSize, 1);
     }
 
     void exportToJson(JsonDocument &jsonDoc) {
@@ -177,9 +177,7 @@ struct DataProcessing : public CfgStructJsonInterface {
 //////////////////////////////////////////////////////////////////////////////////
 
 struct DataCollection {
-    DataCollection() { };
-
-    uint8_t dataValueCount = 0;
+    DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
 
     // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
     // More likely much less, max 1000 for single value?
@@ -189,30 +187,25 @@ struct DataCollection {
 
     // Averaging
     Helper::NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
-    uint16_t *averagingCount; // Pointer to cfgXmoduleSensor
-    uint8_t avgCounter; // Counter for averaging
-    int32_t avgStartTime; // Time of first measurement in averaging cycle
-    boolean avgCycleFinished; // Flag for new data added to dataStore
+    uint16_t *averagingCountPtr; // Pointer to cfgXmoduleSensor
+    uint8_t avgCounter = 0; // Counter for averaging
+    int32_t avgStartTime = 0; // Time of first measurement in averaging cycle
+    boolean avgCycleFinished = false; // Flag for new data added to dataStore
 
     // Data statistics
     Helper::NumberArray<int32_t> dataMax;
     Helper::NumberArray<int32_t> dataMin;
 
 
-    void initValueCount(uint8_t _dataValueCount, uint16_t *_averagingCount) {
-        dataValueCount = _dataValueCount;
-        averagingCount = _averagingCount;
-
+    void initDataValueSize(uint8_t dataValueSize) {
         // Init all NumberArrays
-        avgDataSum = Helper::NumberArray<int32_t>(dataValueCount);
-        dataMax = Helper::NumberArray<int32_t>(dataValueCount, std::numeric_limits<int32_t>::min());
-        dataMin = Helper::NumberArray<int32_t>(dataValueCount, std::numeric_limits<int32_t>::max());
-
-        reset();
+        avgDataSum.lateInit(dataValueSize, 0);
+        dataMax.lateInit(dataValueSize, std::numeric_limits<int32_t>::min());
+        dataMin.lateInit(dataValueSize, std::numeric_limits<int32_t>::max());
     }
 
-    void setAveragingCount(uint16_t *_averagingCount) {
-        averagingCount = _averagingCount;
+    void setAveragingCountPtr(uint16_t *_averagingCount) {
+        averagingCountPtr = _averagingCount;
         reset();
     }
 
@@ -249,10 +242,10 @@ struct DataCollection {
         avgCounter++;
 
         // Check if averaging count is reached
-        if (avgCounter >= *averagingCount) {
+        if (avgCounter >= *averagingCountPtr) {
 
             // Calculate data and time averages and store
-            avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value = nearbyintf( value / *averagingCount ); } );
+            avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value = nearbyintf( value / *averagingCountPtr ); } );
             dataStore.append(avgDataSum);
             dataStoreTime.append(nearbyintf( (avgStartTime + millis()) / 2 ));
 
@@ -276,8 +269,8 @@ class XmoduleSensor : public Xmodule {
         // Constructor to re-init arrays for changed value count
         XmoduleSensor(uint8_t valueCount) {
             cfgXmoduleSensor.initValueCount(valueCount);
-            dataProcessing.initValueCount(valueCount);
-            dataCollection.initValueCount(valueCount, &cfgXmoduleSensor.sampleAveraging); // Averaging can change during operation
+            dataProcessing.initDataValueSize(valueCount);
+            dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
 
         void setup() override;
@@ -316,7 +309,7 @@ class XmoduleSensor : public Xmodule {
 
     private:
         DataProcessing dataProcessing;
-        DataCollection dataCollection;
+        DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
         millisDelay sensorDelay;
 
