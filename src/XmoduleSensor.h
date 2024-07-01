@@ -176,8 +176,6 @@ struct DataProcessing : public CfgStructJsonInterface {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-#include "LinkedNAList.h"
-
 struct DataCollection {
     DataCollection() { };
 
@@ -186,7 +184,7 @@ struct DataCollection {
     // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
     // More likely much less, max 1000 for single value?
     uint16_t dataStoreLength = 5;
-    LinkedNAList<int32_t> dataStore = LinkedNAList<int32_t>(dataStoreLength);
+    Helper::LinkedList<int32_t, true> dataStore = Helper::LinkedList<int32_t, true>(dataStoreLength);
     Helper::LinkedList<int32_t> dataStoreTime = Helper::LinkedList<int32_t>(dataStoreLength);;
 
     // Averaging
@@ -206,9 +204,9 @@ struct DataCollection {
         averagingCount = _averagingCount;
 
         // Init all NumberArrays
-        avgDataSum.init(dataValueCount, 0);
-        dataMax.init(dataValueCount, std::numeric_limits<int32_t>::min());
-        dataMin.init(dataValueCount, std::numeric_limits<int32_t>::max());
+        avgDataSum = Helper::NumberArray<int32_t>(dataValueCount);
+        dataMax = Helper::NumberArray<int32_t>(dataValueCount, std::numeric_limits<int32_t>::min());
+        dataMin = Helper::NumberArray<int32_t>(dataValueCount, std::numeric_limits<int32_t>::max());
 
         reset();
     }
@@ -220,9 +218,9 @@ struct DataCollection {
 
     void reset() {
         // Averaging
-        avgDataSum.clear();
-        dataMax.clear();
-        dataMin.clear();
+        avgDataSum.resetValues();
+        dataMax.resetValues();
+        dataMin.resetValues();
 
         // Counters and such
         avgCounter = 0;
@@ -255,11 +253,11 @@ struct DataCollection {
 
             // Calculate data and time averages and store
             avgDataSum.loopArray([&](int32_t& value, uint16_t i) { value = nearbyintf( value / *averagingCount ); } );
-            dataStore.appendNumericArray(avgDataSum);
-            dataStoreTime.appendForce(nearbyintf( (avgStartTime + millis()) / 2 ));
+            dataStore.append(avgDataSum);
+            dataStoreTime.append(nearbyintf( (avgStartTime + millis()) / 2 ));
 
             // Reset temporary values, counters            
-            avgDataSum.clear();
+            avgDataSum.resetValues();
             avgCounter = 0;
             avgStartTime = 0;
             // Flag new data added for further actions in loop()

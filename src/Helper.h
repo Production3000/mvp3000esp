@@ -36,6 +36,55 @@ class Helper {
             return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
         };
 
+
+
+        /**
+         * A simple number array implementation for the MVP3000 framework.
+         * 
+         * Its provides an array with loop functionality and a clear/reset value function.
+         */
+        template <typename T>
+        class NumberArray {
+            public:
+
+                T* values;
+                T resetValue;
+                uint8_t value_size;
+
+                NumberArray() : value_size(0), resetValue(0) { }
+                NumberArray(uint8_t _valueSize, T _resetValue = 0) : value_size(_valueSize), resetValue(_resetValue) {
+                    values = new T[_valueSize];
+                    resetValues();
+                }
+
+                ~NumberArray() {
+                    delete[] values;
+                }
+
+                /**
+                 * Initializes the array with the reset value.
+                 */
+                void resetValues() {
+                    loopArray([this](T& value, uint16_t i) {
+                        values[i] = resetValue;
+                    });
+                }
+
+                /**
+                 * Loops through all elements in the linked list starting from oldest and calls the given callback function.
+                 * The callback function can be a captive lambda function.
+                 *
+                 * @param callback The callback function to be called for each element.
+                 */
+                void loopArray(std::function<void(T&, uint16_t)> callback) {
+                    for (uint8_t i = 0; i < value_size; i++) {
+                        callback(values[i], i);
+                    }
+                }
+        };
+
+
+
         /**
          * A simple linked list implementation for the MVP3000 framework.
          * 
@@ -44,14 +93,35 @@ class Helper {
          * The linked list can also check if it contains a specific value and move the value to the end of the list.
          * 
          * @tparam T The type of data to be stored in the linked list.
+         * @tparam StoreByPointer If true, the linked list stores pointers to the data. If false, the linked list stores the data directly. Default is false.
+         * 
+         * 
+         * Example usage:
+         * 
+         * // Create a linked list with a maximum size of 10 elements
+         * 
+         * LinkedList<int> list(10);
+         * 
          */
-        template <typename T>
+        template <typename T, bool StoreByPointer = false>
         class LinkedList {
             private:
                 struct Node {
-                    T data;
+                    typename std::conditional<StoreByPointer, T*, T>::type data;
                     Node* prev;
                     Node* next;
+
+                    Node() {}
+                    Node(uint8_t _valueSize) {
+                        data = new T[_valueSize];
+                    }
+                    ~Node() {
+                        if (StoreByPointer) {
+                            // Compiler throws an error for StoreByPointer = false even though it should never be called
+                            // reinterpret_cast probably does nothing for StoreByPointer = true
+                            delete[] reinterpret_cast<T*>(data);
+                        }
+                    }
                 };
 
                 Node* head; // Pointer to the first-added node
@@ -59,13 +129,36 @@ class Helper {
                 uint16_t size;
                 uint16_t max_size;
 
+                /**
+                 * Appends a node to the linked list. Removes the oldest node if the list is already full.
+                 *
+                 * @param newNode The new node to be added to the linked list.
+                 */
+                void appendNode(Node* newNode) {
+                    if (size >= max_size) {
+                        removeFirst();
+                    }
+
+                    newNode->prev = nullptr;
+                    newNode->next = nullptr;
+
+                    if (size == 0) {
+                        head = tail = newNode;
+                    } else {
+                        tail->next = newNode;
+                        newNode->prev = tail;
+                        tail = newNode;
+                    }
+
+                    size++;
+                }
+
             public:
                 /**
                  * Default constructor. The linked list has no size limit and will grow until the memory is full.
                  */
                 LinkedList() : head(nullptr), tail(nullptr), size(0), max_size(10) {}
 
-                // Preferred constructor
                 /**
                  * Preferred constructor with a maximum list size limit.
                  * 
@@ -78,73 +171,56 @@ class Helper {
                     clear();
                 }
 
-                Node* getFirst() { return head; }
-                Node* getLatest() { return tail; }
-
-                /**
-                 * Appends a new element to the linked list.
-                 *
-                 * @param value The value to be added to the linked list.
-                 */
-                bool append(const T& value) {
-                    if (size >= max_size) {
-                        return false;
-                    } else {
-                        Node* newNode = new Node;
-                        newNode->data = value;
-                        newNode->prev = nullptr;
-                        newNode->next = nullptr;
-
-                        if (size == 0) {
-                            head = tail = newNode;
-                        } else {
-                            tail->next = newNode;
-                            newNode->prev = tail;
-                            tail = newNode;
-                        }
-                    }
-
-                    size++;
-                    return true;
-                }
+                typename std::conditional<StoreByPointer, T*, T>::type getFirst() { return head->data; }
+                typename std::conditional<StoreByPointer, T*, T>::type getLatest() { return tail->data; }
 
                 /**
                  * Appends a new element to the linked list. Removes the oldest element if the list is full.
                  *
                  * @param value The value to be added to the linked list.
                  */
-                void appendForce(const T& value) {
-                    if (size >= max_size) {
-                        removeFirst();
-                    }
-                    append(value);
+                void append(const T& value) {
+                    if (StoreByPointer) // Only values
+                        return;
+
+                    // Append new node and assign value
+                    appendNode(new Node());
+                    tail->data = value;
+                }
+                void append(NumberArray<T>& newValues) {
+                    if (!StoreByPointer) // Only pointers
+                        return;
+
+                    // Append new node and copy values
+                    appendNode(new Node(newValues.value_size));
+                    newValues.loopArray([&](T& newValue, uint16_t i) {
+                        tail->data[i] = newValue;
+                    });
                 }
 
                 /**
-                 * Move element to the end of the list if it exists, otherwise append it to the list
+                 * Move element to the end of the list if it exists, otherwise appends it to the list
                  *
                  * @param value The value to be added to the linked list.
                  */
-                void appendForceOrMoveToLast(const T& value) {
+                void appendOrMoveToLast(const T& value) {
+                    if (StoreByPointer) // Only values
+                        return;
+
                     if (contains(value)) {
                         moveToLast(value);
                     } else {
-                        appendForce(value);
+                        append(value);
                     }
                 }
 
                 /**
-                 * Clears the linked list and frees the memory.
+                 * Clears the linked list.
                  */
                 void clear() {
-                    Node* current = head;
-                    while (current != nullptr) {
-                        Node* temp = current;
-                        current = current->next;
-                        delete temp;
+                    while (head != nullptr) {
+                        removeFirst();
                     }
-                    head = nullptr;
-                    size = 0;
                 }
 
                 /**
@@ -153,6 +229,9 @@ class Helper {
                  * @param value The value to be checked.
                  */
                 bool contains(const T& value) const {
+                    if (StoreByPointer)
+                        return false;
+
                     Node* current = head;
                     while (current != nullptr) {
                         if (current->data == value) {
@@ -207,6 +286,9 @@ class Helper {
                  * @param value The value to be moved.
                  */
                 void moveToLast(const T& value) {
+                    if (StoreByPointer) // Only values
+                        return;
+                        
                     if (head == nullptr) {
                         return;
                     }
@@ -253,65 +335,16 @@ class Helper {
                     head->prev = nullptr; // Remove the prev pointer from the new head
                     delete temp;
 
+                    // If no node remains, the tail needs to be set to nullptr as well
+                    if (head == nullptr) {
+                        tail = nullptr;
+                    }
+
                     size--;
                 }
         };
 
 
-        template <typename T>
-        class NumberArray {
-            public:
-
-                T* values;
-                T resetValue;
-                uint8_t value_size;
-
-                NumberArray() : value_size(0), resetValue(0) { }
-
-                NumberArray(uint8_t _valueSize, T _resetValue) : value_size(_valueSize), resetValue(_resetValue) {
-                    values = new T[_valueSize];
-                    clear();
-                }
-
-                ~NumberArray() {
-                    delete[] values;
-                }
-
-                /**
-                 * Initializes the array with the given size and reset value.
-                 *
-                 * @param _valueSize The size of the array.
-                 * @param _resetValue The value to be used to initialize the array.
-                 */
-                void init(uint8_t _valueSize, T _resetValue) {
-                    value_size = _valueSize;
-                    resetValue = _resetValue;
-                    delete [] values;
-                    values = new T[value_size];
-                    clear();
-                }
-
-                /**
-                 * Initializes the array with the reset value.
-                 */
-                void clear() {
-                    loopArray([this](T& value, uint16_t i) {
-                        values[i] = resetValue;
-                    });
-                }
-
-                /**
-                 * Loops through all elements in the linked list starting from oldest and calls the given callback function.
-                 * The callback function can be a captive lambda function.
-                 *
-                 * @param callback The callback function to be called for each element.
-                 */
-                void loopArray(std::function<void(T&, uint16_t)> callback) {
-                    for (uint8_t i = 0; i < value_size; i++) {
-                        callback(values[i], i);
-                    }
-                }
-        };
         
 };
 
