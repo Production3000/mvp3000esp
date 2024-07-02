@@ -53,10 +53,10 @@ struct CfgNetCom : public Cfg {
 
     CfgNetCom() {
         cfgName = "cfgNetCom";
-        addSetting("discoveryPort", &discoveryPort, [&](uint16_t _x) { if (_x < 1024) return false; else discoveryPort = _x; return true; }); // port above 1024
-        addSetting("mqttPort", &mqttPort, [&](uint16_t _x) { if (_x < 1024) return false; else mqttPort = _x; return true; }); // port above 1024
-        addSetting("mqttForcedBroker", &mqttForcedBroker, [&](String _x) { if ((_x.length() > 0) && (_x.length() < 6)) return false; else mqttForcedBroker = _x; return true; } ); // allow empty to remove
-        addSetting("mqttTopicSuffix", &mqttTopicSuffix, [&](String _x) { if (_x.length() < 5) return false; else mqttTopicSuffix = _x; return true; }); // min 5 chars
+        addSetting<uint16_t>("discoveryPort", &discoveryPort, [&](uint16_t _x) { return (_x < 1024) ? false : true; }); // port above 1024
+        addSetting<uint16_t>("mqttPort", &mqttPort, [&](uint16_t _x) { if (_x < 1024) return false; else mqttPort = _x; return true; }); // port above 1024
+        addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [&](String _x) { if ((_x.length() > 0) && (_x.length() < 6)) return false; else mqttForcedBroker = _x; return true; } ); // allow empty to remove
+        addSetting<String>("mqttTopicSuffix", &mqttTopicSuffix, [&](String _x) { if (_x.length() < 5) return false; else mqttTopicSuffix = _x; return true; }); // min 5 chars
     }
 };
 

@@ -38,9 +38,9 @@ struct CfgXmoduleSensor : Cfg {
 
     CfgXmoduleSensor() {
         cfgName = "cfgXmoduleSensor";
-        addSetting("sampleAveraging", &sampleAveraging, [&](uint16_t _x) { if (_x == 0) return false; else sampleAveraging = _x; return true; }); // at least 1
-        addSetting("averagingOffsetScaling", &averagingOffsetScaling, [&](uint16_t _x) { if (_x == 0) return false; else averagingOffsetScaling = _x; return true; }); // at least 1
-        addSetting("reportingInterval", &reportingInterval, [&](uint16_t _x) { reportingInterval = _x; return true; });
+        addSetting<uint16_t>("sampleAveraging", &sampleAveraging, [&](uint16_t _x) { if (_x == 0) return false; else sampleAveraging = _x; return true; }); // at least 1
+        addSetting<uint16_t>("averagingOffsetScaling", &averagingOffsetScaling, [&](uint16_t _x) { if (_x == 0) return false; else averagingOffsetScaling = _x; return true; }); // at least 1
+        addSetting<uint16_t>("reportingInterval", &reportingInterval, [&](uint16_t _x) { reportingInterval = _x; return true; });
     };
 
     // Settings that are not known during creating of this config but need init before anything works

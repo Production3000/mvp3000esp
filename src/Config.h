@@ -30,7 +30,7 @@ limitations under the License.
 #include "Logger.h"
 #include "Helper.h"
 
-
+// Interface for exporting and importing configuration data to/from JSON
 struct CfgStructJsonInterface {
     String cfgName = "template";
 
@@ -50,91 +50,165 @@ struct CfgStructJsonInterface {
     virtual bool importFromJson(JsonDocument &jsonDoc) { return true; };
 };
 
-
+// Configuration structure
 struct Cfg : public CfgStructJsonInterface {
 
     Helper helper;
 
-    template <typename T>                                       // TODO somehow use pointers to put all Settings in single array, maybe https://stackoverflow.com/questions/53744407/how-to-return-a-pointer-to-template-struct
-    struct Setting {
-        uint32_t hash;
+    // Core setting structure for checking and setting values
+    template <typename T>
+    struct SettingCore {
         T *value;
-        std::function<bool(T)> set;
-        Setting() {}; // Default constructor needed for some reason
-        Setting(uint32_t _hash,T *_value, std::function<bool(T)> _set) { hash = _hash; value = _value; set = _set; }
+        std::function<bool(T)> checkValue;
+        SettingCore() {}; // Default constructor needed for some reason
+        SettingCore(T *_value, std::function<bool(T)> _checkValue) : value(_value), checkValue(_checkValue) { };
+
+        /**
+         * @brief Check if the value is valid and set it if so.
+         * 
+         * @param _value The value to check and set.
+         * @return True if the value is valid and was set, false otherwise.
+         */
+        bool checkValueAndSet(T _value) {
+            if (!checkValue(_value))
+                return false;
+            *value = _value;
+            return true;
+        }
     };
 
-    static const uint8_t MAX_SETTINGS = 15;
-    uint8_t settingsBoolCount = 0;
-    Setting<boolean> settingsBool[MAX_SETTINGS];
-    uint8_t settingsIntCount = 0;
-    Setting<uint16_t> settingsInt[MAX_SETTINGS];
-    uint8_t settingsStringCount = 0;
-    Setting<String> settingsString[MAX_SETTINGS];
+    // Main setting structure
+    struct SettingMain {
+        uint32_t hash; // Hash of the key
 
-    void addSetting(String key,  boolean *value, std::function<bool(boolean)> set) {
-        settingsBool[settingsBoolCount] = Setting<boolean>(helper.hashStringDjb2(key.c_str()), value, set);
-        settingsBoolCount++;
-    }
-    void addSetting(String key,  uint16_t *value, std::function<bool(uint16_t)> set) {
-        settingsInt[settingsIntCount] = Setting<uint16_t>(helper.hashStringDjb2(key.c_str()), value, set);
-        settingsIntCount++;
-    }
-    void addSetting(String key,  String *value, std::function<bool(String)> set) {
-        settingsString[settingsStringCount] = Setting<String>(helper.hashStringDjb2(key.c_str()), value, set);
-        settingsStringCount++;
+        uint8_t type; // 0 = boolean, 1 = int, 2 = String
+        union { // Pointer to the value
+            SettingCore<boolean>* b;
+            SettingCore<uint16_t>* i;
+            SettingCore<String>* s;
+        } settingCore;
+
+        // Minimalistic linked list
+        SettingMain* next;
+
+        /**
+         * @brief Default constructor
+         * Automatically sets the type based on the value type.
+         * 
+         * @param _hash The hash of the key-string.
+         * @param _value The value of the setting.
+         * @param checkValue A function to check if the value is valid.
+         */
+        SettingMain() {}; // Default constructor
+        SettingMain(uint32_t _hash, boolean *_value, std::function<bool(boolean)> checkValue) : hash(_hash), type(0) {
+            settingCore.b = new SettingCore<boolean>(_value, checkValue);
+        };
+        SettingMain(uint32_t _hash, uint16_t *_value, std::function<bool(uint16_t)> checkValue) : hash(_hash), type(1) {
+            settingCore.i = new SettingCore<uint16_t>(_value, checkValue);
+        };
+        SettingMain(uint32_t _hash, String *_value, std::function<bool(String)> checkValue) : hash(_hash), type(2) {
+            settingCore.s = new SettingCore<String>(_value, checkValue);
+        };
+    };
+
+    // Minimalistic linked list
+    SettingMain* head;
+
+    /**
+     * @brief Add a setting to the configuration.
+     * 
+     * @tparam T The type of the setting.
+     * @param key The key of the setting.
+     * @param value The value of the setting.
+     * @param checkValue A function to check if the value is valid.
+     */
+    template <typename T>
+    void addSetting(String key, T *value, std::function<bool(T)> checkValue) {
+        SettingMain* newSetting = new SettingMain(helper.hashStringDjb2(key.c_str()), value, checkValue);
+        newSetting->next = head;
+        head = newSetting;
     }
 
-    bool updateFromWeb(String key, String value) {
-        uint32_t hash = helper.hashStringDjb2(key.c_str());
-        for (uint8_t i = 0; i < settingsBoolCount; i++) {
-            if (settingsBool[i].hash == hash)
-                return settingsBool[i].set((value.toInt() != 0));
+    /**
+     * @brief Export the configuration data to a JSON document.
+     * 
+     * @param jsonDoc The JSON document to export the data to.
+     */
+    void exportToJson(JsonDocument &jsonDoc) {
+        SettingMain* current = head;
+        while (current != NULL) {
+            switch (current->type) {
+                case 0:
+                    jsonDoc[String(current->hash)] = *current->settingCore.b->value; // Dereference
+                    break;
+                case 1:
+                    jsonDoc[String(current->hash)] = *current->settingCore.i->value; // Dereference
+                    break;
+                case 2:
+                    jsonDoc[String(current->hash)] = *current->settingCore.s->value; // Dereference
+                    break;
+            }
+            current = current->next;
         }
-        for (uint8_t i = 0; i < settingsIntCount; i++) {
-            if (settingsInt[i].hash == hash)
-                return settingsInt[i].set((uint16_t)value.toInt());
+    }
+
+    /**
+     * @brief Import the configuration data from a JSON document.
+     * 
+     * @param jsonDoc The JSON document to import the data from.
+     */
+    bool importFromJson(JsonDocument &jsonDoc) {
+        // Loop through all settings and compare with hashes in JSON document
+        bool success = true;
+        SettingMain* current = head;
+        while (current != NULL) {
+            String hashString = String(current->hash);
+            if (jsonDoc.containsKey(hashString)) {
+                // Matching hash found, switch to type and check/set the value
+                switch (current->type) {
+                    case 0: // boolean
+                        success &= current->settingCore.b->checkValueAndSet(jsonDoc[hashString].as<boolean>());
+                        break;
+                    case 1: // uint16_t
+                        success &= current->settingCore.i->checkValueAndSet(jsonDoc[hashString].as<uint16_t>());
+                        break;
+                    case 2: // String
+                        success &= current->settingCore.s->checkValueAndSet(jsonDoc[hashString].as<String>());
+                        break;
+                }
+            }
+            current = current->next;
         }
-        for (uint8_t i = 0; i < settingsStringCount; i++) {
-            if (settingsString[i].hash == hash)
-                return settingsString[i].set(value);
+        return success;
+    }
+
+    /**
+     * @brief Update a setting from a web request.
+     * 
+     * @param key The key of the setting to update, will be hashed.
+     * @param value The new value of the setting.
+     */
+    bool updateFromWeb(String key, String value) {    
+        // Loop through all settings to find the correct one    
+        SettingMain* current = head;
+        while (current != NULL) {
+            if (current->hash == helper.hashStringDjb2(key.c_str())) {
+                // Found the setting, switch to its type and check/set the value
+                switch (current->type) {
+                    case 0: // boolean
+                        return current->settingCore.b->checkValueAndSet((value.toInt() != 0));
+                    case 1: // uint16_t
+                        return current->settingCore.i->checkValueAndSet(value.toInt());
+                    case 2: // String
+                        return current->settingCore.s->checkValueAndSet(value);
+                }
+            }
+            current = current->next;
         }
         return false;
     }
 
-    bool importFromJson(JsonDocument &jsonDoc) {
-        for (uint8_t i = 0; i < settingsBoolCount; i++) {
-            String hashString = String(settingsBool[i].hash);
-            if (jsonDoc.containsKey(hashString)) {
-                settingsBool[i].set(jsonDoc[hashString].as<boolean>());
-            }
-        }
-        for (uint8_t i = 0; i < settingsIntCount; i++) {
-            String hashString = String(settingsInt[i].hash);
-            if (jsonDoc.containsKey(hashString)) {
-                settingsInt[i].set(jsonDoc[hashString].as<uint16_t>());
-            }
-        }
-        for (uint8_t i = 0; i < settingsStringCount; i++) {
-            String hashString = String(settingsString[i].hash);
-            if (jsonDoc.containsKey(hashString)) {
-                settingsString[i].set(jsonDoc[hashString].as<String>());
-            }
-        }
-        return true;
-    }
-
-    void exportToJson(JsonDocument &jsonDoc) {
-        for (uint8_t i = 0; i < settingsBoolCount; i++)
-            jsonDoc[String(settingsBool[i].hash)] = *settingsBool[i].value; // Dereference
-        for (uint8_t i = 0; i < settingsIntCount; i++)
-            jsonDoc[String(settingsInt[i].hash)] = *settingsInt[i].value; // Dereference
-        for (uint8_t i = 0; i < settingsStringCount; i++)
-            jsonDoc[String(settingsString[i].hash)] = *settingsString[i].value; // Dereference
-    }
-
 };
-
 
 class Config {
     private:
