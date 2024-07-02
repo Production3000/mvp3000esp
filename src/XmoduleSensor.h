@@ -28,7 +28,7 @@ limitations under the License.
 #include "XmoduleSensor_DataProcessing.h"
 
 
-struct CfgXmoduleSensor : Cfg {
+struct CfgXmoduleSensor : CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
@@ -36,8 +36,7 @@ struct CfgXmoduleSensor : Cfg {
     uint16_t averagingOffsetScaling = 25;
     uint16_t reportingInterval = 0; // [ms], set to 0 to ignore
 
-    CfgXmoduleSensor() {
-        cfgName = "cfgXmoduleSensor";
+    CfgXmoduleSensor() : CfgJsonInterface("cfgXmoduleSensor") {
         addSetting<uint16_t>("sampleAveraging", &sampleAveraging, [](uint16_t x) { return (x == 0) ? false : true; }); // at least 1
         addSetting<uint16_t>("averagingOffsetScaling", &averagingOffsetScaling, [](uint16_t x) { return (x == 0) ? false : true; }); // at least 1
         addSetting<uint16_t>("reportingInterval", &reportingInterval, [](uint16_t _) { return true; });

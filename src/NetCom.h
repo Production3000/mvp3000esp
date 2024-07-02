@@ -38,7 +38,7 @@ limitations under the License.
 #endif
 
 
-struct CfgNetCom : public Cfg {
+struct CfgNetCom : public CfgJsonInterface {
 
     // Fixed settings
 
@@ -51,8 +51,7 @@ struct CfgNetCom : public Cfg {
     String mqttForcedBroker = ""; // test.mosquitto.org
     String mqttTopicSuffix = "myesp";
 
-    CfgNetCom() {
-        cfgName = "cfgNetCom";
+    CfgNetCom() : CfgJsonInterface("cfgNetCom") {
         addSetting<uint16_t>("discoveryPort", &discoveryPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
         addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
         addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](String x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove

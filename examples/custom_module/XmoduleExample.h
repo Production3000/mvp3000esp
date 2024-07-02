@@ -23,7 +23,7 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-struct CfgXmoduleExample : public Cfg {
+struct CfgXmoduleExample : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
     uint16_t editableNumber = 22222;
@@ -31,19 +31,17 @@ struct CfgXmoduleExample : public Cfg {
     // Fixed settings, restored with reboot to value set at compile  
     uint16_t fixedNumber = 10101;
 
-    CfgXmoduleExample() {
-
-        // The config name, used as SPIFF file name
-        cfgName = "XmoduleExample";
+    CfgXmoduleExample() : CfgJsonInterface("XmoduleExample") {
+        // Note above the config name, used as SPIFF file name
 
         // Initialize settings for load/save to SPIFF:
         //  var name string, to allow web-based form input (stored as int though)
         //  pointer to actual variable
-        //  set function with optional range checks
-        addSetting(
+        //  check function with optional range checks
+        addSetting<uint16_t>(
             "editableNumber",
             &editableNumber,
-            [&](uint16_t _x) { if (_x < 11111) return false; else editableNumber = _x; return true; }
+            [](uint16_t _x) { return (_x < 11111) ? false : true; }
         );
     }
 

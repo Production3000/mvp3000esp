@@ -16,12 +16,12 @@ limitations under the License.
 
 #include <ArduinoJson.h>
 
-#include "Config.h"
+#include "Config_JsonInterface.h"
 #include "Helper.h"
 
 
-struct DataProcessing : public CfgStructJsonInterface {
-    DataProcessing() { cfgName = "cfgDataProcessing"; }
+struct DataProcessing : public JsonInterface {
+    DataProcessing() : JsonInterface("cfgDataProcessing") { }
 
     Helper::NumberArray<int32_t> offset;
     Helper::NumberArray<float_t> scaling;

@@ -36,7 +36,7 @@ limitations under the License.
 #endif
 
 
-struct CfgNet : public Cfg  {
+struct CfgNet : public CfgJsonInterface  {
 
     // Modifiable settings saved to SPIFF
 
@@ -53,11 +53,8 @@ struct CfgNet : public Cfg  {
     //  true on power on: try network settings endlessly
     boolean forceClientMode = false;
 
-    CfgNet() {
-        cfgName = "cfgNet";
-        // Saved settings
+    CfgNet() : CfgJsonInterface("cfgNet") {
         addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [](uint16_t x) { return (x > 100) ? false : true; }); // Limit to 100, any more is 'forever'
-        // addSetting("mqttPort", &mqttPort, [&](uint16_t _x) { if (_x < 1) return false; else mqttPort = _x; return true; }); // port above 1024
         addSetting<String>("clientSsid", &clientSsid, [](String _) { return true; } ); // Check is in extra function
         addSetting<String>("clientPass", &clientPass, [](String _) { return true; }); // Check is in extra function
         addSetting<boolean>("forceClientMode", &forceClientMode, [](boolean _) { return true; });
