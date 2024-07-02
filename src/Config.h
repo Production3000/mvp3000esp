@@ -31,6 +31,11 @@ limitations under the License.
 #include "Helper.h"
 
 // Interface for exporting and importing configuration data to/from JSON
+/**
+ * @brief General interface for exporting and importing configuration data to/from JSON.
+ * 
+ * It can be passed to the config class to automatically export and import the data.
+ */
 struct CfgStructJsonInterface {
     String cfgName = "template";
 
@@ -50,17 +55,30 @@ struct CfgStructJsonInterface {
     virtual bool importFromJson(JsonDocument &jsonDoc) { return true; };
 };
 
-// Configuration structure
+/**
+ * @brief Configuration structure to hold single value configuration items
+ * 
+ * The structure is designed to be extended with class/module specific settings.
+ * The values are stored in the main program and the structure is used to manage them.
+ * It offser functions to read/write the settings to/from a JSON file.
+ */
 struct Cfg : public CfgStructJsonInterface {
 
     Helper helper;
 
-    // Core setting structure for checking and setting values
+    // Type-specific core setting structure
     template <typename T>
     struct SettingCore {
-        T *value;
+        T *value; // This is a pointer to the actual value
         std::function<bool(T)> checkValue;
-        SettingCore() {}; // Default constructor needed for some reason
+
+        /**
+         * @brief Default constructor
+         * 
+         * @param _value The value to check and set.
+         * @param _checkValue A function to check if the value is valid.
+         */
+        SettingCore() {};
         SettingCore(T *_value, std::function<bool(T)> _checkValue) : value(_value), checkValue(_checkValue) { };
 
         /**
@@ -77,23 +95,22 @@ struct Cfg : public CfgStructJsonInterface {
         }
     };
 
-    // Main setting structure
+    // Main setting structure, minimalistic linked list
     struct SettingMain {
         uint32_t hash; // Hash of the key
 
         uint8_t type; // 0 = boolean, 1 = int, 2 = String
-        union { // Pointer to the value
+        union { // Pointer to the type-specific setting core
             SettingCore<boolean>* b;
             SettingCore<uint16_t>* i;
             SettingCore<String>* s;
         } settingCore;
 
-        // Minimalistic linked list
         SettingMain* next;
 
         /**
          * @brief Default constructor
-         * Automatically sets the type based on the value type.
+         * Overloaded to select the type-specific settings core based on the value type.
          * 
          * @param _hash The hash of the key-string.
          * @param _value The value of the setting.
@@ -233,45 +250,6 @@ class Config {
 
         bool readFileToJson(const char *fileName);
         void writeJsonToFile(const char *fileName);
-
-        // Templates need to be in the header to be included every time, or explicitly called in cpp to exist everywhere 
-        // https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor
-
-        // template <class T> // Single value variables of any type except char*, char[n]
-        // bool cfgReadGetValue(const char *varName, T &dest) {
-        //     if (!jsonDoc.containsKey(varName) || !jsonDoc[varName].is<T>())
-        //         return false;
-        //     dest = jsonDoc[varName].as<T>(); // .as<T>() needd for String type
-        //     return true;
-        // };
-
-        // template <class T> // Arrays
-        // bool cfgReadGetValue(const char *varName, T &dest, uint8_t arraySize) {
-        //     // Assigns values only if varName exists
-        //     if (!jsonDoc.containsKey(varName) || !jsonDoc[varName].is<JsonArray>())
-        //         return false;
-        //     JsonArray jsonArray = jsonDoc[varName].as<JsonArray>();
-        //     if (jsonArray.size() != arraySize) // Make sure size is correct to not have memory issues
-        //         return false;
-        //     uint8_t i = 0;
-        //     for(JsonVariant value : jsonArray) {
-        //         // if (!value.is<T>())
-        //         //     return false;
-        //         dest[i++] = value; // .as<T>() not defined for uint16_t and some others
-        //     }
-        // };
-
-        // template <class T> // Single value variables of any type
-        // void cfgWriteAddValue(const char *varName, T content) {
-        //     jsonDoc[String(varName)] = content;
-        // };
-        // template <class T> // Arrays
-        // void cfgWriteAddValue(const char *varName, T *content, uint8_t arraySize) {
-        //     JsonArray data = jsonDoc.createNestedArray(varName);
-        //     for (uint8_t i = 0; i < arraySize; i++) {
-        //         data.add(*(content + i));
-        //     }
-        // };
 };
 
 #endif

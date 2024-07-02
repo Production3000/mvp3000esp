@@ -56,11 +56,11 @@ struct CfgNet : public Cfg  {
     CfgNet() {
         cfgName = "cfgNet";
         // Saved settings
-        addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [&](uint16_t _x) { if (_x > 100) return false; else clientConnectRetries = _x; return true; }); // Limit to 100, any more is 'forever'
+        addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [](uint16_t x) { return (x > 100) ? false : true; }); // Limit to 100, any more is 'forever'
         // addSetting("mqttPort", &mqttPort, [&](uint16_t _x) { if (_x < 1) return false; else mqttPort = _x; return true; }); // port above 1024
-        addSetting<String>("clientSsid", &clientSsid, [&](String _x) { clientSsid = _x; return true; } ); // Check is in extra function
-        addSetting<String>("clientPass", &clientPass, [&](String _x) { clientPass = _x; return true; }); // Check is in extra function
-        addSetting<boolean>("forceClientMode", &forceClientMode, [&](boolean _x) { forceClientMode = _x; return true; });
+        addSetting<String>("clientSsid", &clientSsid, [](String _) { return true; } ); // Check is in extra function
+        addSetting<String>("clientPass", &clientPass, [](String _) { return true; }); // Check is in extra function
+        addSetting<boolean>("forceClientMode", &forceClientMode, [](boolean _) { return true; });
     }
 
     bool setWifiCredentials(String newSsid, String newPass) {
