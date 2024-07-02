@@ -88,7 +88,7 @@ void NetCom::loop() {
             }
             break;
         
-        case COM_STATE_TYPE::DISABLED: // Nothing to do
+        case COM_STATE_TYPE::DISABLEDX: // Nothing to do
             break;
 
         default:

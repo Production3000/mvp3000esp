@@ -105,10 +105,10 @@ class Net {
             CLIENT = 0,
             CONNECTING = 1,
             AP = 2,
-            DISABLED = 3,
+            DISABLEDX = 3,
             ERROR = 4
         };
-        NET_STATE_TYPE netState = NET_STATE_TYPE::DISABLED;
+        NET_STATE_TYPE netState = NET_STATE_TYPE::DISABLEDX;
 
         CfgNet cfgNet;
 
