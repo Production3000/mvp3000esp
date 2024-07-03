@@ -23,9 +23,9 @@ limitations under the License.
 struct DataProcessing : public JsonInterface {
     DataProcessing() : JsonInterface("cfgDataProcessing") { }
 
-    Helper::NumberArray<int32_t> offset;
-    Helper::NumberArray<float_t> scaling;
-    Helper::NumberArray<int8_t> sampleToIntExponent;
+    NumberArray<int32_t> offset;
+    NumberArray<float_t> scaling;
+    NumberArray<int8_t> sampleToIntExponent;
 
     int32_t scalingTargetValue = 0;
     uint8_t scalingTargetIndex = 0;

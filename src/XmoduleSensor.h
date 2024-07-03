@@ -115,8 +115,8 @@ class XmoduleSensor : public Xmodule {
         };
         void measurementHandler(int32_t *newSample);
 
-        Helper::NumberArray<int32_t> currentMeasurementRaw();
-        Helper::NumberArray<int32_t> currentMeasurementScaled();
+        NumberArray<int32_t> currentMeasurementRaw();
+        NumberArray<int32_t> currentMeasurementScaled();
 
         void measureOffset();
         bool measureScaling(uint8_t valueNumber, int32_t targetValue);
@@ -126,8 +126,6 @@ class XmoduleSensor : public Xmodule {
         void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
             dataProcessing.sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
         };
-
-        // bool isPeriodic(uint8_t length);
 
     private:
         DataProcessing dataProcessing;

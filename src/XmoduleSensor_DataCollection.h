@@ -16,11 +16,6 @@ limitations under the License.
 
 #include "Helper.h"
 
-#include "_LinkedList.h"
-
-
-
-
 
 struct DataCollection {
 
@@ -64,15 +59,15 @@ struct DataCollection {
     LinkedListSensor dataStoreSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
-    Helper::NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
+    NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
     uint16_t *averagingCountPtr; // Pointer to cfgXmoduleSensor
     uint8_t avgCounter = 0; // Counter for averaging
     int32_t avgStartTime = 0; // Time of first measurement in averaging cycle
     boolean avgCycleFinished = false; // Flag for new data added to dataStore
 
     // Data statistics
-    Helper::NumberArray<int32_t> dataMax;
-    Helper::NumberArray<int32_t> dataMin;
+    NumberArray<int32_t> dataMax;
+    NumberArray<int32_t> dataMin;
 
 
     void initDataValueSize(uint8_t dataValueSize) {

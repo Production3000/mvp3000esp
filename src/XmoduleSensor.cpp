@@ -153,16 +153,16 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
-    Helper::NumberArray<int32_t> currentMeasurementRaw = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
+NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
+    NumberArray<int32_t> currentMeasurementRaw = NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementRaw.loopArray([&](int32_t& value, uint8_t i) {
         value = dataCollection.dataStoreSensor.getNewestData()->data[i];
     });
     return currentMeasurementRaw;
 }
 
-Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
-    Helper::NumberArray<int32_t> currentMeasurementScaled = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
+NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
+    NumberArray<int32_t> currentMeasurementScaled = NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementScaled.loopArray([&](int32_t& value, uint8_t i) {
         // SCALED = (RAW + offset) * scaling
         value = (dataCollection.dataStoreSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
