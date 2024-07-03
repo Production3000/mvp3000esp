@@ -16,15 +16,52 @@ limitations under the License.
 
 #include "Helper.h"
 
+#include "_LinkedList.h"
+
+
+
+
 
 struct DataCollection {
+
     DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
+
+
+    /**
+     * Derived linked list to store sensor data and its time.
+     */
+    struct DataStructSensor {
+        uint32_t time;
+        int32_t* data;
+
+        ~DataStructSensor() {
+            delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
+        }
+        void lateInit(uint8_t size) {
+            data = new int32_t[size];
+        }
+    };
+
+    struct LinkedListSensor : LinkedList<DataStructSensor> {
+        LinkedListSensor(uint8_t _max_size) : LinkedList<DataStructSensor>(_max_size) { }
+
+        void append(int32_t* data, uint8_t size, uint32_t time) {
+            // Add node to list and assign the data to its datastruct
+            // Using this-> as base class/function is templated
+            this->appendNode();
+            this->getNewestData()->lateInit(size);
+            for (uint8_t i = 0; i < size; i++) {
+                this->getNewestData()->data[i] = data[i];
+            }
+            this->getNewestData()->time = time;
+        }
+    };
+
 
     // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
     // More likely much less, max 1000 for single value?
     uint16_t dataStoreLength = 5;
-    Helper::LinkedList<int32_t, true> dataStore = Helper::LinkedList<int32_t, true>(dataStoreLength);
-    Helper::LinkedList<int32_t> dataStoreTime = Helper::LinkedList<int32_t>(dataStoreLength);;
+    LinkedListSensor dataStoreSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
     Helper::NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
@@ -62,8 +99,7 @@ struct DataCollection {
         avgCycleFinished = false;
 
         // Data storage
-        dataStore.clear();
-        dataStoreTime.clear();
+        dataStoreSensor.clear();
     }
 
     void addSample(int32_t *newSample) {
@@ -87,8 +123,7 @@ struct DataCollection {
 
             // Calculate data and time averages and store
             avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value = nearbyintf( value / *averagingCountPtr ); } );
-            dataStore.append(avgDataSum);
-            dataStoreTime.append(nearbyintf( (avgStartTime + millis()) / 2 ));
+            dataStoreSensor.append(avgDataSum.values, avgDataSum.value_size, nearbyintf( (avgStartTime + millis()) / 2 ));
 
             // Reset temporary values, counters            
             avgDataSum.resetValues();

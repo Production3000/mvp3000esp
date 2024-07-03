@@ -145,7 +145,6 @@ void Net::WiFiGotIP() {
 }
 
 void Net::WiFiStationDisconnected() {
-    Serial.println("WiFiStationDisconnected");
     netState = NET_STATE_TYPE::CONNECTING;
     if (clientConnectSuccess || cfgNet.forceClientMode) {
         mvp.logger.write(CfgLogger::Level::INFO, "Network disconnected.");

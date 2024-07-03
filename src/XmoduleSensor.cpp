@@ -156,7 +156,7 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
 Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
     Helper::NumberArray<int32_t> currentMeasurementRaw = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementRaw.loopArray([&](int32_t& value, uint8_t i) {
-        value = dataCollection.dataStore.getLatest()[i];
+        value = dataCollection.dataStoreSensor.getNewestData()->data[i];
     });
     return currentMeasurementRaw;
 }
@@ -165,7 +165,7 @@ Helper::NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
     Helper::NumberArray<int32_t> currentMeasurementScaled = Helper::NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementScaled.loopArray([&](int32_t& value, uint8_t i) {
         // SCALED = (RAW + offset) * scaling
-        value = (dataCollection.dataStore.getLatest()[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
+        value = (dataCollection.dataStoreSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
     });
     return currentMeasurementScaled;
 }
@@ -212,9 +212,9 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
 void XmoduleSensor::measureOffsetScalingFinish() {
     // Calculate offset or scaling
     if (offsetRunning) {
-        dataProcessing.setOffset(dataCollection.dataStore.getLatest());
+        dataProcessing.setOffset(dataCollection.dataStoreSensor.getNewestData()->data);
     } else if (scalingRunning) {
-        dataProcessing.setScaling(dataCollection.dataStore.getLatest());
+        dataProcessing.setScaling(dataCollection.dataStoreSensor.getNewestData()->data);
     } else {
         mvp.logger.write(CfgLogger::Level::ERROR, "Offset/Scaling measurement finished without running.");
         return;
