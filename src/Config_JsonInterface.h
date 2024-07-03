@@ -20,7 +20,7 @@ limitations under the License.
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-#include "Helper.h"
+#include "_Helper.h"
 
 
 /**
@@ -229,6 +229,5 @@ struct CfgJsonInterface : public JsonInterface {
     }
 
 };
-
 
 #endif

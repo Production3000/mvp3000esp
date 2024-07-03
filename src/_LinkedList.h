@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
+#ifndef MVP3000__LINKEDLIST
+#define MVP3000__LINKEDLIST
 
 #include <Arduino.h>
 
@@ -184,7 +186,7 @@ struct LinkedListArray : LinkedList<DataStructArray<T>> {
     }
 };
 
-
+#endif
 
 
                 // /**

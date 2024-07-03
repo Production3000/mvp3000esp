@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
+#ifndef MVP3000__NUMBERARRAY
+#define MVP3000__NUMBERARRAY
+
 #include <Arduino.h>
 
 
@@ -97,3 +100,4 @@ struct NumberArray {
     }
 };
 
+#endif

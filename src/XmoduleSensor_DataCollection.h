@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "Helper.h"
+#ifndef MVP3000_XMODULESENSOR_DATACOLLECTION
+#define MVP3000_XMODULESENSOR_DATACOLLECTION
+
+#include "_LinkedList.h"
+#include "_NumberArray.h"
 
 
 struct DataCollection {
@@ -129,3 +133,5 @@ struct DataCollection {
         }
     }
 };
+
+#endif
