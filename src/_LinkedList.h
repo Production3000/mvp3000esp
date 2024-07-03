@@ -121,6 +121,26 @@ struct LinkedList {
     }
 
     /**
+     * @brief Loops through all elements in the linked list and calls the given callback function.
+     * 
+     * The callback function can be a captive lambda function, with its data structure and index as parameters:
+     *      loopList([&](T*& dataStruct, uint16_t i) { ... });
+     * The data structure is passed by reference, so it can be modified within the lambda function.
+     * 
+     * @param callback The callback function to be called for each node.
+     * @param reverse If true, the list is looped through in reverse order from latest/tail to first/head entry. Default is false.
+     */       
+    void loopList(std::function<void(T*&, uint16_t)> callback, bool reverse = false) {
+        // This one only allows non-captive lambdas: loopList(void (*callback)(T"&, uint16_t))
+        Node* current = (reverse) ? tail : head;
+        uint16_t i = 0;
+        while (current != nullptr) {
+            callback(current->dataStruct, i++);
+            current = (reverse) ? current->prev : current->next;
+        }
+    }
+
+    /**
      * @brief Removes the head/oldest element from the linked list.
      */
     void removeHead() {
@@ -240,24 +260,6 @@ struct LinkedListArray : LinkedList<DataStructArray<T>> {
                 //     return false;
                 // }
 
-
-                // /**
-                //  * Loops through all elements in the linked list and calls the given callback function.
-                //  * The callback function can be a captive lambda function.
-                //  * 
-                //  * @param callback The callback function to be called for each element.
-                //  * @param reverse If true, the list is looped through in reverse order from latest/tail to first/head entry. Default is false.
-                //  */       
-                // void loopList(std::function<void(T&, uint16_t)> callback, bool reverse = false) {
-                //     // The above allows to call with captive lambda, loopList([&](T& value, uint16_t index) { ... });
-                //     // This one only allows non-captive lambdas: loopList(void (*callback)(T&, uint16_t))
-                //     Node* current = (reverse) ? tail : head;
-                //     uint16_t i = 0;
-                //     while (current != nullptr) {
-                //         callback(current->data, i++);
-                //         current = (reverse) ? current->prev : current->next;
-                //     }
-                // }
 
                 // /**
                 //  * Moves the node with the given value to the end of the list.

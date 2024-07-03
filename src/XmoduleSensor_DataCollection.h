@@ -59,8 +59,8 @@ struct DataCollection {
     };
 
 
-    // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
-    // More likely much less, max 1000 for single value?
+    // Storing of averages with initial limit of 100 is reasonable on ESP8266
+    // The list grows automatically if memory is sufficient
     uint16_t dataStoreLength = 100;
     LinkedListSensor dataStoreSensor = LinkedListSensor(dataStoreLength);
 
