@@ -49,8 +49,9 @@ struct LinkedList {
     T* getOldestData() { return head->dataStruct; }
     T* getNewestData() { return tail->dataStruct; }
 
-    uint8_t size;
-    uint8_t max_size;
+    uint16_t size;
+    uint16_t max_size;
+    boolean allow_growing;
 
     uint8_t getSize() const { return size; }
 
@@ -58,9 +59,10 @@ struct LinkedList {
     /**
      * Constructor with a maximum list size limit.
      * 
-     * @param _max_size The maximum size of the linked list. Default is 10.
+     * @param _max_size The maximum size of the linked list.
+     * @param _allow_growing If true, the list can grow beyond the maximum size limit depending on available memory. Default is false.
      */
-    LinkedList(uint8_t _max_size) : max_size(_max_size) { }
+    LinkedList(uint16_t _max_size, boolean _allow_growing = false) : max_size(_max_size), allow_growing(_allow_growing) { }
 
     ~LinkedList() {
         clear(); // IMPORTANT: Make sure to also free memory within the dataStruct
@@ -73,7 +75,8 @@ struct LinkedList {
      * The class is templated, thus use this->appendNode() in derived classes to add a new node.
      */
     void appendNode() {
-        if (size >= max_size) {
+        // Check if size limit is reached and cannot be grown, then remove the oldest node
+        if ((size >= max_size) && !growMaxSize()) {
             removeHead();
         }
 
@@ -94,6 +97,21 @@ struct LinkedList {
     }
 
     /**
+     * @brief Grows the maximum size of the linked list if enough memory is available.
+     * 
+     * @return True if the maximum size was increased, otherwise false.
+     */
+    bool growMaxSize() {
+        if ((allow_growing) && (ESP.getFreeHeap() > 16384)) {
+            // 16k free memory seems reasonable, to leave room vor web and other stuff
+            // An additional 10 elements seem also reasonable
+            max_size += 10;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @brief Clears the linked list.
      */
     void clear() {
@@ -109,6 +127,7 @@ struct LinkedList {
         if (head == nullptr) {
             return;
         }
+        
         Node* temp = head;
         head = head->next; // Move the head pointer to the second node
         delete temp; // IMPORTANT: Make sure to also free memory within the dataStruct
@@ -140,7 +159,7 @@ struct DataStructValue {
 
 template <typename T>
 struct LinkedListValue : LinkedList<DataStructValue<T>> {
-    LinkedListValue(uint8_t _max_size) : LinkedList<DataStructValue<T>>(_max_size) { }
+    LinkedListValue(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructValue<T>>(_max_size, _allow_growing) { }
 
     void append(T data) {
         // Add node to list and assign the data to its datastruct
@@ -173,7 +192,7 @@ struct DataStructArray {
 
 template <typename T>
 struct LinkedListArray : LinkedList<DataStructArray<T>> {
-    LinkedListArray(uint8_t _max_size) : LinkedList<DataStructArray<T>>(_max_size) { }
+    LinkedListArray(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructArray<T>>(_max_size, _allow_growing) { }
 
     void append(T* data, uint8_t size) {
         // Add node to list and assign the data to its datastruct

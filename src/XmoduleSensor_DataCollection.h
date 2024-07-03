@@ -27,7 +27,7 @@ struct DataCollection {
 
 
     /**
-     * Derived linked list to store sensor data and its time.
+     * Derived data structure to store sensor data and its time.
      */
     struct DataStructSensor {
         uint32_t time;
@@ -40,9 +40,11 @@ struct DataCollection {
             data = new int32_t[size];
         }
     };
-
+    /**
+     * Derived linked list to store sensor data and its time. Grows automatically.
+     */
     struct LinkedListSensor : LinkedList<DataStructSensor> {
-        LinkedListSensor(uint8_t _max_size) : LinkedList<DataStructSensor>(_max_size) { }
+        LinkedListSensor(uint16_t _max_size) : LinkedList<DataStructSensor>(_max_size, true) { }
 
         void append(int32_t* data, uint8_t size, uint32_t time) {
             // Add node to list and assign the data to its datastruct
@@ -59,7 +61,7 @@ struct DataCollection {
 
     // Storing of averages, empiric maximum length of circular data buffer on ESP8266: 1x float 5000, 2x float 3500
     // More likely much less, max 1000 for single value?
-    uint16_t dataStoreLength = 5;
+    uint16_t dataStoreLength = 100;
     LinkedListSensor dataStoreSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
@@ -81,6 +83,7 @@ struct DataCollection {
         dataMin.lateInit(dataValueSize, std::numeric_limits<int32_t>::max());
     }
 
+    // Called only when switching from normal measurement to offset/scaling measurement
     void setAveragingCountPtr(uint16_t *_averagingCount) {
         averagingCountPtr = _averagingCount;
         reset();
