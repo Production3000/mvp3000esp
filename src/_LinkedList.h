@@ -24,7 +24,8 @@ limitations under the License.
  * 
  * It can be extended to store any type of pre-defined data structure encapsulating e.g. a single value, an array, or a struct.
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
- * Example usages are below.
+ * 
+ * Example usages are below: 1) Single values, 2) Arrays of values.
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  */
