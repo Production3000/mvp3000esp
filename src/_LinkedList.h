@@ -24,6 +24,7 @@ limitations under the License.
  * 
  * It can be extended to store any type of pre-defined data structure encapsulating e.g. a single value, an array, or a struct.
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
+ * Example usages are below.
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  */
@@ -99,6 +100,22 @@ struct LinkedList {
     }
 
     /**
+     * @brief Move element to the tail/top of the list if it exists, otherwise appends it to the list
+     * 
+     * The class is templated, thus use this->appendNode() in derived classes to add a new node.
+     *
+     * @param newDataStruct The data structure to be moved to tail or appended to the linked list.
+     */
+    void appendNodeOrMoveToTail(T* newDataStruct) {
+        Node* existingNode = contains(newDataStruct);
+        if (existingNode == nullptr) {
+            appendNode(newDataStruct);
+        } else {
+            moveToTail(existingNode);
+        }
+    }
+
+    /**
      * @brief Grows the maximum size of the linked list if enough memory is available.
      * 
      * @return True if the maximum size was increased, otherwise false.
@@ -123,6 +140,22 @@ struct LinkedList {
     }
 
     /**
+     * Checks if the linked list contains the given value.
+     * 
+     * @param value The value to be checked.
+     */
+    Node* contains(T* newdataStruct) {
+        Node* current = head;
+        while (current != nullptr) {
+            if (current->dataStruct->equals(newdataStruct)) {
+                return current;
+            }
+            current = current->next;
+        }
+        return nullptr;
+    }
+
+    /**
      * @brief Loops through all elements in the linked list and calls the given callback function.
      * 
      * The callback function can be a captive lambda function, with its data structure and index as parameters:
@@ -140,6 +173,33 @@ struct LinkedList {
             callback(current->dataStruct, i++);
             current = (reverse) ? current->prev : current->next;
         }
+    }
+
+    /**
+     * Moves a given node to the tail of the list.
+     * 
+     * @param existingNode The node to be moved.
+     */
+    void moveToTail(Node* existingNode) {
+        // The node is already the last node
+        if (existingNode == tail) {
+            return;
+        } 
+    
+        // Remove the node from its current position
+        if (existingNode == head) {
+            head = existingNode->next; // Move the head pointer to the second node
+            head->prev = nullptr; // Remove the prev pointer from the new head
+        } else {
+            // Neither head nor tail
+            existingNode->prev->next = existingNode->next; // Link the previous node directly to the next node
+            existingNode->next->prev = existingNode->prev; // Link the next node directly to the previous node
+        }
+        // Insert the node at the end
+        tail->next = existingNode; // Set the next pointer of the old tail to the node
+        existingNode->prev = tail; // Set the previous pointer of the node to the old tail
+        existingNode->next = nullptr; // Remove the next pointer of the node
+        tail = existingNode; // Move the tail pointer to the node
     }
 
     /**
@@ -180,16 +240,40 @@ struct DataStructValue {
 
     DataStructValue(T _data) : data(_data) { }
     // ~DataStructValue() { } // No need to free memory for single values
+
+    /**
+     * @brief Compares the data of two data structures.
+     * 
+     * @param newDataStruct The data structure to be compared.
+     * @return True if the data is equal, otherwise false.
+     */
+    bool equals(DataStructValue<T>* newDataStruct) {
+        return data == newDataStruct->data;
+    }
 };
 
 template <typename T>
 struct LinkedListValue : LinkedList<DataStructValue<T>> {
     LinkedListValue(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructValue<T>>(_max_size, _allow_growing) { }
 
+    /**
+     * @brief Appends a single value to the linked list.
+     * 
+     * @param data The value to be appended.
+     */
     void append(T data) {
         // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
         this->appendNode(new DataStructValue<T>(data));
+    }
+
+    /**
+     * @brief Appends a single value to the linked list or moves it to the top if it already exists.
+     * 
+     * @param data The value to be appended or moved to the top.
+     */
+    void appendOrMoveToTop(T data) {
+        this->appendNodeOrMoveToTail(new DataStructValue<T>(data));
     }
 };
 
@@ -205,8 +289,9 @@ struct LinkedListValue : LinkedList<DataStructValue<T>> {
 template <typename T>
 struct DataStructArray {
     T* data;
+    uint8_t size;
 
-    DataStructArray(T* _data, uint8_t size) {
+    DataStructArray(T* _data, uint8_t _size) : size(_size) {
         data = new T[size];
         for (uint8_t i = 0; i < size; i++) {
             data[i] = _data[i];
@@ -215,12 +300,36 @@ struct DataStructArray {
     ~DataStructArray() {
         delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
     }
+
+    /**
+     * @brief Compares the data of two data structures.
+     * 
+     * @param newDataStruct The data structure to be compared.
+     * @return True if the data is equal, otherwise false.
+     */
+    bool equals(DataStructArray<T>* newDataStruct) {
+        if (size != newDataStruct->size) {
+            return false;
+        }
+        for (uint8_t i = 0; i < size; i++) {
+            if (data[i] != newDataStruct->data[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 template <typename T>
 struct LinkedListArray : LinkedList<DataStructArray<T>> {
     LinkedListArray(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructArray<T>>(_max_size, _allow_growing) { }
 
+    /**
+     * @brief Appends an array of values to the linked list.
+     * 
+     * @param data The array of values to be appended.
+     * @param size The size of the array.
+     */
     void append(T* data, uint8_t size) {
         // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
@@ -229,79 +338,3 @@ struct LinkedListArray : LinkedList<DataStructArray<T>> {
 };
 
 #endif
-
-
-                // /**
-                //  * Move element to the end of the list if it exists, otherwise appends it to the list
-                //  *
-                //  * @param value The value to be added to the linked list.
-                //  */
-                // void appendOrMoveToLast(const T& value) {
-                //     if (contains(value)) {
-                //         moveToLast(value);
-                //     } else {
-                //         append(value);
-                //     }
-                // }
-
-                // /**
-                //  * Checks if the linked list contains the given value.
-                //  * 
-                //  * @param value The value to be checked.
-                //  */
-                // bool contains(const T& value) const {
-                //     if (StoreByPointer)
-                //         return false;
-
-                //     Node* current = head;
-                //     while (current != nullptr) {
-                //         if (current->data == value) {
-                //             return true;
-                //         }
-                //         current = current->next;
-                //     }
-                //     return false;
-                // }
-
-
-                // /**
-                //  * Moves the node with the given value to the end of the list.
-                //  * 
-                //  * @param value The value to be moved.
-                //  */
-                // void moveToLast(const T& value) {
-                //     if (StoreByPointer) // Only values
-                //         return;
-                        
-                //     if (head == nullptr) {
-                //         return;
-                //     }
-
-                //     Node* current = head;
-                //     while (current != nullptr) {
-                //         if (current->data == value) {
-                //             // Found the node with the given value
-                //             if (current == tail) {
-                //                 // The node is already the last node
-                //             } else {
-                //                 // Remove the node from its current position
-                //                 if (current == head) {
-                //                     head = current->next; // Move the head pointer to the second node
-                //                     head->prev = nullptr; // Remove the prev pointer from the new head
-                //                 } else {
-                //                     // Neither head nor tail
-                //                     current->prev->next = current->next; // Link the previous node directly to the next node
-                //                     current->next->prev = current->prev; // Link the next node directly to the previous node
-                //                 }
-                //                 // Insert the node at the end
-                //                 tail->next = current; // Set the next pointer of the old tail to the node
-                //                 current->prev = tail; // Set the previous pointer of the node to the old tail
-                //                 current->next = nullptr; // Remove the next pointer of the node
-                //                 tail = current; // Move the tail pointer to the node
-                //             }
-                //             // Done
-                //             return;
-                //         }
-                //         current = current->next;
-                //     }
-                // }
