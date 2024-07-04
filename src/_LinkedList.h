@@ -56,6 +56,8 @@ struct LinkedList {
     boolean allow_growing;
 
     uint8_t getSize() const { return size; }
+    uint8_t getMaxSize() const { return max_size; }
+    boolean getAdaptiveSize() const { return allow_growing; }
 
 
     /**
