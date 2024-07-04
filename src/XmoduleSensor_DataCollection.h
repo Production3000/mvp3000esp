@@ -33,17 +33,24 @@ struct DataCollection {
         uint32_t time;
         int32_t* data;
 
-        ~DataStructSensor() {
-            delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
-        }
-        void lateInit(int32_t* _data, uint8_t size, uint32_t _time) {
+        /**
+         * Constructor for data structure.
+         * 
+         * @param _data Pointer to data array
+         * @param size Size of data array
+         * @param _time Time of data
+         */
+        DataStructSensor(int32_t* _data, uint8_t size, uint32_t _time) : time(_time) {
             data = new int32_t[size];
             for (uint8_t i = 0; i < size; i++) {
                 data[i] = _data[i];
             }
-            time = _time;
+        }
+        ~DataStructSensor() {
+            delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
         }
     };
+    
     /**
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
@@ -51,10 +58,9 @@ struct DataCollection {
         LinkedListSensor(uint16_t _max_size) : LinkedList<DataStructSensor>(_max_size, true) { }
 
         void append(int32_t* data, uint8_t size, uint32_t time) {
-            // Add node to list and assign the data to its datastruct
+            // Create data structure and add node to linked list
             // Using this-> as base class/function is templated
-            this->appendNode();
-            this->getNewestData()->lateInit(data, size, time);
+            this->appendNode(new DataStructSensor(data, size, time));
         }
     };
 

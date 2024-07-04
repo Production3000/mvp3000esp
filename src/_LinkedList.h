@@ -35,8 +35,8 @@ struct LinkedList {
         Node* prev;
         Node* next;
 
-        Node() {
-            dataStruct = new T();
+        Node(T* newDataStruct) {
+            dataStruct = newDataStruct;
         }
         ~Node() { // IMPORTANT: Make sure to also free memory within the dataStruct
             delete dataStruct;
@@ -73,14 +73,16 @@ struct LinkedList {
      * @brief Appends an empty node to the linked list. Removes the oldest/head node if the list is already full.
      * 
      * The class is templated, thus use this->appendNode() in derived classes to add a new node.
+     * 
+     * @param newDataStruct The data structure to be passed on to be stored in the linked list.
      */
-    void appendNode() {
+    void appendNode(T* newDataStruct) {
         // Check if size limit is reached and cannot be grown, then remove the oldest node
         if ((size >= max_size) && !growMaxSize()) {
             removeHead();
         }
 
-        Node* newNode = new Node();
+        Node* newNode = new Node(newDataStruct);
         newNode->prev = nullptr;
         newNode->next = nullptr;
 
@@ -175,9 +177,9 @@ struct LinkedList {
 template <typename T>
 struct DataStructValue {
     T data;
-    void lateInit(T _data) {
-        data = _data;
-    }
+
+    DataStructValue(T _data) : data(_data) { }
+    // ~DataStructValue() { } // No need to free memory for single values
 };
 
 template <typename T>
@@ -185,10 +187,9 @@ struct LinkedListValue : LinkedList<DataStructValue<T>> {
     LinkedListValue(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructValue<T>>(_max_size, _allow_growing) { }
 
     void append(T data) {
-        // Add node to list and assign the data to its datastruct
+        // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
-        this->appendNode();
-        this->getNewestData()->lateInit(data);
+        this->appendNode(new DataStructValue<T>(data));
     }
 };
 
@@ -205,14 +206,14 @@ template <typename T>
 struct DataStructArray {
     T* data;
 
-    ~DataStructArray() {
-        delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
-    }
-    void lateInit(int32_t* _data, uint8_t size) {
-        data = new int32_t[size];
+    DataStructArray(T* _data, uint8_t size) {
+        data = new T[size];
         for (uint8_t i = 0; i < size; i++) {
             data[i] = _data[i];
         }
+    }
+    ~DataStructArray() {
+        delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
     }
 };
 
@@ -221,10 +222,9 @@ struct LinkedListArray : LinkedList<DataStructArray<T>> {
     LinkedListArray(uint16_t _max_size, boolean _allow_growing = false) : LinkedList<DataStructArray<T>>(_max_size, _allow_growing) { }
 
     void append(T* data, uint8_t size) {
-        // Add node to list and assign the data to its datastruct
+        // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
-        this->appendNode();
-        this->getNewestData()->lateInit(data, size);
+        this->appendNode(new DataStructArray<T>(data, size));
     }
 };
 
