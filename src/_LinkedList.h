@@ -175,6 +175,9 @@ struct LinkedList {
 template <typename T>
 struct DataStructValue {
     T data;
+    void lateInit(T _data) {
+        data = _data;
+    }
 };
 
 template <typename T>
@@ -185,7 +188,7 @@ struct LinkedListValue : LinkedList<DataStructValue<T>> {
         // Add node to list and assign the data to its datastruct
         // Using this-> as base class/function is templated
         this->appendNode();
-        this->getNewestData()->data = data;
+        this->getNewestData()->lateInit(data);
     }
 };
 
@@ -205,8 +208,11 @@ struct DataStructArray {
     ~DataStructArray() {
         delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
     }
-    void lateInit(uint8_t size) {
-        data = new T[size];
+    void lateInit(int32_t* _data, uint8_t size) {
+        data = new int32_t[size];
+        for (uint8_t i = 0; i < size; i++) {
+            data[i] = _data[i];
+        }
     }
 };
 
@@ -218,10 +224,7 @@ struct LinkedListArray : LinkedList<DataStructArray<T>> {
         // Add node to list and assign the data to its datastruct
         // Using this-> as base class/function is templated
         this->appendNode();
-        this->getNewestData()->lateInit(size);
-        for (uint8_t i = 0; i < size; i++) {
-            this->getNewestData()->data[i] = data[i];
-        }
+        this->getNewestData()->lateInit(data, size);
     }
 };
 

@@ -36,8 +36,12 @@ struct DataCollection {
         ~DataStructSensor() {
             delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
         }
-        void lateInit(uint8_t size) {
+        void lateInit(int32_t* _data, uint8_t size, uint32_t _time) {
             data = new int32_t[size];
+            for (uint8_t i = 0; i < size; i++) {
+                data[i] = _data[i];
+            }
+            time = _time;
         }
     };
     /**
@@ -50,11 +54,7 @@ struct DataCollection {
             // Add node to list and assign the data to its datastruct
             // Using this-> as base class/function is templated
             this->appendNode();
-            this->getNewestData()->lateInit(size);
-            for (uint8_t i = 0; i < size; i++) {
-                this->getNewestData()->data[i] = data[i];
-            }
-            this->getNewestData()->time = time;
+            this->getNewestData()->lateInit(data, size, time);
         }
     };
 
