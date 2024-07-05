@@ -54,8 +54,8 @@ struct DataCollection {
     /**
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
-    struct LinkedListSensor : LinkedList<DataStructSensor> {
-        LinkedListSensor(uint16_t _max_size) : LinkedList<DataStructSensor>(_max_size, true) { }
+    struct LinkedListSensor : LinkedList3000<DataStructSensor> {
+        LinkedListSensor(uint16_t _max_size) : LinkedList3000<DataStructSensor>(_max_size, true) { }
 
         void append(int32_t* data, uint8_t size, uint32_t time) {
             // Create data structure and add node to linked list

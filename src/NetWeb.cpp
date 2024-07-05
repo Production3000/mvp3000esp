@@ -22,12 +22,13 @@ extern MVP3000 mvp;
 
 void NetWeb::setup() {
     // Folders/requests
-    server.on("/", std::bind(&NetWeb::serveRequest, this));
-    server.on("/save", std::bind(&NetWeb::editCfg, this, false));
-    server.on("/savecheck", std::bind(&NetWeb::editCfg, this, true));
-    server.on("/start", std::bind(&NetWeb::startAction, this, false));
-    server.on("/startcheck", std::bind(&NetWeb::startAction, this, true));
-    server.onNotFound(std::bind(&NetWeb::serveRequest, this));
+    // server.on("/", std::bind(&NetWeb::serveRequest, this));
+    server.on("/", HTTP_ANY, std::bind(&NetWeb::serveRequest, this, std::placeholders::_1));
+    server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
+    server.on("/checksave", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
+    server.on("/start", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
+    server.on("/checkstart", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
+    server.onNotFound(std::bind(&NetWeb::serveRequestCaptureAll, this, std::placeholders::_1));
 
     // Start server, independent of wifi status, main will only be called when connected
     server.begin();
@@ -35,243 +36,250 @@ void NetWeb::setup() {
 
 void NetWeb::loop() {
     // Called from net.loop() only if network is up
-
-    // Handle page requests
-    server.handleClient();
+    // There is actually nothing to do here, the async server is running in the background
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::serveRequest() {
-    // Prepare and head
-    contentStart();
 
-    // Serve main/module content
-    if ((server.args() == 1) && (server.argName(0) == "m") && (mvp.helper.isValidInteger(server.arg(0))) && (server.arg(0).toInt() < mvp.moduleCount)) {
-        mvp.xmodules[server.arg(0).toInt()]->contentModuleNetWeb();
+//         static String processor(const String& var);
+// String NetWeb::processor(const String& var) {
+
+//     // switch (var.toInt()) {
+//     //     case 1:
+//     //         return ESPX.getChipId();
+//     //     case 2:
+//     //         return postMessage;
+//     //     default:
+//     //         break;
+//     // }
+
+    
+//     return String();
+// }
+
+void NetWeb::serveRequestCaptureAll(AsyncWebServerRequest *request) {
+    if (mvp.helper.isValidInteger(request->url().substring(1))) {
+        Serial.println("module");
+        serveRequest(request);
+        // Serve module content
+        // uint8_t moduleId = request->url().toInt();
+        // if (moduleId < mvp.moduleCount) {
+        //     if (mvp.xmodules[moduleId]->enableContentModuleNetWeb) {
+        //         mvp.xmodules[moduleId]->contentModuleNetWeb(request);
+        //         return;
+        //     }
+        // }
     } else {
-        contentHome();
+        // Serve main page
+        serveRequest(request);
     }
-
-    // Close page
-    contentClose();
-
-    // Client IP is obviously empty after stop()
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Serving page to: %s",  server.client().remoteIP().toString().c_str());
-
-    // Stop connection, not sure if needed
-    server.client().stop();
 }
 
-void NetWeb::contentStart() {
-    // Open connection
-    server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    server.sendHeader("Pragma", "no-cache");
-    server.sendHeader("Expires", "-1");
-    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+void NetWeb::serveRequest(AsyncWebServerRequest *request) {
+    response = request->beginChunkedResponse("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+        // Put the substring from index_html into the buffer, starting at index until index + maxLen
+        size_t len = strlen(index_html);
+        if (index + maxLen > len) {
+            maxLen = len - index;
+        }
+        memcpy(buffer, index_html + index, maxLen);
+        return maxLen;
+    } , [&](const String& var) -> String {
+        String modules;
+        switch (var.toInt()) {
+            case 1:
+                return String(ESPX.getChipId());
+            case 2:
+                return postMessage;
+            case 3:
+                return String(__DATE__) + " " + String(__TIME__);
+            case 4:
+                return String(ESP.getFreeHeap());
+            case 5:
+                return String(ESPX.getHeapFragmentation());
+            case 6:
+                return String(mvp.helper.upTime());
+            case 7:
+                return String(ESPX.getResetReason().c_str());
+            case 8:
+                return String(ESP.getCpuFreqMHz());
+            case 9:
+                return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
+            
+            case 31:
+                return mvp.net.apSsid.c_str();
+            case 32:
+                return mvp.net.cfgNet.clientSsid.c_str();
+            case 33:
+                return mvp.net.cfgNet.clientPass.c_str();
+            case 34:
+                return String(mvp.net.cfgNet.clientConnectRetries);
+            case 35:
+                return (mvp.net.cfgNet.forceClientMode == true) ? "checked" : "";
 
-    // Actual content is sent in chunks
-    server.send(200, "text/html", "");
+            case 51:
+                return mvp.net.netCom.controllerConnectedString().c_str();
+            case 52:
+                return String(mvp.net.netCom.cfgNetCom.discoveryPort);
+            case 53:
+                return mvp.net.netCom.cfgNetCom.mqttForcedBroker.c_str();
+            case 54:
+                return String(mvp.net.netCom.cfgNetCom.mqttPort);
+            case 55:
+                return mvp.net.netCom.mqttTopicPrefix.c_str();
+            case 56:
+                return mvp.net.netCom.cfgNetCom.mqttTopicSuffix.c_str();
 
-    // HTML head, styles, title, start body and postMessage
-    sendFormatted("<!DOCTYPE html> <html lang='en'> <head> <title>MVP3000 - Device ID %d</title> \
-    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script> \
-    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head> \
-    <body> <h1>MVP3000 - Device ID %d</h1> <h3 style='color: red;'>%s</h3>", ESPX.getChipId(), ESPX.getChipId(), postMessage);
+            case 99:
+                for (uint8_t i = 0; i < mvp.moduleCount; i++) {                                        // TODO make this string thing much better this is so annoying in c++
+                    if (mvp.xmodules[i]->enableContentModuleNetWeb)
+                        modules += "<li><a href='/" + String(i) + "'>" + mvp.xmodules[i]->description + "</a></li>";
+                    else
+                        modules += "<li>" + mvp.xmodules[i]->description + "</li>";
+                }
+                if (mvp.moduleCount == 0)
+                    modules += "<li>None</li>";
+                return modules;
+
+            default:
+                break;
+        }
+        return String();
+    });
+
+    request->send(response);
 
     // Clear message for next load
     postMessage = "";
 }
 
-void NetWeb::contentClose() {
-    // HTMK close page tags
-    server.sendContent("<p>&nbsp;</body></html>");
 
-    // Close connection
-    server.sendContent("");
-}
-
-void NetWeb::contentHome() {
-    // System
-    sendFormatted("\
-        <h3>System</h3> <ul> \
-        <li>ID: %d</li> \
-        <li>Build: %s %s</li> \
-        <li>Memory: %d, fragmentation %d%%</li> \
-        <li>Uptime: %s</li> \
-        <li>Last restart reason: %s</li> \
-        <li>CPU frequency: %d MHz</li> \
-        <li>Main loop duration: %d / %d / %d ms (mean/min/max)</li> </ul>",
-        ESPX.getChipId(), __DATE__,__TIME__, ESP.getFreeHeap(), ESPX.getHeapFragmentation(), mvp.helper.upTime(), ESPX.getResetReason().c_str(), ESP.getCpuFreqMHz(), mvp.loopDurationMean_ms, mvp.loopDurationMin_ms, mvp.loopDurationMax_ms);
-
-    // Network
-    sendFormatted("\
-        <h3>Network</h3> <ul> \
-        <li>Fallback AP SSID: '%s'</li> \
-        <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/save' method='post'> SSID <input name='newSsid' value='%s'> Passphrase <input type='password' name='newPass' value='%s'> <input type='submit' value='Save'> </form> </li> \
-        <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%d' min='1' max='255'> <input type='submit' value='Save'> </form> </li>",
-        mvp.net.apSsid.c_str(), mvp.net.cfgNet.clientSsid.c_str(), mvp.net.cfgNet.clientPass.c_str(), mvp.net.cfgNet.clientConnectRetries);
-    sendFormatted("\
-        <li>Force client mode. WARNING: If credentials are wrong the device will be inaccessible via network, thus require re-flashing! \
-         <form action='/savecheck' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %s value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>",
-        (mvp.net.cfgNet.forceClientMode == true) ? "checked" : "" );
-
-    // MQTT communication
-    sendFormatted("\
-        <h3>MQTT Communication</h3> <ul> \
-        <li>Status: %s </li> \
-        <li>Auto-discovery port local broker: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
-        <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%s'> <input type='submit' value='Save'> </form> </li> \
-        <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%d' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> \
-        <li>Topic: <br> <form action='/save' method='post'> %s <input name='mqttTopicSuffix' value='%s' minlength='5'> <input type='submit' value='Save'> </form> </li> </ul>",
-        mvp.net.netCom.controllerConnectedString().c_str(), mvp.net.netCom.cfgNetCom.discoveryPort, mvp.net.netCom.cfgNetCom.mqttForcedBroker.c_str(), mvp.net.netCom.cfgNetCom.mqttPort, mvp.net.netCom.mqttTopicPrefix.c_str(), mvp.net.netCom.cfgNetCom.mqttTopicSuffix);
-
-
-    // Modules list
-    sendFormatted("<h3>Modules</h3> <ul>");
-    for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-        if (mvp.xmodules[i]->enableContentModuleNetWeb)
-            sendFormatted("<li><a href='?m=%d'>%s</a></li>", i, mvp.xmodules[i]->description.c_str());
-        else
-            sendFormatted("<li>%s</li>", mvp.xmodules[i]->description.c_str());
-    }
-    sendFormatted("</ul>");
-
-    // Maintenance
-    sendFormatted("\
-        <h3>Maintenance</h3> <ul> \
-        <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li> \
-        <li> <form action='/startcheck' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>");
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::editCfg(boolean checkId) {
-    if (server.args() == 0) { // Likely a reload-from-locationbar error
+void NetWeb::editCfg(AsyncWebServerRequest *request) {
+    if (request->params() == 0) { // Likely a reload-from-locationbar error
         responseRedirect("Redirected ...");
         return;
     }
 
-    if (checkId)
-        if (!formInputCheckId())
+    if (request->url().substring(1,6) == "check") {
+        if (!formInputCheckId()) {
             return;
+        }
+    }
 
-    auto lambdaKey = [&](int i) { return server.argName(i); };
-    auto lambdaValue = [&](int i) { return server.arg(i); };
+    auto lambdaKey = [&](int i) { return request->getParam(i)->name(); };
+    auto lambdaValue = [&](int i) { return request->getParam(i)->value(); };
 
     // MVP3000 settings
-    bool success = mvp.net.editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+    bool success = mvp.net.editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
     if (!success)
-        success = mvp.net.netCom.editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+        success = mvp.net.netCom.editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
 
-    // Loop through modules while success is not true
-    if (!success)
-        for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-            // Use lambdas to read args
-            success = mvp.xmodules[i]->editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
-            if (success)
-                break;
-        }
+    // // Loop through modules while success is not true
+    // if (!success)
+    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+    //         // Use lambdas to read args
+    //         success = mvp.xmodules[i]->editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
+    //         if (success)
+    //             break;
+    //     }
 
     // Response for display
     if (success) {
         responseRedirect("Settings saved!");
     } else {
         responseRedirect("Input error!");
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s", request->client()->remoteIP().toString().c_str());
     }
 }
 
-void NetWeb::startAction(boolean checkId) {
-    if (server.args() == 0) { // Likely a reload-from-locationbar error
+void NetWeb::startAction(AsyncWebServerRequest *request) {
+    if (request->params() == 0) { // Likely a reload-from-locationbar error
         responseRedirect("Redirected ...");
         return;
     }
 
-    if (checkId)
-        if (!formInputCheckId())
+    if (request->url().substring(1,6) == "check") {
+        if (!formInputCheckId()) {
             return;
-
-    // MVP3000 actions
-    bool success = true;
-    switch (mvp.helper.hashStringDjb2(server.argName(0).c_str())) {
-
-        case mvp.helper.hashStringDjb2("restart"):
-            responsePrepareRestart();
-            ESP.restart();
-            break;
-
-        case mvp.helper.hashStringDjb2("resetdevice"): //
-            responsePrepareRestart();
-            mvp.config.factoryResetDevice(); // calls ESP.restart();
-            break;
-
-        default: // Keyword not found
-            success = false;
-    }
-
-    // Loop through modules while success is not true
-    if (!success) {
-        auto lambdaKey = [&](int i) { return server.argName(i); };
-        auto lambdaValue = [&](int i) { return server.arg(i); };
-        for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-            // Use lambdas to read args
-            success = mvp.xmodules[i]->startActionNetWeb(server.args(), lambdaKey, lambdaValue);
-            if (success)
-                break;
         }
     }
 
-    // Response for display
-    if (!success) {
-        responseRedirect("Input error!");
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
-    } // else in case of success response should be generated from within the action function
+    // // MVP3000 actions
+    // bool success = true;
+    // switch (mvp.helper.hashStringDjb2(server.argName(0).c_str())) {
+
+    //     case mvp.helper.hashStringDjb2("restart"):
+    //         responsePrepareRestart();
+    //         ESP.restart();
+    //         break;
+
+    //     case mvp.helper.hashStringDjb2("resetdevice"): //
+    //         responsePrepareRestart();
+    //         mvp.config.factoryResetDevice(); // calls ESP.restart();
+    //         break;
+
+    //     default: // Keyword not found
+    //         success = false;
+    // }
+
+    // // Loop through modules while success is not true
+    // if (!success) {
+    //     auto lambdaKey = [&](int i) { return server.argName(i); };
+    //     auto lambdaValue = [&](int i) { return server.arg(i); };
+    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+    //         // Use lambdas to read args
+    //         success = mvp.xmodules[i]->startActionNetWeb(server.args(), lambdaKey, lambdaValue);
+    //         if (success)
+    //             break;
+    //     }
+    // }
+
+    // // Response for display
+    // if (!success) {
+    //     responseRedirect("Input error!");
+    //     mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
+    // } // else in case of success response should be generated from within the action function
 }
 
 
 bool NetWeb::formInputCheckId() {
-    // Minimum two arguments: action and deviceId
-    if (server.args() >= 2) {
-        // deviceId is last input element
-        uint8_t lastInput = server.args() - 1;
-        if ( (server.argName(lastInput) == "deviceId") && (mvp.helper.isValidInteger(server.arg(lastInput))) && (server.arg(lastInput).toInt() == ESPX.getChipId()) )
-            return true;
-    }
+    // // Minimum two arguments: action and deviceId
+    // if (server.args() >= 2) {
+    //     // deviceId is last input element
+    //     uint8_t lastInput = server.args() - 1;
+    //     if ( (server.argName(lastInput) == "deviceId") && (mvp.helper.isValidInteger(server.arg(lastInput))) && (server.arg(lastInput).toInt() == ESPX.getChipId()) )
+    //         return true;
+    // }
 
-    responseRedirect("Id check failed.");
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  server.client().remoteIP().toString().c_str());
+    // responseRedirect("Id check failed.");
+    // mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  server.client().remoteIP().toString().c_str());
     return false;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::sendFormatted(const char* messageFormatString, ...) {
-    char message[WEB_CHUNK_LENGTH];
-    va_list args;
-    va_start(args, messageFormatString);
-    vsnprintf(message, sizeof(message), messageFormatString, args);
-    va_end(args);
 
-    server.sendContent(message);
-}
 
 void NetWeb::responseRedirect(const char* message) {
-    // Message to serve on next page load
-    postMessage = message;
+    // // Message to serve on next page load
+    // postMessage = message;
 
-    // Redirect to avoid post reload, 303 temporary
-    // For modules this does not redirect to the module but to home
-    server.sendHeader("Location", "/");
-    server.send(303);
+    // // Redirect to avoid post reload, 303 temporary
+    // // For modules this does not redirect to the module but to home
+    // server.sendHeader("Location", "/");
+    // server.send(303);
 }
 
 void NetWeb::responsePrepareRestart() {
-    // http-equiv seems to not show up in history
-    server.send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
-    // Wait for redirect to be actually sent
-    delay(25);
+    // // http-equiv seems to not show up in history
+    // server.send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
+    // // Wait for redirect to be actually sent
+    // delay(25);
 }
