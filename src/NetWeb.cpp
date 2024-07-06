@@ -22,7 +22,6 @@ extern MVP3000 mvp;
 
 void NetWeb::setup() {
     // Folders/requests
-    // server.on("/", std::bind(&NetWeb::serveRequest, this));
     server.on("/", HTTP_ANY, std::bind(&NetWeb::serveRequest, this, std::placeholders::_1));
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/checksave", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
@@ -45,17 +44,14 @@ void NetWeb::loop() {
 
 //         static String processor(const String& var);
 // String NetWeb::processor(const String& var) {
-
-//     // switch (var.toInt()) {
-//     //     case 1:
-//     //         return ESPX.getChipId();
-//     //     case 2:
-//     //         return postMessage;
-//     //     default:
-//     //         break;
-//     // }
-
-    
+    // switch (var.toInt()) {
+    //     case 1:
+    //         return ESPX.getChipId();
+    //     case 2:
+    //         return postMessage;
+    //     default:
+    //         break;
+    // }
 //     return String();
 // }
 
@@ -162,12 +158,12 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
 
 void NetWeb::editCfg(AsyncWebServerRequest *request) {
     if (request->params() == 0) { // Likely a reload-from-locationbar error
-        responseRedirect("Redirected ...");
+        responseRedirect(request, "Redirected ...");
         return;
     }
 
     if (request->url().substring(1,6) == "check") {
-        if (!formInputCheckId()) {
+        if (!formInputCheckId(request)) {
             return;
         }
     }
@@ -180,53 +176,56 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
     if (!success)
         success = mvp.net.netCom.editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
 
-    // // Loop through modules while success is not true
-    // if (!success)
-    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-    //         // Use lambdas to read args
-    //         success = mvp.xmodules[i]->editCfgNetWeb(server.args(), lambdaKey, lambdaValue);
-    //         if (success)
-    //             break;
-    //     }
+    // Loop through modules while success is not true
+    if (!success)
+        for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+            // Use lambdas to read args
+            success = mvp.xmodules[i]->editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
+            if (success)
+                break;
+        }
 
     // Response for display
     if (success) {
-        responseRedirect("Settings saved!");
+        responseRedirect(request, "Settings saved!");
     } else {
-        responseRedirect("Input error!");
+        responseRedirect(request, "Input error!");
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s", request->client()->remoteIP().toString().c_str());
     }
 }
 
+
+
+
 void NetWeb::startAction(AsyncWebServerRequest *request) {
     if (request->params() == 0) { // Likely a reload-from-locationbar error
-        responseRedirect("Redirected ...");
+        responseRedirect(request, "Redirected ...");
         return;
     }
 
     if (request->url().substring(1,6) == "check") {
-        if (!formInputCheckId()) {
+        if (!formInputCheckId(request)) {
             return;
         }
     }
 
-    // // MVP3000 actions
-    // bool success = true;
-    // switch (mvp.helper.hashStringDjb2(server.argName(0).c_str())) {
+    // MVP3000 actions
+    bool success = true;
+    switch (mvp.helper.hashStringDjb2(request->getParam(0)->name().c_str())) {
 
-    //     case mvp.helper.hashStringDjb2("restart"):
-    //         responsePrepareRestart();
-    //         ESP.restart();
-    //         break;
+        case mvp.helper.hashStringDjb2("restart"):
+            responsePrepareRestart(request);
+            ESP.restart();
+            break;
 
-    //     case mvp.helper.hashStringDjb2("resetdevice"): //
-    //         responsePrepareRestart();
-    //         mvp.config.factoryResetDevice(); // calls ESP.restart();
-    //         break;
+        case mvp.helper.hashStringDjb2("resetdevice"): //
+            responsePrepareRestart(request);
+            mvp.config.factoryResetDevice(); // calls ESP.restart();
+            break;
 
-    //     default: // Keyword not found
-    //         success = false;
-    // }
+        default: // Keyword not found
+            success = false;
+    }
 
     // // Loop through modules while success is not true
     // if (!success) {
@@ -240,25 +239,25 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
     //     }
     // }
 
-    // // Response for display
-    // if (!success) {
-    //     responseRedirect("Input error!");
-    //     mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s",  server.client().remoteIP().toString().c_str());
-    // } // else in case of success response should be generated from within the action function
+    // Response for display
+    if (!success) {
+        responseRedirect(request, "Input error!");
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s", request->client()->remoteIP().toString().c_str());
+    } // else in case of success response should be generated from within the action function
 }
 
 
-bool NetWeb::formInputCheckId() {
-    // // Minimum two arguments: action and deviceId
-    // if (server.args() >= 2) {
-    //     // deviceId is last input element
-    //     uint8_t lastInput = server.args() - 1;
-    //     if ( (server.argName(lastInput) == "deviceId") && (mvp.helper.isValidInteger(server.arg(lastInput))) && (server.arg(lastInput).toInt() == ESPX.getChipId()) )
-    //         return true;
-    // }
+bool NetWeb::formInputCheckId(AsyncWebServerRequest *request) {
+    // Minimum two arguments: action and deviceId
+    if (request->params() >= 2) {
+        // deviceId is last input element
+        uint8_t lastInput = request->params() - 1;
+        if ( (request->getParam(lastInput)->name() == "deviceId") && (mvp.helper.isValidInteger(request->getParam(lastInput)->value())) && (request->getParam(lastInput)->value().toInt() == ESPX.getChipId()) )
+            return true;
+    }
 
-    // responseRedirect("Id check failed.");
-    // mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  server.client().remoteIP().toString().c_str());
+    responseRedirect(request, "ID check failed.");
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
     return false;
 }
 
@@ -267,7 +266,7 @@ bool NetWeb::formInputCheckId() {
 
 
 
-void NetWeb::responseRedirect(const char* message) {
+void NetWeb::responseRedirect(const char* message) {        // TODO DELETE
     // // Message to serve on next page load
     // postMessage = message;
 
@@ -277,9 +276,18 @@ void NetWeb::responseRedirect(const char* message) {
     // server.send(303);
 }
 
-void NetWeb::responsePrepareRestart() {
-    // // http-equiv seems to not show up in history
-    // server.send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
-    // // Wait for redirect to be actually sent
-    // delay(25);
+void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
+    // Message to serve on next page load
+    postMessage = message;
+
+    // Redirect to avoid post reload, 303 temporary
+    // For modules this does not redirect to the module but to home
+    request->redirect("/");                                            // TODO redirect for modules after save/action
+}
+
+void NetWeb::responsePrepareRestart(AsyncWebServerRequest *request) {
+    // http-equiv seems to not show up in history
+    request->send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
+    // Wait for redirect to be actually sent
+    delay(25);
 }

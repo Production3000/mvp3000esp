@@ -35,6 +35,15 @@ limitations under the License.
     extern EspClassX ESPX;
 #endif
 
+// #include "_Helper.h"
+// #include "_LinkedList.h"
+
+
+// uint32_t hashStringDjb2xy(const char* str, uint8_t h = 0) {
+//     // constexpr needs to be defined in .h file
+//     return !str[h] ? 5381 : (hashStringDjb2xy(str, h+1) * 33) ^ str[h];
+// };
+
 
 class NetWeb {
     public:
@@ -42,10 +51,69 @@ class NetWeb {
         void setup();
         void loop();
 
-        void sendFormatted(const char* formatString, ...); // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
+        void sendFormatted(const char* formatString, ...) {} // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
+
+        void responseRedirect(AsyncWebServerRequest *request, const char* message);
+
+
         void responseRedirect(const char* message); // Used in modules editCfg(), startAction()
 
     private:
+
+
+        // Helper helper;
+
+        // struct DataStructWebAction {
+        //     uint32_t hash;
+        //     void (NetWeb::*function)(AsyncWebServerRequest *request);
+
+        //     DataStructWebAction(const char *name, void (NetWeb::*_function)(AsyncWebServerRequest *request)) : function(_function) {
+        //         hash = hashStringDjb2xy(name);
+        //     }
+
+        //     ~DataStructWebAction() {
+        //         // delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
+        //     }
+        // };
+        // struct LinkedListWebAction : LinkedList3000<DataStructWebAction> {
+        //     LinkedListWebAction(uint16_t _max_size) : LinkedList3000<DataStructWebAction>(_max_size, true) { }
+
+        //     void append(const char *name, void (NetWeb::*_function)(AsyncWebServerRequest *request)) {
+        //         // Create data structure and add node to linked list
+        //         // Using this-> as base class/function is templated
+        //         this->appendNode(new DataStructWebAction(name, _function));
+        //     }
+        // };
+
+        // LinkedListWebAction webActions = LinkedListWebAction(10);
+
+
+
+        AsyncWebServerResponse *response;
+
+        #ifdef ESP8266
+            // ESP8266WebServer server;
+            AsyncWebServer server = AsyncWebServer(80);
+        #else
+            WebServer server;
+        #endif
+
+
+        // Message to serve on next page load after form save
+        const char *postMessage = "";
+
+        // Serve web page content (get)
+        void serveRequest(AsyncWebServerRequest *request);
+        void serveRequestCaptureAll(AsyncWebServerRequest *request);
+
+        // Handle form action (post)
+        void editCfg(AsyncWebServerRequest *request);
+        void startAction(AsyncWebServerRequest *request);
+        bool formInputCheckId(AsyncWebServerRequest *request);
+
+        void responsePrepareRestart(AsyncWebServerRequest *request);
+        void responsePrepareRestart() { };
+
 
         const char* index_html = R"RAW(
 <!DOCTYPE html> <html lang='en'>
@@ -80,31 +148,6 @@ class NetWeb {
         <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>
 <p>&nbsp;</body></html>
 )RAW";
-
-
-        AsyncWebServerResponse *response;
-
-        #ifdef ESP8266
-            // ESP8266WebServer server;
-            AsyncWebServer server = AsyncWebServer(80);
-        #else
-            WebServer server;
-        #endif
-
-
-        // Message to serve on next page load after form save
-        const char *postMessage = "";
-
-        // Serve web page content (get)
-        void serveRequest(AsyncWebServerRequest *request);
-        void serveRequestCaptureAll(AsyncWebServerRequest *request);
-
-        // Handle form action (post)
-        void editCfg(AsyncWebServerRequest *request);
-        void startAction(AsyncWebServerRequest *request);
-        bool formInputCheckId();
-
-        void responsePrepareRestart();
 
 };
 

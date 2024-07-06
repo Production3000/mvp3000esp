@@ -19,6 +19,30 @@ limitations under the License.
 
 #include <Arduino.h>
 
+// void NetWeb::sendFormatted(const char* messageFormatString, ...) {
+    // char message[WEB_CHUNK_LENGTH];
+    // va_list args;
+    // va_start(args, messageFormatString);
+    // vsnprintf(message, sizeof(message), messageFormatString, args);
+    // va_end(args);
+
+    // server.sendContent(message);
+// }
+
+// struct MyString : public String {
+//     int format(char const * const fmt, ...) {
+//         char buff[256];
+//         va_list argList;
+//         va_start(argList, fmt);
+//         int const len = vsnprintf(buff, sizeof(buff)/sizeof(*buff),
+//             fmt, argList);
+//         va_end(argList);
+
+//         *((String*) this) = buff;
+//         return len;
+//     }
+// };
+
 
 struct Helper {
 
@@ -111,6 +135,7 @@ struct Helper {
         // constexpr needs to be defined in .h file
         return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
     };
+    // uint32_t hashStringDjb2(String str) { return hashStringDjb2(str.c_str()); };
 
 };
 
