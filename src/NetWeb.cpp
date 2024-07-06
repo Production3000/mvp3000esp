@@ -168,7 +168,7 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
 
 void NetWeb::editCfg(AsyncWebServerRequest *request) {
     if (!formInputCheck(request)) {
-            return;
+        return;
     }
 
     // Try to change setting and respond
@@ -182,7 +182,7 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
 
 void NetWeb::startAction(AsyncWebServerRequest *request) {
     if (!formInputCheck(request)) {
-            return;
+        return;
     }
 
     // Loops through all actions and executes it if found
@@ -196,37 +196,41 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
     }
 
     // Report success and 
-    switch (result->successResonse)   {
+    switch (result->successResonse) {
         case WebActionList::ResponseType::MESSAGE:
             responseRedirect(request, result->successMessage.c_str());
             break;
         case WebActionList::ResponseType::RESTART:
             responsePrepareRestart(request); // Restarts after 25 ms, page reloads after 4 s
             break;
-        
-        default:
+
+        default:// WebActionList::ResponseType::NONE - should never occur?
+            responseRedirect(request);
             break;
     }
 }
 
-bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
+bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {         
     if (request->params() == 0) { // Likely a reload-from-locationbar error
         responseRedirect(request, "Redirected ...");
         return false;
     }
-
+                                              
     // Double check for deviceId for confirmation
-    if (request->url().substring(1,6) == "check") {
-        if (request->hasParam("deviceId")) {
-            if ( (mvp.helper.isValidInteger(request->getParam("deviceId")->value())) && (request->getParam("deviceId")->value().toInt() == ESPX.getChipId()) )
+    if (request->url().substring(1,6) == "check") {                      
+        if (request->hasParam("deviceId", true)) {   
+            if ( (mvp.helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == ESPX.getChipId()) ) {
                 return true;
-        } else {
-            // Failed confirmation check
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
-            return false;
+            }                
         }
+    } else {
+        // No deviceId check
+        return true;
     }
-    return true;
+    
+    // Failed confirmation check or no deviceId provided
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
+    return false;
 }
 
 

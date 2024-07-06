@@ -54,10 +54,10 @@ class NetWeb {
 
         void sendFormatted(const char* formatString, ...) {} // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
 
-        void responseRedirect(AsyncWebServerRequest *request, const char* message);
+        void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
 
 
-        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()
+        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()     DELETE
 
         void registerCfg(CfgJsonInterface* Cfg) {
             webCfgList.add(Cfg);
