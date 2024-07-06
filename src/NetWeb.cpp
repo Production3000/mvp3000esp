@@ -24,6 +24,15 @@ void NetWeb::setup() {
     // Initialize cfgList
     webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
+    // Initialize actionList
+    webActionList.add("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
+        return true;
+    });
+    webActionList.add("resetdevice", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
+        mvp.config.factoryResetDevice(); // also calls restart, but whatever
+        return true;
+    });
+
     // Folders/requests
     server.on("/", HTTP_ANY, std::bind(&NetWeb::serveRequest, this, std::placeholders::_1));
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
@@ -155,36 +164,15 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
 }
 
 
-
-
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::editCfg(AsyncWebServerRequest *request) {
-    if (request->params() == 0) { // Likely a reload-from-locationbar error
-        responseRedirect(request, "Redirected ...");
-        return;
-    }
-
-    if (request->url().substring(1,6) == "check") {
-        if (!formInputCheckId(request)) {
+    if (!formInputCheck(request)) {
             return;
-        }
     }
 
-    webCfgList.add(&mvp.net.cfgNet);
-    bool success = webCfgList.loopUpdateSingleValue(request->getParam(0)->name(), request->getParam(0)->value());
-
-    // Loop through modules while success is not true
-    // if (!success)
-    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-    //         // Use lambdas to read args
-    //         success = mvp.xmodules[i]->editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
-    //         if (success)
-    //             break;
-    //     }
-
-    // Response for display
-    if (success) {
+    // Try to change setting and respond
+    if (webCfgList.loopUpdateSingleValue(request->getParam(0)->name(), request->getParam(0)->value())) {
         responseRedirect(request, "Settings saved!");
     } else {
         responseRedirect(request, "Input error!");
@@ -192,79 +180,59 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
     }
 }
 
-
-
-
 void NetWeb::startAction(AsyncWebServerRequest *request) {
-    if (request->params() == 0) { // Likely a reload-from-locationbar error
-        responseRedirect(request, "Redirected ...");
+    if (!formInputCheck(request)) {
+            return;
+    }
+
+    // Loops through all actions and executes it if found
+    WebActionList::Node* result = webActionList.loopActions(request->params(), [&](int i) { return request->getParam(i)->name(); }, [&](int i) { return request->getParam(i)->value(); });
+
+    // Not found or failed
+    if (result == nullptr) {
+        responseRedirect(request, "Invalid input or action not found!");
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid action/input from: %s", request->client()->remoteIP().toString().c_str());
         return;
     }
 
-    if (request->url().substring(1,6) == "check") {
-        if (!formInputCheckId(request)) {
-            return;
-        }
-    }
-
-    // MVP3000 actions
-    bool success = true;
-    switch (mvp.helper.hashStringDjb2(request->getParam(0)->name().c_str())) {
-
-        case mvp.helper.hashStringDjb2("restart"):
-            responsePrepareRestart(request);
-            ESP.restart();
+    // Report success and 
+    switch (result->successResonse)   {
+        case WebActionList::ResponseType::MESSAGE:
+            responseRedirect(request, result->successMessage.c_str());
             break;
-
-        case mvp.helper.hashStringDjb2("resetdevice"): //
-            responsePrepareRestart(request);
-            mvp.config.factoryResetDevice(); // calls ESP.restart();
+        case WebActionList::ResponseType::RESTART:
+            responsePrepareRestart(request); // Restarts after 25 ms, page reloads after 4 s
             break;
-
-        default: // Keyword not found
-            success = false;
+        
+        default:
+            break;
     }
-
-    // // Loop through modules while success is not true
-    // if (!success) {
-    //     auto lambdaKey = [&](int i) { return server.argName(i); };
-    //     auto lambdaValue = [&](int i) { return server.arg(i); };
-    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-    //         // Use lambdas to read args
-    //         success = mvp.xmodules[i]->startActionNetWeb(server.args(), lambdaKey, lambdaValue);
-    //         if (success)
-    //             break;
-    //     }
-    // }
-
-    // Response for display
-    if (!success) {
-        responseRedirect(request, "Input error!");
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid form input from: %s", request->client()->remoteIP().toString().c_str());
-    } // else in case of success response should be generated from within the action function
 }
 
-
-bool NetWeb::formInputCheckId(AsyncWebServerRequest *request) {
-    // Minimum two arguments: action and deviceId
-    if (request->params() >= 2) {
-        // deviceId is last input element
-        uint8_t lastInput = request->params() - 1;
-        if ( (request->getParam(lastInput)->name() == "deviceId") && (mvp.helper.isValidInteger(request->getParam(lastInput)->value())) && (request->getParam(lastInput)->value().toInt() == ESPX.getChipId()) )
-            return true;
+bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
+    if (request->params() == 0) { // Likely a reload-from-locationbar error
+        responseRedirect(request, "Redirected ...");
+        return false;
     }
 
-    responseRedirect(request, "ID check failed.");
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
-    return false;
+    // Double check for deviceId for confirmation
+    if (request->url().substring(1,6) == "check") {
+        if (request->hasParam("deviceId")) {
+            if ( (mvp.helper.isValidInteger(request->getParam("deviceId")->value())) && (request->getParam("deviceId")->value().toInt() == ESPX.getChipId()) )
+                return true;
+        } else {
+            // Failed confirmation check
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
+            return false;
+        }
+    }
+    return true;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-
-
-void NetWeb::responseRedirect(const char* message) {        // TODO DELETE
+void NetWeb::responseRedirect(const char* message) {                                         // TODO DELETE
     // // Message to serve on next page load
     // postMessage = message;
 
@@ -275,17 +243,17 @@ void NetWeb::responseRedirect(const char* message) {        // TODO DELETE
 }
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
-    // Message to serve on next page load
+    // Message to serve on next page load                              // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  
     postMessage = message;
 
     // Redirect to avoid post reload, 303 temporary
-    // For modules this does not redirect to the module but to home
+                                                                        // For modules this does not redirect to the module but to home
     request->redirect("/");                                            // TODO redirect for modules after save/action
 }
 
 void NetWeb::responsePrepareRestart(AsyncWebServerRequest *request) {
     // http-equiv seems to not show up in history
     request->send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
-    // Wait for redirect to be actually sent
-    delay(25);
+    // Initiate delayed restart
+    mvp.delayedRestart(25);
 }

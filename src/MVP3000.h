@@ -70,6 +70,8 @@ class MVP3000 {
         // Forward internal functions for simplicity
         void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };
 
+        uint32_t delayedRestart_ms = 0;
+        void delayedRestart(uint32_t delay_ms = 25) { delayedRestart_ms = millis() + delay_ms; };
 };
 
 #endif

@@ -68,7 +68,6 @@ class NetWeb {
         struct WebCfgList {
             struct Node {
                 CfgJsonInterface* Cfg;
-
                 Node* next;
             };
             Node* head = nullptr;
@@ -110,33 +109,62 @@ class NetWeb {
 
         WebCfgList webCfgList;
 
+        struct WebActionList {
+            enum ResponseType {
+                NONE = 0,
+                MESSAGE = 1,
+                RESTART = 2
+            };
 
-        // Helper helper;
+            struct Node {
+                String name;
+                ResponseType successResonse; // 0: none, 1: message-redirect, 2: restart-redirect
+                String successMessage;
+                std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt;
+                Node* next;
+            };
+            Node* head = nullptr;
 
-        // struct DataStructWebAction {
-        //     uint32_t hash;
-        //     void (NetWeb::*function)(AsyncWebServerRequest *request);
+            WebActionList() { }
 
-        //     DataStructWebAction(const char *name, void (NetWeb::*_function)(AsyncWebServerRequest *request)) : function(_function) {
-        //         hash = hashStringDjb2xy(name);
-        //     }
+            /**
+             * @brief Make a configuration available for web interface.
+             * 
+             * @param name The name of the configuration.
+             * @param successResonse The response type on success.
+             * @param actionFkt The function to execute.
+             * @param successMessage The message to display on success.
+             */
+            void add(String name, ResponseType successResonse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "") {
+                Node* newNode = new Node;
+                newNode->name = name;
+                newNode->successResonse = successResonse;
+                newNode->successMessage = successMessage;
+                newNode->actionFkt = actionFkt;
+                newNode->next = head;
+                head = newNode;
+            }
 
-        //     ~DataStructWebAction() {
-        //         // delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
-        //     }
-        // };
-        // struct LinkedListWebAction : LinkedList3000<DataStructWebAction> {
-        //     LinkedListWebAction(uint16_t _max_size) : LinkedList3000<DataStructWebAction>(_max_size, true) { }
+            // Loops through all cfgs and updates the value if found
+            Node* loopActions(int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
+                Node* current = head;
+                // Loop through all nodes
+                while (current != nullptr) {
+                    // Check if name matches and execute action
+                    if (argName(0) == current->name) {
+                        if (current->actionFkt(args, argName, argValue)) {
+                            return current;
+                        } else {
+                            return nullptr;
+                        }
+                    }
+                    current = current->next;
+                }
+                return nullptr;
+            }
+        };
 
-        //     void append(const char *name, void (NetWeb::*_function)(AsyncWebServerRequest *request)) {
-        //         // Create data structure and add node to linked list
-        //         // Using this-> as base class/function is templated
-        //         this->appendNode(new DataStructWebAction(name, _function));
-        //     }
-        // };
-
-        // LinkedListWebAction webActions = LinkedListWebAction(10);
-
+        WebActionList webActionList;
 
 
         AsyncWebServerResponse *response;
@@ -159,7 +187,7 @@ class NetWeb {
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);
         void startAction(AsyncWebServerRequest *request);
-        bool formInputCheckId(AsyncWebServerRequest *request);
+        bool formInputCheck(AsyncWebServerRequest *request);
 
         void responsePrepareRestart(AsyncWebServerRequest *request);
         void responsePrepareRestart() { };

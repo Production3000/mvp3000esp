@@ -138,8 +138,7 @@ void Config::factoryResetDevice() {
     
     // Wait for filesystem to actually write to flash
     SPIFFS.end();
-    delay(25);
-    ESP.restart();
+    mvp.delayedRestart(25);
 }
 
 

@@ -42,6 +42,13 @@ void MVP3000::loop() {
     for (uint8_t i = 0; i < moduleCount; i++) {
         xmodules[i]->loop();
     }
+
+    // Check if delayed restart was set
+    if (delayedRestart_ms > 0) {
+        if (millis() > delayedRestart_ms) {
+            ESP.reset();
+        }
+    }
 }
 
 void MVP3000::addXmodule(Xmodule *xmodule) {
