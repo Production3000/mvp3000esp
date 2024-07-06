@@ -27,8 +27,11 @@ void Net::setup() {
     // Start wifi
     startWifi();
 
-    // Init modules
+    // Init web interface and register configuration
     netWeb.setup();
+    netWeb.registerCfg(&cfgNet);
+
+    // Init MQTT communication
     netCom.setup();
 }
  
@@ -54,21 +57,6 @@ void Net::loop() {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
-
-bool Net::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
-    // Special case wifi credentials first
-    boolean success = false;
-    if ((args == 2) && (argName(0) == "newSsid"))
-        success = editClientConnection(arg(0), arg(1));
-    // Try to update cfg
-    if (!success)
-        success = cfgNet.updateFromWeb(argName(0), arg(0));
-
-    // Save cfg on success
-    if (success)
-        mvp.config.writeCfg(cfgNet);
-    return success;
-};
 
 bool Net::editClientConnection(String newSsid, String newPass) {
 

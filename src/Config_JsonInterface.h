@@ -203,12 +203,12 @@ struct CfgJsonInterface : public JsonInterface {
     }
 
     /**
-     * @brief Update a setting from a web request.
+     * @brief Update a single setting, typically from a web request.
      * 
      * @param key The key of the setting to update, will be hashed.
      * @param value The new value of the setting.
      */
-    bool updateFromWeb(String key, String value) {    
+    bool updateSingleValue(String key, String value) {    
         // Loop through all settings to find the correct one    
         SettingMain* current = head;
         while (current != NULL) {

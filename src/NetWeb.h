@@ -37,6 +37,7 @@ limitations under the License.
 
 // #include "_Helper.h"
 // #include "_LinkedList.h"
+#include "Config_JsonInterface.h"
 
 
 // uint32_t hashStringDjb2xy(const char* str, uint8_t h = 0) {
@@ -58,7 +59,56 @@ class NetWeb {
 
         void responseRedirect(const char* message); // Used in modules editCfg(), startAction()
 
+        void registerCfg(CfgJsonInterface* Cfg) {
+            webCfgList.add(Cfg);
+        }
+
     private:
+
+        struct WebCfgList {
+            struct Node {
+                CfgJsonInterface* Cfg;
+
+                Node* next;
+            };
+            Node* head = nullptr;
+
+            std::function<void(CfgJsonInterface&)> saveCfgFkt; // Function to save the configuration
+
+            WebCfgList() { }
+            WebCfgList(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
+                this->saveCfgFkt = saveCfgFkt;
+            }
+
+            /**
+             * @brief Make a configuration available for web interface.
+             * 
+             * @param Cfg The configuration to add.
+             */
+            void add(CfgJsonInterface* Cfg) {
+                Node* newNode = new Node;
+                newNode->Cfg = Cfg;
+                newNode->next = head;
+                head = newNode;
+            }
+
+            // Loops through all cfgs and updates the value if found
+            bool loopUpdateSingleValue(String name, String value) {
+                Node* current = head;
+                // Loop through all nodes
+                while (current != nullptr) {
+                    // Try to update value, if successful save Cfg and return
+                    if (current->Cfg->updateSingleValue(name, value)) {
+                        saveCfgFkt(*current->Cfg);
+                        return true;
+                    }
+                    current = current->next;
+                }
+                return false;
+            }
+        };
+
+        WebCfgList webCfgList;
 
 
         // Helper helper;

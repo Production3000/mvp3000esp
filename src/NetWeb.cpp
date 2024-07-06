@@ -21,6 +21,9 @@ extern MVP3000 mvp;
 
 
 void NetWeb::setup() {
+    // Initialize cfgList
+    webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
+
     // Folders/requests
     server.on("/", HTTP_ANY, std::bind(&NetWeb::serveRequest, this, std::placeholders::_1));
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
@@ -29,7 +32,7 @@ void NetWeb::setup() {
     server.on("/checkstart", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
     server.onNotFound(std::bind(&NetWeb::serveRequestCaptureAll, this, std::placeholders::_1));
 
-    // Start server, independent of wifi status, main will only be called when connected
+    // Start server, independent of wifi status
     server.begin();
 }
 
@@ -168,22 +171,17 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
         }
     }
 
-    auto lambdaKey = [&](int i) { return request->getParam(i)->name(); };
-    auto lambdaValue = [&](int i) { return request->getParam(i)->value(); };
-
-    // MVP3000 settings
-    bool success = mvp.net.editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
-    if (!success)
-        success = mvp.net.netCom.editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
+    webCfgList.add(&mvp.net.cfgNet);
+    bool success = webCfgList.loopUpdateSingleValue(request->getParam(0)->name(), request->getParam(0)->value());
 
     // Loop through modules while success is not true
-    if (!success)
-        for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-            // Use lambdas to read args
-            success = mvp.xmodules[i]->editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
-            if (success)
-                break;
-        }
+    // if (!success)
+    //     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+    //         // Use lambdas to read args
+    //         success = mvp.xmodules[i]->editCfgNetWeb(request->params(), lambdaKey, lambdaValue);
+    //         if (success)
+    //             break;
+    //     }
 
     // Response for display
     if (success) {

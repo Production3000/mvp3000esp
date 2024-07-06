@@ -120,8 +120,7 @@ class Net {
         void setup();
         void loop();
 
-        bool editClientConnection(String newSsid, String newPass);
-        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
+        bool editClientConnection(String newSsid, String newPass);;
 };
 
 #endif

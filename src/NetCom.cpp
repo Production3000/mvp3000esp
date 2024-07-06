@@ -35,8 +35,9 @@ extern MVP3000 mvp;
 
 
 void NetCom::setup() {
-    // Read config
+    // Read config and register with web interface
     mvp.config.readCfg(cfgNetCom);
+    mvp.net.netWeb.registerCfg(&cfgNetCom);
 
     if (!cfgNetCom.mqttEnabled)
         return;
@@ -94,14 +95,6 @@ void NetCom::loop() {
         default:
             break;
     }
-}
-
-bool NetCom::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
-    // Try to update cfg, save if successful
-    bool success = cfgNetCom.updateFromWeb(argName(0), arg(0));
-    if (success)
-        mvp.config.writeCfg(cfgNetCom);
-    return success;
 }
 
 void NetCom::udpDiscoverMqtt() {

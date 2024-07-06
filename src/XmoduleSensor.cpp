@@ -97,7 +97,7 @@ void XmoduleSensor::contentModuleNetWeb() {
 
 bool XmoduleSensor::editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) {
     // Try to update cfg, save if successful
-    boolean success = cfgXmoduleSensor.updateFromWeb(argName(0), arg(0));
+    boolean success = cfgXmoduleSensor.updateSingleValue(argName(0), arg(0));
     if (success)
         mvp.config.writeCfg(cfgXmoduleSensor);
     return success;

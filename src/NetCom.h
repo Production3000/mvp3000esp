@@ -97,8 +97,6 @@ class NetCom {
         String mqttTopicPrefix = "MVP3000_" + String(ESPX.getChipId()) + "_";
 
         void mqttWrite(const char *message);
-
-        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg);
 };
 
 #endif
