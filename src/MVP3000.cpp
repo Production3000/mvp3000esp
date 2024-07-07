@@ -46,6 +46,7 @@ void MVP3000::loop() {
     // Check if delayed restart was set
     if (delayedRestart_ms > 0) {
         if (millis() > delayedRestart_ms) {
+            // delayedRestart_ms = 0; // Not needed as we reset the ESP
             ESP.reset();
         }
     }

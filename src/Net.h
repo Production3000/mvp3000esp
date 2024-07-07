@@ -55,27 +55,10 @@ struct CfgNet : public CfgJsonInterface  {
 
     CfgNet() : CfgJsonInterface("cfgNet") {
         addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [](uint16_t x) { return (x > 100) ? false : true; }); // Limit to 100, any more is 'forever'
-        addSetting<String>("clientSsid", &clientSsid, [](String _) { return true; } ); // Check is in extra function
-        addSetting<String>("clientPass", &clientPass, [](String _) { return true; }); // Check is in extra function
+        addSetting<String>("clientSsid", &clientSsid, [](String x) { return true; } ); // Check is in extra function
+        addSetting<String>("clientPass", &clientPass, [](String x) { return true; }); // Check is in extra function
         addSetting<boolean>("forceClientMode", &forceClientMode, [](boolean _) { return true; });
     }
-
-    bool setWifiCredentials(String newSsid, String newPass) {
-        // Remove network
-        if (newSsid.length() == 0) {
-            clientSsid = "";
-            clientPass = "";
-            return true;
-        }
-        // Edit network
-        if ((newSsid.length() >= 1) && (newSsid.length() <= 32) && (newPass.length() >= 8) && (newPass.length() <= 63)) {
-            clientSsid = newSsid;
-            clientPass = newPass;
-            return true;
-        }
-
-        return false;
-    };
 };
 
 
@@ -94,6 +77,9 @@ class Net {
         void startWifi();
         void startAp();
         void startClient();
+
+        uint32_t delayedRestartWifi_ms = 0;
+        void delayedRestartWifi(uint32_t delay_ms = 50) { delayedRestartWifi_ms = millis() + delay_ms; };
 
 // ESP8266 needs definition of Wifi events
 #ifdef ESP8266

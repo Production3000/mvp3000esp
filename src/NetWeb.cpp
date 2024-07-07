@@ -21,72 +21,21 @@ extern MVP3000 mvp;
 
 
 void NetWeb::setup() {
-    // Initialize cfgList
-    webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
-
-    // Initialize actionList
-    webActionList.add("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
-        return true;
-    });
-    webActionList.add("resetdevice", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
-        mvp.config.factoryResetDevice(); // also calls restart, but whatever
-        return true;
-    });
-
-    // Folders/requests
-    server.on("/", HTTP_ANY, std::bind(&NetWeb::serveRequest, this, std::placeholders::_1));
+    // Initialize folders/requests
+    // Root folder and module folders are initialized with registering the pages
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/checksave", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/start", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
     server.on("/checkstart", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
-    server.onNotFound(std::bind(&NetWeb::serveRequestCaptureAll, this, std::placeholders::_1));
+    server.onNotFound([&](AsyncWebServerRequest *request) { // Catch all
+        request->redirect("/");
+    });
 
-    // Start server, independent of wifi status
-    server.begin();
-}
+    // Initialize cfgList
+    webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-void NetWeb::loop() {
-    // Called from net.loop() only if network is up
-    // There is actually nothing to do here, the async server is running in the background
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////
-
-
-//         static String processor(const String& var);
-// String NetWeb::processor(const String& var) {
-    // switch (var.toInt()) {
-    //     case 1:
-    //         return ESPX.getChipId();
-    //     case 2:
-    //         return postMessage;
-    //     default:
-    //         break;
-    // }
-//     return String();
-// }
-
-void NetWeb::serveRequestCaptureAll(AsyncWebServerRequest *request) {
-    if (mvp.helper.isValidInteger(request->url().substring(1))) {
-        Serial.println("module");
-        serveRequest(request);
-        // Serve module content
-        // uint8_t moduleId = request->url().toInt();
-        // if (moduleId < mvp.moduleCount) {
-        //     if (mvp.xmodules[moduleId]->enableContentModuleNetWeb) {
-        //         mvp.xmodules[moduleId]->contentModuleNetWeb(request);
-        //         return;
-        //     }
-        // }
-    } else {
-        // Serve main page
-        serveRequest(request);
-    }
-}
-
-void NetWeb::serveRequest(AsyncWebServerRequest *request) {
-    response = request->beginChunkedResponse("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+    // Register main page and actions
+    registerPage("/", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
         // Put the substring from index_html into the buffer, starting at index until index + maxLen
         size_t len = strlen(index_html);
         if (index + maxLen > len) {
@@ -94,13 +43,15 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
         }
         memcpy(buffer, index_html + index, maxLen);
         return maxLen;
-    } , [&](const String& var) -> String {
-        String modules;
+    }, [&](const String& var) -> String {
+        String str;
         switch (var.toInt()) {
             case 1:
                 return String(ESPX.getChipId());
             case 2:
-                return postMessage;
+                str = postMessage;
+                postMessage = ""; // Clear message for next load
+                return str;
             case 3:
                 return String(__DATE__) + " " + String(__TIME__);
             case 4:
@@ -143,13 +94,13 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
             case 99:
                 for (uint8_t i = 0; i < mvp.moduleCount; i++) {                                        // TODO make this string thing much better this is so annoying in c++
                     if (mvp.xmodules[i]->enableContentModuleNetWeb)
-                        modules += "<li><a href='/" + String(i) + "'>" + mvp.xmodules[i]->description + "</a></li>";
+                        str += "<li><a href='/" + String(i) + "'>" + mvp.xmodules[i]->description + "</a></li>";
                     else
-                        modules += "<li>" + mvp.xmodules[i]->description + "</li>";
+                        str += "<li>" + mvp.xmodules[i]->description + "</li>";
                 }
                 if (mvp.moduleCount == 0)
-                    modules += "<li>None</li>";
-                return modules;
+                    str += "<li>None</li>";
+                return str;
 
             default:
                 break;
@@ -157,10 +108,41 @@ void NetWeb::serveRequest(AsyncWebServerRequest *request) {
         return String();
     });
 
-    request->send(response);
+    // Initialize actionList
+    registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+        return true;
+    });
+    registerAction("resetdevice", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+        mvp.config.factoryResetDevice(); // also calls restart, but whatever
+        return true;
+    });
+    
+    // Start server, independent of wifi status
+    server.begin();
+}
 
-    // Clear message for next load
-    postMessage = "";
+void NetWeb::loop() {
+    // Called from net.loop() only if network is up
+    // There is actually nothing to do here, the async server is running in the background
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
+void NetWeb::registerPage(String url, AwsResponseFiller responseFiller, AwsTemplateProcessor processor) {
+    webPageList.add(url, responseFiller, processor);
+    // Register url with server
+    server.on(url.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->sendChunked("text/html", webPageList.head->responseFiller , webPageList.head->processor);
+    });
+}
+
+void NetWeb::registerCfg(CfgJsonInterface* Cfg) {
+    webCfgList.add(Cfg);
+}
+
+void NetWeb::registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+    webActionList.add(action, successResponse, actionFkt, successMessage);
 }
 
 
@@ -196,7 +178,7 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
     }
 
     // Report success and 
-    switch (result->successResonse) {
+    switch (result->successResponse) {
         case WebActionList::ResponseType::MESSAGE:
             responseRedirect(request, result->successMessage.c_str());
             break;

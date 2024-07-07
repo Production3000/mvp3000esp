@@ -40,30 +40,45 @@ limitations under the License.
 #include "Config_JsonInterface.h"
 
 
-// uint32_t hashStringDjb2xy(const char* str, uint8_t h = 0) {
-//     // constexpr needs to be defined in .h file
-//     return !str[h] ? 5381 : (hashStringDjb2xy(str, h+1) * 33) ^ str[h];
-// };
-
-
 class NetWeb {
     public:
 
-        void setup();
-        void loop();
+        struct WebPageList {
+            struct Node {
+                String url;
+                AwsResponseFiller responseFiller;
+                AwsTemplateProcessor processor;
+                Node* next;
+            };
+            Node* head = nullptr;
+            
+            /**
+             * @brief Add a web page to the web interface.
+             * 
+             * @param url The URL of the page. IMPORTANT: include the '/' at the beginning.
+             * @param responseFiller The function to fill the response.
+             * @param processor The function to process the template.
+             */
+            void add(String url, AwsResponseFiller responseFiller, AwsTemplateProcessor processor) {
+                Node* newNode = new Node();
+                newNode->url = url;
+                newNode->responseFiller = responseFiller;
+                newNode->processor = processor;
+                newNode->next = head;
+                head = newNode;
+            }
 
-        void sendFormatted(const char* formatString, ...) {} // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
-
-        void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
-
-
-        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()     DELETE
-
-        void registerCfg(CfgJsonInterface* Cfg) {
-            webCfgList.add(Cfg);
-        }
-
-    private:
+            Node* selectPage(String url) {
+                Node* current = head;
+                while (current != nullptr) {
+                    if (current->url == url) {
+                        return current;
+                    }
+                    current = current->next;
+                }
+                return nullptr;
+            }
+        };
 
         struct WebCfgList {
             struct Node {
@@ -92,12 +107,12 @@ class NetWeb {
             }
 
             // Loops through all cfgs and updates the value if found
-            bool loopUpdateSingleValue(String name, String value) {
+            bool loopUpdateSingleValue(String key, String value) {
                 Node* current = head;
                 // Loop through all nodes
                 while (current != nullptr) {
                     // Try to update value, if successful save Cfg and return
-                    if (current->Cfg->updateSingleValue(name, value)) {
+                    if (current->Cfg->updateSingleValue(key, value)) {
                         saveCfgFkt(*current->Cfg);
                         return true;
                     }
@@ -107,8 +122,6 @@ class NetWeb {
             }
         };
 
-        WebCfgList webCfgList;
-
         struct WebActionList {
             enum ResponseType {
                 NONE = 0,
@@ -117,8 +130,8 @@ class NetWeb {
             };
 
             struct Node {
-                String name;
-                ResponseType successResonse; // 0: none, 1: message-redirect, 2: restart-redirect
+                String action;
+                ResponseType successResponse;
                 String successMessage;
                 std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt;
                 Node* next;
@@ -130,15 +143,15 @@ class NetWeb {
             /**
              * @brief Make a configuration available for web interface.
              * 
-             * @param name The name of the configuration.
-             * @param successResonse The response type on success.
+             * @param action The action of the configuration.
+             * @param successResponse The response type on success.
              * @param actionFkt The function to execute.
              * @param successMessage The message to display on success.
              */
-            void add(String name, ResponseType successResonse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "") {
+            void add(String action, ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "") {
                 Node* newNode = new Node;
-                newNode->name = name;
-                newNode->successResonse = successResonse;
+                newNode->action = action;
+                newNode->successResponse = successResponse;
                 newNode->successMessage = successMessage;
                 newNode->actionFkt = actionFkt;
                 newNode->next = head;
@@ -146,13 +159,13 @@ class NetWeb {
             }
 
             // Loops through all cfgs and updates the value if found
-            Node* loopActions(int args, std::function<String(int)> argName, std::function<String(int)> argValue) {
+            Node* loopActions(int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
                 Node* current = head;
                 // Loop through all nodes
                 while (current != nullptr) {
-                    // Check if name matches and execute action
-                    if (argName(0) == current->name) {
-                        if (current->actionFkt(args, argName, argValue)) {
+                    // Check if key matches and execute action
+                    if (argKey(0) == current->action) {
+                        if (current->actionFkt(args, argKey, argValue)) {
                             return current;
                         } else {
                             return nullptr;
@@ -164,10 +177,23 @@ class NetWeb {
             }
         };
 
-        WebActionList webActionList;
+        void setup();
+        void loop();
+
+        void registerPage(String url, AwsResponseFiller responseFiller, AwsTemplateProcessor processor);
+        void registerCfg(CfgJsonInterface* Cfg);
+        void registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
 
 
-        AsyncWebServerResponse *response;
+    // DELETE
+        void sendFormatted(const char* formatString, ...) {} // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
+        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()     DELETE
+        void responsePrepareRestart() { };
+        
+
+
+
+    private:
 
         #ifdef ESP8266
             // ESP8266WebServer server;
@@ -176,22 +202,20 @@ class NetWeb {
             WebServer server;
         #endif
 
+        WebPageList webPageList;
+        WebCfgList webCfgList;
+        WebActionList webActionList;
 
         // Message to serve on next page load after form save
         const char *postMessage = "";
-
-        // Serve web page content (get)
-        void serveRequest(AsyncWebServerRequest *request);
-        void serveRequestCaptureAll(AsyncWebServerRequest *request);
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);
         void startAction(AsyncWebServerRequest *request);
         bool formInputCheck(AsyncWebServerRequest *request);
 
+        void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
         void responsePrepareRestart(AsyncWebServerRequest *request);
-        void responsePrepareRestart() { };
-
 
         const char* index_html = R"RAW(
 <!DOCTYPE html> <html lang='en'>
@@ -209,7 +233,7 @@ class NetWeb {
         <li>Main loop duration: %9% ms (mean/min/max)</li> </ul>
     <h3>Network</h3> <ul>
         <li>Fallback AP SSID: '%31%'</li>
-        <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/save' method='post'> SSID <input name='newSsid' value='%32%'> Passphrase <input type='password' name='newPass' value='%33%'> <input type='submit' value='Save'> </form> </li>
+        <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/start' method='post' onsubmit='return confirm(`Change network?`);'> <input name='setwifi' type='hidden'> SSID <input name='newSsid' value='%32%'> Passphrase <input type='password' name='newPass' value='%33%'> <input type='submit' value='Save'> </form> </li>
         <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%34%' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
         <li>Force client mode. WARNING: If the credentials are wrong, the device will be inaccessible via network, thus require re-flashing!
          <form action='/checksave' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %35% value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>

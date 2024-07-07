@@ -27,9 +27,13 @@ void Net::setup() {
     // Start wifi
     startWifi();
 
-    // Init web interface and register configuration
+    // Init web interface and register cfg and actions
     netWeb.setup();
     netWeb.registerCfg(&cfgNet);
+    netWeb.registerAction("setwifi", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+        // argValue(0) is the action name
+        return editClientConnection(argValue(1), argValue(2));
+    }, "Connecting to network ...");
 
     // Init MQTT communication
     netCom.setup();
@@ -53,22 +57,35 @@ void Net::loop() {
 
     // Web interface for all
     netWeb.loop();
+
+    // Check if delayed restart was set
+    if (delayedRestartWifi_ms > 0) {
+        if (millis() > delayedRestartWifi_ms) {
+            delayedRestartWifi_ms = 0; // Clear flag
+            startWifi();
+        }
+    }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 bool Net::editClientConnection(String newSsid, String newPass) {
-
-    bool success = cfgNet.setWifiCredentials(newSsid, newPass);
-    if (success) {
+    // SSID and pass are both either empty or IEEE conform
+    if (((newSsid.length() == 0) && (newPass.length() == 0)) || ((newSsid.length() >= 1) && (newSsid.length() <= 32) && (newPass.length() >= 8) && (newPass.length() <= 63))) {
+        cfgNet.clientSsid = newSsid;
+        cfgNet.clientPass = newPass;
+        // Save cfg
+        mvp.config.writeCfg(cfgNet);
+        // Reset connection state
         clientConnectFails = 0;
         clientConnectSuccess = false;
+        // Restart wifi with new settings but leave time for web response to be sent
+        delayedRestartWifi();
         mvp.logger.write(CfgLogger::Level::INFO, "SSID and pass updated.");
-        startWifi();
+        return true;
     }
-
-    return success;
+    return false;
 }
 
 
@@ -121,7 +138,7 @@ void Net::startClient() {
 
 void Net::connectClient() {
     WiFi.begin(cfgNet.clientSsid, cfgNet.clientPass);
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s %s", cfgNet.clientSsid.c_str(), cfgNet.clientPass.c_str());
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s/%s", cfgNet.clientSsid.c_str(), cfgNet.clientPass.c_str());
 }
 
 void Net::WiFiGotIP() {
