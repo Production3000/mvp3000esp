@@ -46,6 +46,16 @@ void Config::setup() {
     mvp.logger.write(CfgLogger::Level::ERROR, "Permanently failed to mount file system.");
 }
 
+void Config::loop() {
+    // Check if delayed factory reset was started
+    if (delayedFactoryReset_ms > 0) {
+        if (millis() > delayedFactoryReset_ms) {
+            delayedFactoryReset_ms = 0;
+            factoryResetDevice(delayedFactoryResetKeepWifi);
+        }
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Config::isReadyFS() {
@@ -127,11 +137,21 @@ void Config::writeJsonToFile(const char *fileName) {
     jsonDoc.clear();
 }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Config::delayedFactoryResetDevice(boolean keepWifi) {
+    // This is a workaround to not trigger the ESP32 watchdog on the web server
+    // It still floods the serial
+    delayedFactoryReset_ms = millis() + 25;
+    delayedFactoryResetKeepWifi = keepWifi;
+}
+
 void Config::factoryResetDevice(boolean keepWifi) {
     if (!isReadyFS())
         return;
 
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Starting factory reset ...");
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Starting factory reset ...");             // TODO trigers watchdog
 
     // Clear any saved data, factory config will be restored to defaults on reboot
     SPIFFS.format();

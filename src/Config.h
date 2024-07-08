@@ -45,12 +45,15 @@ class Config {
 
     public:
         void setup();
-        // There is no loop action in this class
+        void loop();
 
         void readCfg(JsonInterface &cfg);
         void writeCfg(JsonInterface &cfg);
 
         void factoryResetDevice(boolean keepWifi = false);
+        uint32_t delayedFactoryReset_ms = 0;
+        boolean delayedFactoryResetKeepWifi = true;
+        void delayedFactoryResetDevice(boolean keepWifi = false);
 };
 
 #endif

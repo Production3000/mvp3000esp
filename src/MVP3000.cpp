@@ -36,6 +36,7 @@ void MVP3000::loop() {
     updateLoopDuration();
     checkStatus();
 
+    config.loop();
     led.loop();
     net.loop();
     // Modules

@@ -114,11 +114,11 @@ void NetWeb::setup() {
     registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         return true;
     });
-    registerAction("reset", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    registerAction("reset", WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // If keepwifi is checked it is present in the args, otherwise not
-        mvp.config.factoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
+        mvp.config.delayedFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
         return true;
-    });
+    }, "Factory reset initiated, this takes some 10 s ...");
     
     // Start server, independent of wifi status
     server.begin();
