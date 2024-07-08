@@ -36,6 +36,7 @@ limitations under the License.
 #else
     extern EspClassX ESPX;
 #endif
+#include "NetWeb.h"
 
 
 struct CfgNetCom : public CfgJsonInterface {
@@ -68,6 +69,8 @@ class NetCom {
             DISABLEDX = 2
         };
         COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLEDX;
+
+        NetWeb::WebPage* webPageNetCom;
 
         WiFiClient wifiClient;
         MqttClient mqttClient = NULL;

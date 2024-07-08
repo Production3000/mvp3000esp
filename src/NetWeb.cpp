@@ -34,65 +34,61 @@ void NetWeb::setup() {
     // Initialize cfgList
     webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-    // Register main page and actions
-    registerPage("/", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-        // Put the substring from index_html into the buffer, starting at index until index + maxLen
-        size_t len = strlen(index_html);
-        if (index + maxLen > len) {
-            maxLen = len - index;
+    // Define home page
+    webPageHome = new WebPage("/", R"===(
+<!DOCTYPE html> <html lang='en'>
+<head> <title>MVP3000 - Device ID %0%</title>
+    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+<body> <h2>MVP3000 - Device ID %0%</h2> <h3 style='color: red;'>%1%</h3>
+    <h3>System</h3> <ul>
+        <li>ID: %0%</li>
+        <li>Build: %2%</li>
+        <li>Memory: %3%, fragmentation %4%&percnt;</li>
+        <li>Uptime: %5%</li>
+        <li>Last restart reason: %6%</li>
+        <li>CPU frequency: %7% MHz</li>
+        <li>Main loop duration: %8% ms (mean/min/max)</li> </ul>
+    <h3>Components</h3> <ul>
+        <li><a href='/net'>Network</a></li>
+        <li><a href='/netcom'>MQTT communication</a></li> </ul>
+    <h3>Modules</h3> <ul>
+        %9% </ul>
+    <h3>Maintenance</h3> <ul>
+        <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
+        <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>
+<p>&nbsp;</body></html>
+    )===" ,[&](const String& var) -> String {
+        if (!mvp.helper.isValidInteger(var)) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+            return var;
         }
-        memcpy(buffer, index_html + index, maxLen);
-        return maxLen;
-    }, [&](const String& var) -> String {
-        String str;
+
+        String str; // Needs to be defined outside of switch
         switch (var.toInt()) {
-            case 1:
+            case 0:
                 return String(ESPX.getChipId());
-            case 2:
+
+            case 1:
                 str = postMessage;
                 postMessage = ""; // Clear message for next load
                 return str;
-            case 3:
+            case 2:
                 return String(__DATE__) + " " + String(__TIME__);
-            case 4:
+            case 3:
                 return String(ESP.getFreeHeap());
-            case 5:
+            case 4:
                 return String(ESPX.getHeapFragmentation());
-            case 6:
+            case 5:
                 return String(mvp.helper.upTime());
-            case 7:
+            case 6:
                 return String(ESPX.getResetReason().c_str());
-            case 8:
+            case 7:
                 return String(ESP.getCpuFreqMHz());
-            case 9:
+            case 8:
                 return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
-            
-            case 31:
-                return mvp.net.apSsid.c_str();
-            case 32:
-                return mvp.net.cfgNet.clientSsid.c_str();
-            case 33:
-                return mvp.net.cfgNet.clientPass.c_str();
-            case 34:
-                return String(mvp.net.cfgNet.clientConnectRetries);
-            case 35:
-                return (mvp.net.cfgNet.forceClientMode == true) ? "checked" : "";
-
-            case 51:
-                return mvp.net.netCom.controllerConnectedString().c_str();
-            case 52:
-                return String(mvp.net.netCom.cfgNetCom.discoveryPort);
-            case 53:
-                return mvp.net.netCom.cfgNetCom.mqttForcedBroker.c_str();
-            case 54:
-                return String(mvp.net.netCom.cfgNetCom.mqttPort);
-            case 55:
-                return mvp.net.netCom.mqttTopicPrefix.c_str();
-            case 56:
-                return mvp.net.netCom.cfgNetCom.mqttTopicSuffix.c_str();
-
-            case 99:
-                for (uint8_t i = 0; i < mvp.moduleCount; i++) {                                        // TODO make this string thing much better this is so annoying in c++
+            case 9:
+                for (uint8_t i = 0; i < mvp.moduleCount; i++) {
                     if (mvp.xmodules[i]->enableContentModuleNetWeb)
                         str += "<li><a href='/" + String(i) + "'>" + mvp.xmodules[i]->description + "</a></li>";
                     else
@@ -105,10 +101,13 @@ void NetWeb::setup() {
             default:
                 break;
         }
-        return String();
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+        return var;
     });
+    // Register home page
+    registerPage(*webPageHome);
 
-    // Initialize actionList
+    // Register actions
     registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         return true;
     });
@@ -129,15 +128,13 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerPage(String url, AwsResponseFiller responseFiller, AwsTemplateProcessor processor) {
-    webPageList.add(url, responseFiller, processor);
-    // Register url with server
-    server.on(url.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request){
-        request->sendChunked("text/html", webPageList.head->responseFiller , webPageList.head->processor);
+void NetWeb::registerPage(WebPage& webPage) {
+    server.on(webPage.uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request){
+        request->sendChunked("text/html", webPage.responseFiller, webPage.processor);
     });
 }
 
-void NetWeb::registerCfg(CfgJsonInterface* Cfg) {
+void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
     webCfgList.add(Cfg);
 }
 

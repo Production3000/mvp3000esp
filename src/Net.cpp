@@ -27,16 +27,64 @@ void Net::setup() {
     // Start wifi
     startWifi();
 
-    // Init web interface and register cfg and actions
+    // Init web interface and MQTT communication
     netWeb.setup();
+    netCom.setup();
+
+    // Define web page
+    webPageNet = new NetWeb::WebPage("/net", R"===(
+<!DOCTYPE html> <html lang='en'>
+<head> <title>MVP3000 - Device ID %0%</title>
+    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+<body> <h1>MVP3000 - Device ID %0%</h1>
+    <p><a href='/'>Home</a></p>
+    <h3>Network</h3> <ul>
+        <li>Fallback AP SSID: '%31%'</li>
+        <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/start' method='post' onsubmit='return confirm(`Change network?`);'> <input name='setwifi' type='hidden'> SSID <input name='newSsid' value='%32%'> Passphrase <input type='password' name='newPass' value='%33%'> <input type='submit' value='Save'> </form> </li>
+        <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%34%' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
+        <li>Force client mode. WARNING: If the credentials are wrong, the device will be inaccessible via network, thus require re-flashing!
+         <form action='/checksave' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %35% value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>
+<p>&nbsp;</body></html>
+    )===" ,[&](const String& var) -> String {
+        if (!mvp.helper.isValidInteger(var)) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+            return var;
+        }
+
+        switch (var.toInt()) {
+            case 0:
+                return String(ESPX.getChipId());
+            
+            case 31:
+                return apSsid.c_str();
+            case 32:
+                return cfgNet.clientSsid.c_str();
+            case 33:
+                return cfgNet.clientPass.c_str();
+            case 34:
+                return String(cfgNet.clientConnectRetries);
+            case 35:
+                return (cfgNet.forceClientMode == true) ? "checked" : "";
+
+            default:
+                break;
+        }
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+        return var;
+    });
+    // Register web page
+    netWeb.registerPage(*webPageNet);
+
+    // Register config
     netWeb.registerCfg(&cfgNet);
+
+    // Register actions
     netWeb.registerAction("setwifi", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // argValue(0) is the action name
         return editClientConnection(argValue(1), argValue(2));
     }, "Connecting to network ...");
 
-    // Init MQTT communication
-    netCom.setup();
 }
  
 void Net::loop() {

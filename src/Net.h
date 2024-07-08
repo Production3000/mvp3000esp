@@ -101,6 +101,8 @@ class Net {
         NetWeb netWeb;
         NetCom netCom;
 
+        NetWeb::WebPage* webPageNet;
+
         String apSsid = "device" + String(ESPX.getChipId());
 
         void setup();
