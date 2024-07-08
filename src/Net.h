@@ -69,6 +69,8 @@ class Net {
         // Counter for client connect fails
         uint8_t clientConnectFails = 0;
         boolean clientConnectSuccess = false;
+
+        NetWeb::WebPage* webPageNet;
     
         void connectClient();
         void WiFiGotIP();
@@ -100,8 +102,6 @@ class Net {
 
         NetWeb netWeb;
         NetCom netCom;
-
-        NetWeb::WebPage* webPageNet;
 
         String apSsid = "device" + String(ESPX.getChipId());
 

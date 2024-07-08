@@ -171,14 +171,6 @@ class NetWeb {
         void registerCfg(CfgJsonInterface* Cfg);
         void registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
 
-
-    // DELETE
-        void sendFormatted(const char* formatString, ...) {} // Used in modules contentHome(), string length limited to WEB_CHUNK_LENGTH
-        void responseRedirect(const char* message); // Used in modules editCfg(), startAction()     DELETE
-        
-
-
-
     private:
 
         #ifdef ESP8266

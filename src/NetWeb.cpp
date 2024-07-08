@@ -88,14 +88,17 @@ void NetWeb::setup() {
             case 8:
                 return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
             case 9:
-                for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-                    if (mvp.xmodules[i]->enableContentModuleNetWeb)
-                        str += "<li><a href='/" + String(i) + "'>" + mvp.xmodules[i]->description + "</a></li>";
-                    else
-                        str += "<li>" + mvp.xmodules[i]->description + "</li>";
-                }
                 if (mvp.moduleCount == 0)
-                    str += "<li>None</li>";
+                    return "<li>None</li>";
+                for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+                    char message[128];
+                    if ((mvp.xmodules[i]->uri).length() > 0) {
+                        snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", mvp.xmodules[i]->uri.c_str(), mvp.xmodules[i]->description.c_str());
+                    } else {
+                        snprintf(message, sizeof(message), "<li>%s</li>", mvp.xmodules[i]->description.c_str());
+                    }
+                    str += message;
+                }
                 return str;
 
             default:
@@ -215,16 +218,6 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
-
-void NetWeb::responseRedirect(const char* message) {                                         // TODO DELETE
-    // // Message to serve on next page load
-    // postMessage = message;
-
-    // // Redirect to avoid post reload, 303 temporary
-    // // For modules this does not redirect to the module but to home
-    // server.sendHeader("Location", "/");
-    // server.send(303);
-}
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
     // Message to serve on next page load                              // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  

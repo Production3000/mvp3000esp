@@ -85,6 +85,7 @@ struct CfgXmoduleSensor : CfgJsonInterface {
 //////////////////////////////////////////////////////////////////////////////////
 
 class XmoduleSensor : public Xmodule {
+
     public:
         CfgXmoduleSensor cfgXmoduleSensor;
 
@@ -95,15 +96,18 @@ class XmoduleSensor : public Xmodule {
             dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
 
+
         void setup() override;
         void loop() override;
 
-        void contentModuleNetWeb() override;
-        bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override;
-        bool startActionNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override;
-
-        // Module custom functions
-
+        /**
+         * @brief Add a new sample array to the sensor module.
+         * 
+         * This method is used to add a new sample array to the sensor module.
+         * 
+         * @tparam T The numeric type of the sample, typically int or float.
+         * @param newSample The new sample array to add.
+         */
         template <typename T>
         void addSample(T *newSample)  {
             // Shift data by decimals
@@ -113,7 +117,6 @@ class XmoduleSensor : public Xmodule {
             }
             measurementHandler(decimalShiftedSample);
         };
-        void measurementHandler(int32_t *newSample);
 
         NumberArray<int32_t> currentMeasurementRaw();
         NumberArray<int32_t> currentMeasurementScaled();
@@ -123,23 +126,34 @@ class XmoduleSensor : public Xmodule {
         void resetOffset();
         void resetScaling();
 
+        /**
+         * @brief Set the sample to integer conversion exponent.
+         * 
+         * This method shifts the decimal point of the sample values by the given exponent.
+         * 
+         * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
+         */
         void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
             dataProcessing.sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
         };
 
     private:
+
         DataProcessing dataProcessing;
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
         millisDelay sensorDelay;
 
+        // Flag to indicate new data is stored
         boolean newDataStored;
 
-        // Measure offset and scaling
+        // Offset and scaling
         boolean offsetRunning = false;
         boolean scalingRunning = false;
         int32_t scalingTargetValue;
         uint8_t scalingValueIndex;
+
+        void measurementHandler(int32_t *newSample);
 
         void measureOffsetScalingFinish();
 };

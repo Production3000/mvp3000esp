@@ -50,7 +50,7 @@ void NetCom::setup() {
     udp.begin(cfgNetCom.discoveryPort);
 
 
-        // Define web page
+    // Define web page
     webPageNetCom = new NetWeb::WebPage("/netcom", R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
