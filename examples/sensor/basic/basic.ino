@@ -26,10 +26,13 @@ const uint8_t valueCount = 2;
 XmoduleSensor xmoduleSensor(valueCount);
 
 // Optional: Add a description of the sensor for the web interface
+// ATTENTION with the sensor units:
+//  Degree is non-ASCII, use &deg; or its code \xB0 
+//  Percent symbol (or its code \x25) messes up the string parser, use &percnt; instead
 String infoName = "BASIC";
 String infoDescription = "The BASIC is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
 String sensorTypes[valueCount] = {"T", "rH"};
-String sensorUnits[valueCount] = {"\xB0""C", "%"}; // degree is non-ASCII
+String sensorUnits[valueCount] = {"&deg;C", "&percnt;"};
 
 // Local data variable
 int32_t data[valueCount];

@@ -44,7 +44,6 @@ void XmoduleSensor::setup() {
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
 <body> <h1>MVP3000 - Device ID %0%</h1>
     <p><a href='/'>Home</a></p>
-
 <h3>Sensor</h3> <ul>
     <li>Product: %1% </li>
     <li>Description: %2% </li> </ul>
@@ -55,16 +54,15 @@ void XmoduleSensor::setup() {
     <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%13%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>
-    %21%
+    %30%
     <tr> <td colspan='3'></td>
         <td valign='bottom'> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%22%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
+        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%21%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
         <td></td> </tr>
     <tr> <td colspan='3'></td>
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
         <td></td> </tr> </table>
-
 <p>&nbsp;</body></html>
     )===" ,[&](const String& var) -> String {
         if (!mvp.helper.isValidInteger(var)) {
@@ -92,18 +90,33 @@ void XmoduleSensor::setup() {
                 return String(cfgXmoduleSensor.reportingInterval);
 
             case 21:
-                for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-                    char message[128]; // Define the buffer size as per your requirement
-                    snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
-                        i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
-                    str += message;
-                }
-                return str;
-            case 22:
                 return String(cfgXmoduleSensor.dataValueCount);
 
-            default:
-                break;
+            default: // Capture all
+                // The response is way to long to be replaced in one go. Luckyly we can add a secondary placeholder (+1) at the 
+                // end of each replacement. This is then replaced in the next iteration.
+                // Obviously the 'default' case should not be reached in any other case.
+                
+                // Subtract the offset of 30, see HTML above
+                uint8_t x = var.toInt() - 30;
+                uint8_t i = x / 2;
+
+                String nextPlaceholder = "";
+                // Only add a next placeholder if there are any more values
+                if (x < 2* cfgXmoduleSensor.dataValueCount - 1) {
+                    nextPlaceholder = "%" + String(var.toInt() + 1) + "%";
+                }
+
+                // Compile response
+                char message[128];
+                if (x % 2 == 0) { // First half of line
+                    snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> %s", 
+                        i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), nextPlaceholder.c_str());
+                } else { // Second half of line
+                    snprintf(message, sizeof(message), "<td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s", 
+                        dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i], nextPlaceholder.c_str());
+                }
+                return message;
         }
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return var;
