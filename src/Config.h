@@ -18,9 +18,14 @@ limitations under the License.
 #define MVP3000_CONFIG
 
 #include <Arduino.h>
+
 #ifdef ESP32
     #include <SPIFFS.h>
+    // Fix Intellisense for ArduinoJson on ESP32: https://github.com/bblanchon/ArduinoJson/issues/1181
+    #define ARDUINOJSON_ENABLE_STD_STREAM 0
+    #define ARDUINOJSON_ENABLE_STD_STRING 0
 #endif
+
 #include <FS.h>
 #include <ArduinoJson.h>
 
