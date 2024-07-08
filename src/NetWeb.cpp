@@ -56,7 +56,7 @@ void NetWeb::setup() {
         %9% </ul>
     <h3>Maintenance</h3> <ul>
         <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
-        <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='resetdevice' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> </form> </li> </ul>
+        <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
 <p>&nbsp;</body></html>
     )===" ,[&](const String& var) -> String {
         if (!mvp.helper.isValidInteger(var)) {
@@ -111,8 +111,9 @@ void NetWeb::setup() {
     registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         return true;
     });
-    registerAction("resetdevice", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
-        mvp.config.factoryResetDevice(); // also calls restart, but whatever
+    registerAction("reset", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+        // If keepwifi is checked it is present in the args, otherwise not
+        mvp.config.factoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
         return true;
     });
     

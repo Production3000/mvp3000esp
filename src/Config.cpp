@@ -127,17 +127,20 @@ void Config::writeJsonToFile(const char *fileName) {
     jsonDoc.clear();
 }
 
-
-
-void Config::factoryResetDevice() {
+void Config::factoryResetDevice(boolean keepWifi) {
     if (!isReadyFS())
         return;
 
-    // Clear all stored values, main config will be set to defaults on reboot
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Starting factory reset ...");
+
+    // Clear any saved data, factory config will be restored to defaults on reboot
     SPIFFS.format();
+
+    // Re-save wifi client settings if requested
+    if (keepWifi) {
+        mvp.net.cleanCfgKeepClientInfo();
+    }
     
-    // Wait for filesystem to actually write to flash
-    SPIFFS.end();
     mvp.delayedRestart(25);
 }
 
@@ -230,87 +233,3 @@ bool Config::writeFile(const char *fileName, std::function<bool(File& file)> wri
     file.close();
     return true;
 }
-
-
-
-/* 
-void testJsonConversion() {
-    mvp.config.cfgWritePrepare();
-
-    // uint8_t xuint = 123;
-    // float_t xfloat = 123.567;
-    // uint8_t yuint;
-    // float_t yfloat;
-    // mvp.config.cfgWriteAddValue("xuint", xuint);
-    // mvp.config.cfgWriteAddValue("xfloat", xfloat);
-    // mvp.config.readFileToJson("dummyprint");
-    // mvp.config.cfgReadGetValue("xuint", yuint);
-    // mvp.config.cfgReadGetValue("xfloat", yfloat);
-    // Serial.print(yuint);
-    // Serial.print(" | ");
-    // Serial.print(yfloat);
-    // Serial.print(" | ");
-
-
-    // int16_t xarray[3] = {123,-456,789};
-    // uint16_t xuarray[3] = {123,456,789};
-    // float_t xfarray[3] = {123.456,-456.789,789.123};
-    // int16_t yarray[3];
-    // uint16_t yuarray[3];
-    // float_t yfarray[3];
-    // mvp.config.cfgWriteAddValue("xarray", xarray, 3);
-    // mvp.config.cfgWriteAddValue("xuarray", xuarray, 3);
-    // mvp.config.cfgWriteAddValue("xfarray", xfarray, 3);
-    // mvp.config.readFileToJson("dummyprint");
-    // mvp.config.cfgReadGetValue("xarray", yarray, 3);
-    // mvp.config.cfgReadGetValue("xuarray", yuarray, 3);
-    // mvp.config.cfgReadGetValue("xfarray", yfarray, 3);
-    // Serial.print(yarray[0]);
-    // Serial.print(" ");
-    // Serial.print(yarray[1]);
-    // Serial.print(" ");
-    // Serial.print(yarray[2]);
-    // Serial.print(" | ");
-    // Serial.print(yuarray[0]);
-    // Serial.print(" ");
-    // Serial.print(yuarray[1]);
-    // Serial.print(" ");
-    // Serial.print(yuarray[2]);
-    // Serial.print(" | ");
-    // Serial.print(yfarray[0]);
-    // Serial.print(" ");
-    // Serial.print(yfarray[1]);
-    // Serial.print(" ");
-    // Serial.print(yfarray[2]);
-    // Serial.print(" | ");
-
-
-    const char *xcchar = "qweqwe";
-    char xbchar[12] = "yxcyxc";
-    char *xpchar = "asdasd";
-    // String xstring = "qweqwe";
-    const char* ycchar;
-    char ybchar[12];
-    char* ypchar;
-    // String ystring;
-    mvp.config.cfgWriteAddValue("xpchar", xpchar);
-    mvp.config.cfgWriteAddValue("xcchar", xcchar);
-    mvp.config.cfgWriteAddValue("xbchar", xbchar);
-    // mvp.config.cfgWriteAddValue("xstring", xstring);
-    mvp.config.readFileToJson("dummyprint");
-    // mvp.config.cfgReadGetValue("xcchar", ycchar);
-    // mvp.config.cfgReadGetValue("xbchar", ybchar);
-    // mvp.config.cfgReadGetValue("xpchar", ypchar);
-    // mvp.config.cfgReadGetValue("xstring", ystring);
-    Serial.print(ypchar);
-    Serial.print(" | ");
-    Serial.print(ycchar);
-    Serial.print(" | ");
-    Serial.print(ybchar);
-    Serial.print(" | ");
-
-
-    Serial.println("");
-    mvp.config.writeJsonToFile();
-}
-*/

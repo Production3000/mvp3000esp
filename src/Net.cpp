@@ -82,6 +82,10 @@ void Net::setup() {
     // Register actions
     netWeb.registerAction("setwifi", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // argValue(0) is the action name
+        if (args != 3)
+            return false;
+        if ((argKey(1) != "newSsid") && (argKey(2) != "newPass"))
+            return false;
         return editClientConnection(argValue(1), argValue(2));
     }, "Connecting to network ...");
 
@@ -136,6 +140,17 @@ bool Net::editClientConnection(String newSsid, String newPass) {
     return false;
 }
 
+void Net::cleanCfgKeepClientInfo() {
+    // For some reason this does not work:
+    //  CfgNet cfgNetClean = *new CfgNet();
+    //  cfgNetClean.clientSsid = cfgNet.clientSsid;
+    //  cfgNetClean.clientPass = cfgNet.clientPass;
+    //  mvp.config.writeCfg(cfgNetClean);
+    // Alternative but not nice:
+    cfgNet.clientConnectRetries = 3;
+    cfgNet.forceClientMode = false;
+    mvp.config.writeCfg(cfgNet);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////
 

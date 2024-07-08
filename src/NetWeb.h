@@ -188,9 +188,10 @@ class NetWeb {
             WebServer server;
         #endif
 
-        WebPage* webPageHome;
         WebCfgList webCfgList;
         WebActionList webActionList;
+
+        WebPage* webPageHome;
 
         // Message to serve on next page load after form save
         const char *postMessage = "";

@@ -50,7 +50,7 @@ class Config {
         void readCfg(JsonInterface &cfg);
         void writeCfg(JsonInterface &cfg);
 
-        void factoryResetDevice();
+        void factoryResetDevice(boolean keepWifi = false);
 };
 
 #endif

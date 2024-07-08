@@ -108,7 +108,8 @@ class Net {
         void setup();
         void loop();
 
-        bool editClientConnection(String newSsid, String newPass);;
+        bool editClientConnection(String newSsid, String newPass);
+        void cleanCfgKeepClientInfo();
 };
 
 #endif
