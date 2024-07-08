@@ -47,7 +47,7 @@ void MVP3000::loop() {
     if (delayedRestart_ms > 0) {
         if (millis() > delayedRestart_ms) {
             // delayedRestart_ms = 0; // Not needed as we reset the ESP
-            ESP.reset();
+            ESPX.reset();
         }
     }
 }

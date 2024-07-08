@@ -19,14 +19,7 @@ limitations under the License.
 
 #include <Arduino.h>
 
-
-#ifdef ESP8266
-    // #include <ESP8266WebServer.h>
-    #include <ESPAsyncWebServer.h>
-#else
-    #include <WebServer.h>
-    // #include <ESPAsyncWebServer.h>                                                       // TODO
-#endif
+#include <ESPAsyncWebServer.h>
 
 #include "ESPX.h"
 #ifdef ESP8266
@@ -35,8 +28,6 @@ limitations under the License.
     extern EspClassX ESPX;
 #endif
 
-// #include "_Helper.h"
-// #include "_LinkedList.h"
 #include "Config_JsonInterface.h"
 
 
@@ -173,20 +164,15 @@ class NetWeb {
 
     private:
 
-        #ifdef ESP8266
-            // ESP8266WebServer server;
-            AsyncWebServer server = AsyncWebServer(80);
-        #else
-            WebServer server;
-        #endif
+        AsyncWebServer server = AsyncWebServer(80);
+
+        // Message to serve on next page load after form save
+        const char *postMessage = "";
 
         WebCfgList webCfgList;
         WebActionList webActionList;
 
         WebPage* webPageHome;
-
-        // Message to serve on next page load after form save
-        const char *postMessage = "";
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

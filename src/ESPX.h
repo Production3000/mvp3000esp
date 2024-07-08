@@ -81,6 +81,8 @@ class EspClassX {
             return String(buff);
         }
 
+        void reset() { ESP.restart(); };
+
 };
 
 #endif

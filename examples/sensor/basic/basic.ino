@@ -51,7 +51,7 @@ void loop() {
 
     // Create random data: +10..20, -100..200, +1000..2000, -10..20, ...
     for (uint8_t i = 0; i < valueCount; i++) {
-        int32_t mag = 10 * pow10(i % 3);
+        int32_t mag = 10 * pow(10, i % 3);
         data[i] = (i % 2 == 0) ? random(mag, mag * 2) : random(-mag * 2, -mag);
     }
 
