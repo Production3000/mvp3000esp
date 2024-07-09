@@ -38,15 +38,11 @@ Example configuration struct with comments:
 
 ### The Module
 
-The custom module needs to overwrite at least one method:
- *  loop() ... called repeatedly from the main loop of the program
-Four additional methods are optional to overwrite:
+The custom module needs to overwrite at least the setup() method:
  *  setup() ... called once during initialization, loads 
- *  contentModuleNetWeb() ... called if the user browses to the modules web interface, with module specific HTML content.
- *  editCfgNetWeb() ... called if the user saves a setting via the modules web interface.
- *  startActionNetWeb() ... called if the user initiates an action via the modules web interface.
+ *  loop() ... called repeatedly from the main loop of the program
 
-Example module with additional comments:
+The most important part for integration of the module in the MVP3000 framwork is the definition of the modules web interface and available actions.
 
     class XmoduleExample : public Xmodule {
         public:
@@ -54,54 +50,73 @@ Example module with additional comments:
 
             void setup() override {
                 description = "XmoduleExample";
+                uri = "/example";
 
-                // Read config
+                // Read config from SPIFF
                 mvp.config.readCfg(cfgXmoduleExample);
+
+                // Define the module's web interface
+                webPageXmodule = new NetWeb::WebPage(uri,  R"===(
+    <!DOCTYPE html> <html lang='en'>
+    <head> <title>MVP3000 - Device ID %0%</title>
+        <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+        <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+    <body> <h2>MVP3000 - Device ID %0%</h2>
+        <p><a href='/'>Home</a></p>
+        <h3>%1%</h3>
+        <h3>Settings</h3> <ul>
+            <li>Some fixed number: %11% </li>
+            <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%12%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
+        <h3>Action</h3> <ul>
+            <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
+    <p>&nbsp;</body></html>         
+                    )===", [&](const String& var) -> String {
+                        if (!mvp.helper.isValidInteger(var)) {
+                            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                            return var;
+                        }
+
+                        String str;
+                        switch (var.toInt()) {
+                            case 0:
+                                return String(ESPX.getChipId());
+
+                            case 1:
+                                return description.c_str();
+
+                            case 11:
+                                return String(cfgXmoduleExample.fixedNumber);
+                            case 12:
+                                return String(cfgXmoduleExample.editableNumber);
+
+                            default: // This could be used as a capture all re
+                                // The placeholder string has a limitd length. Luckily it can include a secondary placeholder at the 
+                                // end of each replacement, which is then replaced automatically, to stick together a long response.
+                                // Obviously the 'default' case is not available as catch all any more.
+                                break;
+                        }
+                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                        return var;
+                    }
+                );
+                mvp.net.netWeb.registerPage(*webPageXmodule);
+
+                // Register config
+                mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
+
+                // Register action
+                mvp.net.netWeb.registerAction("someAction", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+                    // argValue(0) is the action name
+                    someAction();
+                    return true;
+                }, "Some action was performed.");
+                    
 
                 // Custom setup code here
             }
 
             void loop() override {
                 // Custom loop code here
-            }
-
-            // 
-            void contentModuleNetWeb() override {
-                mvp.net.netWeb.sendFormatted("<h1>%s</h1>", description.c_str());
-
-                // Settings
-                mvp.net.netWeb.sendFormatted("\
-                    <h3>Settings</h3> <ul> \
-                    <li>Some fixed number: %d </li> \
-                    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%d' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>",
-                    cfgXmoduleExample.editableNumber, cfgXmoduleExample.fixedNumber);
-
-                // Actions
-                mvp.net.netWeb.sendFormatted("\
-                    <h3>Action</h3> <ul> \
-                    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>");
-            }
-
-            bool editCfgNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override {
-                boolean success = cfgXmoduleExample.updateFromWeb(argName(0), arg(0));
-                if (success)
-                    mvp.config.writeCfg(cfgXmoduleExample);
-                return success;
-            }
-
-            bool startActionNetWeb(int args, std::function<String(int)> argName, std::function<String(int)> arg) override {
-                boolean success = true;
-                switch (mvp.helper.hashStringDjb2(argName(0).c_str())) {
-
-                    case mvp.helper.hashStringDjb2("someAction"):
-                        someAction();
-                        mvp.net.netWeb.responseRedirect("Some action performed.");
-                        break;
-
-                    default: // Keyword not found
-                        success = false;
-                }
-                return success;
             }
 
             // Module custom methods

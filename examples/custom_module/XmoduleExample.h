@@ -93,7 +93,10 @@ class XmoduleExample : public Xmodule {
                         case 12:
                             return String(cfgXmoduleExample.editableNumber);
 
-                        default: 
+                        default: // This could be used as a capture all re
+                            // The placeholder string has a limitd length. Luckily it can include a secondary placeholder at the 
+                            // end of each replacement, which is then replaced automatically, to stick together a long response.
+                            // Obviously the 'default' case is not available as catch all any more.
                             break;
                     }
                     mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
