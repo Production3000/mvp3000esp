@@ -51,9 +51,9 @@ void NetWeb::setup() {
         <li>Main loop duration: %8% ms (mean/min/max)</li> </ul>
     <h3>Components</h3> <ul>
         <li><a href='/net'>Network</a></li>
-        <li><a href='/netcom'>MQTT communication</a></li> </ul>
+        <li>%11% </ul>
     <h3>Modules</h3> <ul>
-        %9% </ul>
+        %21% </ul>
     <h3>Maintenance</h3> <ul>
         <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
         <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
@@ -87,7 +87,15 @@ void NetWeb::setup() {
                 return String(ESP.getCpuFreqMHz());
             case 8:
                 return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
-            case 9:
+
+            case 11:
+                if (mvp.net.netCom.cfgNetCom.mqttEnabled) {
+                    return "<a href='/netcom'>MQTT communication</a></li>";
+                } else {
+                    return "MQTT communication (disabled)</li>";
+                }
+
+            case 21:
                 if (mvp.moduleCount == 0)
                     return "<li>None</li>";
                 for (uint8_t i = 0; i < mvp.moduleCount; i++) {
