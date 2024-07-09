@@ -50,6 +50,15 @@ class NetWeb {
 
             AwsTemplateProcessor processor;
 
+            /**
+             * @brief Construct a new Web Page object
+             * 
+             * Make sure there is no unencoded percent symbol in the html string or any of replacment strings as it messes up the placeholder parsing. 
+             * 
+             * @param uri The URI of the page.
+             * @param html The HTML content of the page. 
+             * @param processor The processor to use for the page.
+             */
             WebPage() { }
             WebPage(String uri, const char* html, AwsTemplateProcessor processor) {
                 this->uri = uri;

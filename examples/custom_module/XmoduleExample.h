@@ -53,14 +53,14 @@ class XmoduleExample : public Xmodule {
         CfgXmoduleExample cfgXmoduleExample;
 
         void setup() override {
-            description = "XmoduleExample";
+            description = "Xmodule Example";
             uri = "/example";
 
             // Read config from SPIFF
             mvp.config.readCfg(cfgXmoduleExample);
 
             // Define the module's web interface
-            webPageXmodule = new NetWeb::WebPage(uri,  R"===(
+            webPageXmodule = new NetWeb::WebPage(uri, R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -76,7 +76,7 @@ class XmoduleExample : public Xmodule {
 <p>&nbsp;</body></html>         
                 )===", [&](const String& var) -> String {
                     if (!mvp.helper.isValidInteger(var)) {
-                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
                         return var;
                     }
 
@@ -93,13 +93,16 @@ class XmoduleExample : public Xmodule {
                         case 12:
                             return String(cfgXmoduleExample.editableNumber);
 
-                        default: // This could be used as a capture all re
-                            // The placeholder string has a limitd length. Luckily it can include a secondary placeholder at the 
-                            // end of each replacement, which is then replaced automatically, to stick together a long response.
-                            // Obviously the 'default' case is not available as catch all any more.
+                        default: // Capture all
+                            // The placeholder string can hold a secondary placeholder which then is also filled, and so on.
+                            // if (var.toInt() < 50) {
+                            //     return "added a placeholder ( %" + String(var.toInt() + 1) + "% )";
+                            // } else {
+                            //     return "stop this madness!!!";
+                            // }
                             break;
                     }
-                    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
                     return var;
                 }
             );
@@ -110,7 +113,7 @@ class XmoduleExample : public Xmodule {
 
             // Register action
             mvp.net.netWeb.registerAction("someAction", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
-                // argValue(0) is the action name
+                // argKey(0) is the action name
                 someAction();
                 return true;
             }, "Some action was performed.");

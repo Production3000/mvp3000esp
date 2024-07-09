@@ -72,7 +72,7 @@ The most important part for integration of the module in the MVP3000 framwork is
     <p>&nbsp;</body></html>         
                     )===", [&](const String& var) -> String {
                         if (!mvp.helper.isValidInteger(var)) {
-                            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
                             return var;
                         }
 
@@ -89,13 +89,16 @@ The most important part for integration of the module in the MVP3000 framwork is
                             case 12:
                                 return String(cfgXmoduleExample.editableNumber);
 
-                            default: // This could be used as a capture all re
-                                // The placeholder string has a limitd length. Luckily it can include a secondary placeholder at the 
-                                // end of each replacement, which is then replaced automatically, to stick together a long response.
-                                // Obviously the 'default' case is not available as catch all any more.
+                            default: // Capture all
+                                // The placeholder string can hold a secondary placeholder which then is also filled, and so on.
+                                // if (var.toInt() < 50) {
+                                //     return "added a placeholder ( %" + String(var.toInt() + 1) + "% )";
+                                // } else {
+                                //     return "stop this madness!!!";
+                                // }
                                 break;
                         }
-                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
                         return var;
                     }
                 );

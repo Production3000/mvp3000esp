@@ -65,8 +65,9 @@ void XmoduleSensor::setup() {
         <td></td> </tr> </table>
 <p>&nbsp;</body></html>
         )===" ,[&](const String& var) -> String {
+            // IMPORTANT: Make sure there is no additional % symbol in the
             if (!mvp.helper.isValidInteger(var)) {
-                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
                 return var;
             }
 
@@ -94,33 +95,20 @@ void XmoduleSensor::setup() {
                 case 21:
                     return String(cfgXmoduleSensor.dataValueCount);
 
-                default: // Capture all
-                    // The response is way to long to be replaced in one go. Luckyly we can add a secondary placeholder (+1) at the 
-                    // end of each replacement. This is then replaced in the next iteration.
-                    // Obviously the 'default' case should not be reached in any other case.
-                    
-                    // Subtract the offset of 30, see HTML above
-                    uint8_t x = var.toInt() - 30;
-                    uint8_t i = x / 2;
-
-                    String nextPlaceholder = "";
-                    // Only add a next placeholder if there are any more values
-                    if (x < 2* cfgXmoduleSensor.dataValueCount - 1) {
-                        nextPlaceholder = "%" + String(var.toInt() + 1) + "%";
-                    }
-
-                    // Compile response
+                case 30: // Sensor details: type, unit, offset, scaling, float to int exponent
                     char message[128];
-                    if (x % 2 == 0) { // First half of line
-                        snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> %s", 
-                            i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), nextPlaceholder.c_str());
-                    } else { // Second half of line
-                        snprintf(message, sizeof(message), "<td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s", 
-                            dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i], nextPlaceholder.c_str());
+                    for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
+                        snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
+                            i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
+                        Serial.println(message);
+                        str += message;
                     }
-                    return message;
+                    return str;
+
+                default:
+                    break;
             }
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
             return var;
         });
     // Register web page
