@@ -36,6 +36,7 @@ String sensorUnits[valueCount] = {"au", "au", "au", "au", "au"};
 int32_t data[valueCount];
 
 // See https://cplusplus.com/reference/random/normal_distribution/
+// Despite IntelliSense not liking it, the following is correct
 std::default_random_engine generator;
 std::normal_distribution<double_t> distribution(50.0, 20.0); // mean value, standard deviation
 

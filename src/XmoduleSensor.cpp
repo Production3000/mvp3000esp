@@ -42,11 +42,11 @@ void XmoduleSensor::setup() {
 <head> <title>MVP3000 - Device ID %0%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h1>MVP3000 - Device ID %0%</h1>
+<body> <h2>MVP3000 - Device ID %0%</h2>
     <p><a href='/'>Home</a></p>
-<h3>Sensor</h3> <ul>
-    <li>Product: %1% </li>
-    <li>Description: %2% </li> </ul>
+<h3>%1%</h3> <ul>
+    <li>Product: %2% </li>
+    <li>Description: %3% </li> </ul>
 <h3>Data Handling</h3> <ul>
     <li>Data storage: %11%</li>
     <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
@@ -64,63 +64,65 @@ void XmoduleSensor::setup() {
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
         <td></td> </tr> </table>
 <p>&nbsp;</body></html>
-    )===" ,[&](const String& var) -> String {
-        if (!mvp.helper.isValidInteger(var)) {
+        )===" ,[&](const String& var) -> String {
+            if (!mvp.helper.isValidInteger(var)) {
+                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+                return var;
+            }
+
+            String str;
+            switch (var.toInt()) {
+                case 0:
+                    return String(ESPX.getChipId());
+
+                case 1:
+                    return description.c_str();
+                case 2:
+                    return cfgXmoduleSensor.infoName.c_str();
+                case 3:
+                    return cfgXmoduleSensor.infoDescription.c_str();
+
+                case 11:
+                    return String(dataCollection.dataStoreSensor.getSize()) + "/" + String(dataCollection.dataStoreSensor.getMaxSize()) + " (" + (dataCollection.dataStoreSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
+                case 12:
+                    return String(cfgXmoduleSensor.sampleAveraging);
+                case 13:
+                    return String(cfgXmoduleSensor.averagingOffsetScaling);
+                case 14:
+                    return String(cfgXmoduleSensor.reportingInterval);
+
+                case 21:
+                    return String(cfgXmoduleSensor.dataValueCount);
+
+                default: // Capture all
+                    // The response is way to long to be replaced in one go. Luckyly we can add a secondary placeholder (+1) at the 
+                    // end of each replacement. This is then replaced in the next iteration.
+                    // Obviously the 'default' case should not be reached in any other case.
+                    
+                    // Subtract the offset of 30, see HTML above
+                    uint8_t x = var.toInt() - 30;
+                    uint8_t i = x / 2;
+
+                    String nextPlaceholder = "";
+                    // Only add a next placeholder if there are any more values
+                    if (x < 2* cfgXmoduleSensor.dataValueCount - 1) {
+                        nextPlaceholder = "%" + String(var.toInt() + 1) + "%";
+                    }
+
+                    // Compile response
+                    char message[128];
+                    if (x % 2 == 0) { // First half of line
+                        snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> %s", 
+                            i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), nextPlaceholder.c_str());
+                    } else { // Second half of line
+                        snprintf(message, sizeof(message), "<td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s", 
+                            dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i], nextPlaceholder.c_str());
+                    }
+                    return message;
+            }
             mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
             return var;
-        }
-
-        String str;
-        switch (var.toInt()) {
-            case 0:
-                return String(ESPX.getChipId());
-
-            case 1:
-                return cfgXmoduleSensor.infoName.c_str();
-            case 2:
-                return cfgXmoduleSensor.infoDescription.c_str();
-
-            case 11:
-                return String(dataCollection.dataStoreSensor.getSize()) + "/" + String(dataCollection.dataStoreSensor.getMaxSize()) + " (" + (dataCollection.dataStoreSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
-            case 12:
-                return String(cfgXmoduleSensor.sampleAveraging);
-            case 13:
-                return String(cfgXmoduleSensor.averagingOffsetScaling);
-            case 14:
-                return String(cfgXmoduleSensor.reportingInterval);
-
-            case 21:
-                return String(cfgXmoduleSensor.dataValueCount);
-
-            default: // Capture all
-                // The response is way to long to be replaced in one go. Luckyly we can add a secondary placeholder (+1) at the 
-                // end of each replacement. This is then replaced in the next iteration.
-                // Obviously the 'default' case should not be reached in any other case.
-                
-                // Subtract the offset of 30, see HTML above
-                uint8_t x = var.toInt() - 30;
-                uint8_t i = x / 2;
-
-                String nextPlaceholder = "";
-                // Only add a next placeholder if there are any more values
-                if (x < 2* cfgXmoduleSensor.dataValueCount - 1) {
-                    nextPlaceholder = "%" + String(var.toInt() + 1) + "%";
-                }
-
-                // Compile response
-                char message[128];
-                if (x % 2 == 0) { // First half of line
-                    snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> %s", 
-                        i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), nextPlaceholder.c_str());
-                } else { // Second half of line
-                    snprintf(message, sizeof(message), "<td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s", 
-                        dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i], nextPlaceholder.c_str());
-                }
-                return message;
-        }
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
-    });
+        });
     // Register web page
     mvp.net.netWeb.registerPage(*webPageXmodule);
 

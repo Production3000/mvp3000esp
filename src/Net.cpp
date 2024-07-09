@@ -37,7 +37,7 @@ void Net::setup() {
 <head> <title>MVP3000 - Device ID %0%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h1>MVP3000 - Device ID %0%</h1>
+<body> <h2>MVP3000 - Device ID %0%</h2>
     <p><a href='/'>Home</a></p>
     <h3>Network</h3> <ul>
         <li>Fallback AP SSID: '%31%'</li>
