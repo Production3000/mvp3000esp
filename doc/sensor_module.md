@@ -75,10 +75,6 @@ Some options can be set during compile time as well as via the web interface. Ge
 
 ### Settings Available via the Web Interface
 
-The module web interface can be disabled as a whole during compile time.
-
-    xmoduleSensor.enableContentModuleNetWeb = false;
-
 #### Sample averaging
 
 The number of data samples that should be averaged before the data is reported. Default value is 10 samples.
@@ -115,10 +111,13 @@ Offset and scaling can be measured and reset via the web interface. If needed it
 A brief description of the sensor, its values and their units. 
 
     // Optional: Add a description of the sensor for the web interface
-    String infoName = "PN123";
-    String infoDescription = "The PN123 is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
+    // ATTENTION with the sensor units:
+    //  Degree is non-ASCII, use &deg; or its code \xB0 
+    //  Percent symbol (or its code \x25) messes up the string parser, use &percnt; instead
+    String infoName = "BASIC";
+    String infoDescription = "The BASIC is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
     String sensorTypes[valueCount] = {"T", "rH"};
-    String sensorUnits[valueCount] = {"°C", "%"};
+    String sensorUnits[valueCount] = {"&deg;C", "&percnt;"};
 
     // Optional: Set the sensor descriptions
     xmoduleSensor.cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
@@ -141,11 +140,11 @@ Matrix column count is used for CSV output only. Together with the number of row
 
 ## Troubleshooting
 
-Q: My raw sensor values are fine, but the averaged values reported by the framework are zero/strange?  
+Q: The raw sensor values are fine, but the averaged values reported by the framework are zero/strange?  
 A: Check offset and scaling via the web interface. Possibly factory reset the device.
 
-Q: The values defined in the code are ignored for some settings?  
-A: The value set via the web interface supersede the value set during compile time!
+Q: Some settings in the code are ignored?  
+A: The value set via the web interface supersede the value set during compile time. Possibly factory reset the device.
 
 
 ## License
