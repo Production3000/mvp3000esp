@@ -100,7 +100,6 @@ void XmoduleSensor::setup() {
                     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
                         snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
                             i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
-                        Serial.println(message);
                         str += message;
                     }
                     return str;

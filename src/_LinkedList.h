@@ -56,8 +56,8 @@ struct LinkedList3000 {
     uint16_t max_size;
     boolean allow_growing;
 
-    uint8_t getSize() const { return size; }
-    uint8_t getMaxSize() const { return max_size; }
+    uint16_t getSize() const { return size; }
+    uint16_t getMaxSize() const { return max_size; }
     boolean getAdaptiveSize() const { return allow_growing; }
 
 
@@ -125,10 +125,12 @@ struct LinkedList3000 {
      * @return True if the maximum size was increased, otherwise false.
      */
     bool growMaxSize() {
-        if ((allow_growing) && (ESP.getFreeHeap() > 16384)) {
-            // 16k free memory seems reasonable, to leave room vor web and other stuff
-            // An additional 10 elements seem also reasonable
-            max_size += 10;
+        // This is quite complex...
+        // 
+        if ((allow_growing) && (ESP.getFreeHeap() > 16384) && (ESPX.getHeapFragmentation() < 50)){
+            // 16k free memory seems reasonable for single core ESP8266
+            // However, ESP32 has two cores, with seperate heaps ....
+            max_size += 5;
             return true;
         }
         return false;
