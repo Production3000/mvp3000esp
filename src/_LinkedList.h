@@ -84,7 +84,7 @@ struct LinkedList3000 {
     void appendNode(T* newDataStruct) {
         // Check if size limit is reached and cannot be grown, then remove the oldest node
         if ((size >= max_size) && !growMaxSize()) {
-            removeHead();
+            removeNode(head);
         }
 
         Node* newNode = new Node(newDataStruct);
@@ -92,8 +92,7 @@ struct LinkedList3000 {
         newNode->next = nullptr;
 
         if (head == nullptr) {
-            head = newNode;
-            tail = newNode;
+            head = tail = newNode;
         } else {
             tail->next = newNode;
             newNode->prev = tail;
@@ -111,11 +110,11 @@ struct LinkedList3000 {
      * @param newDataStruct The data structure to be moved to tail or appended to the linked list.
      */
     void appendNodeOrMoveToTail(T* newDataStruct) {
-        Node* existingNode = contains(newDataStruct);
+        Node* existingNode = containsNode(newDataStruct);
         if (existingNode == nullptr) {
             appendNode(newDataStruct);
         } else {
-            moveToTail(existingNode);
+            moveNodeToTail(existingNode);
         }
     }
 
@@ -139,7 +138,7 @@ struct LinkedList3000 {
      */
     void clear() {
         while (head != nullptr) {
-            removeHead();
+            removeNode(head);
         }
     }
 
@@ -148,7 +147,7 @@ struct LinkedList3000 {
      * 
      * @param value The value to be checked.
      */
-    Node* contains(T* newdataStruct) {
+    Node* containsNode(T* newdataStruct) {
         Node* current = head;
         while (current != nullptr) {
             if (current->dataStruct->equals(newdataStruct)) {
@@ -160,17 +159,26 @@ struct LinkedList3000 {
     }
 
     /**
+     * Searches the nodes for given content and removes the node.
+     * 
+     * @param dataStruct The data structure to be removed.
+     */
+    void findRemoveNode(T* dataStruct) {
+        removeNode(containsNode(dataStruct));
+    }
+
+    /**
      * @brief Loops through all elements in the linked list and calls the given callback function.
      * 
      * The callback function can be a captive lambda function, with its data structure and index as parameters:
-     *      loopList([&](T*& dataStruct, uint16_t i) { ... });
+     *      loopNodes([&](T*& dataStruct, uint16_t i) { ... });
      * The data structure is passed by reference, so it can be modified within the lambda function.
      * 
      * @param callback The callback function to be called for each node.
      * @param reverse If true, the list is looped through in reverse order from latest/tail to first/head entry. Default is false.
      */       
-    void loopList(std::function<void(T*&, uint16_t)> callback, bool reverse = false) {
-        // This one only allows non-captive lambdas: loopList(void (*callback)(T"&, uint16_t))
+    void loopNodes(std::function<void(T*&, uint16_t)> callback, bool reverse = false) {
+        // This one only allows non-captive lambdas: loopNodes(void (*callback)(T"&, uint16_t))
         Node* current = (reverse) ? tail : head;
         uint16_t i = 0;
         while (current != nullptr) {
@@ -184,7 +192,7 @@ struct LinkedList3000 {
      * 
      * @param existingNode The node to be moved.
      */
-    void moveToTail(Node* existingNode) {
+    void moveNodeToTail(Node* existingNode) {
         // The node is already the last node
         if (existingNode == tail) {
             return;
@@ -207,26 +215,33 @@ struct LinkedList3000 {
     }
 
     /**
-     * @brief Removes the head/oldest element from the linked list.
+     * Removes a given node from the list.
+     * 
+     * @param existingNode The node to be removed.
      */
-    void removeHead() {
-        if (head == nullptr) {
+    void removeNode(Node* existingNode) {
+        if (existingNode == nullptr) {
             return;
         }
-        
-        Node* temp = head;
-        head = head->next; // Move the head pointer to the second node
-        delete temp; // IMPORTANT: Make sure to also free memory within the dataStruct
 
-        if (head != nullptr) {
-            head->prev = nullptr; // Remove the prev pointer from the new head
-        } else { // If no node remains, the tail needs to be set to nullptr as well
-            tail = nullptr;
+        if (existingNode == head) {
+            head = existingNode->next; // Move the head pointer to the second node
+            if (head != nullptr) {
+                head->prev = nullptr; // Remove the prev pointer from the new head
+            } else { // If no node remains, the tail needs to be set to nullptr as well
+                tail = nullptr;
+            }
+        } else if (existingNode == tail) {
+            tail = existingNode->prev; // Move the tail pointer to the second last node
+            tail->next = nullptr; // Remove the next pointer from the new tail
+        } else {
+            existingNode->prev->next = existingNode->next; // Link the previous node directly to the next node
+            existingNode->next->prev = existingNode->prev; // Link the next node directly to the previous node
         }
 
+        delete existingNode; // IMPORTANT: Make sure to also free memory within the dataStruct
         size--;
     }
-
 };
 
 
@@ -265,7 +280,7 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * 
      * @param data The value to be appended.
      */
-    void append(T data) {
+    void appendData(T data) {
         // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
         this->appendNode(new DataStructValue<T>(data));
@@ -276,8 +291,30 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * 
      * @param data The value to be appended or moved to the top.
      */
-    void appendOrMoveToTop(T data) {
+    void appendDataOrMoveToTop(T data) {
         this->appendNodeOrMoveToTail(new DataStructValue<T>(data));
+    }
+
+    bool containsData(T data) {
+        return (this->containsNode(new DataStructValue<T>(data)) != nullptr);
+    }
+
+    /**
+     * @brief Loops through all elements in the linked list and calls the given callback function with the VALUE and its index.
+     * 
+     * @param callback The callback function to be called for each value.
+     */
+    void loopDatas(std::function<void(T, uint16_t)> callback, bool reverse = false) {
+        this->loopNodes([&](DataStructValue<T>*& dataStruct, uint16_t i) { callback(dataStruct->data, i); }, reverse);
+    }
+
+    /**
+     * @brief Removes a single value from the linked list.
+     * 
+     * @param data The value to be removed.
+     */
+    void removeData(T data) {
+        this->findRemoveNode(new DataStructValue<T>(data));
     }
 };
 
@@ -334,7 +371,7 @@ struct LinkedListArray : LinkedList3000<DataStructArray<T>> {
      * @param data The array of values to be appended.
      * @param size The size of the array.
      */
-    void append(T* data, uint8_t size) {
+    void appendData(T* data, uint8_t size) {
         // Create data structure and add node to linked list
         // Using this-> as base class/function is templated
         this->appendNode(new DataStructArray<T>(data, size));
