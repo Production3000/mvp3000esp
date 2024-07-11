@@ -114,6 +114,7 @@ struct LinkedList3000 {
         if (existingNode == nullptr) {
             appendNode(newDataStruct);
         } else {
+            delete newDataStruct; // IMPORTANT: Delete object to not leak memory
             moveNodeToTail(existingNode);
         }
     }
@@ -157,14 +158,17 @@ struct LinkedList3000 {
         }
         return nullptr;
     }
+    bool containsNode(T newdataStruct) {
+        return containsNode(&newdataStruct) != nullptr;
+    }
 
     /**
      * Searches the nodes for given content and removes the node.
      * 
      * @param dataStruct The data structure to be removed.
      */
-    void findRemoveNode(T* dataStruct) {
-        removeNode(containsNode(dataStruct));
+    void findRemoveNode(T dataStruct) {
+        removeNode(containsNode(&dataStruct));
     }
 
     /**
@@ -292,11 +296,12 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * @param data The value to be appended or moved to the top.
      */
     void appendDataOrMoveToTop(T data) {
-        this->appendNodeOrMoveToTail(new DataStructValue<T>(data));
+        // IMPORTANT: the dataStruct is deleted in the function if not appended
+        this->appendNodeOrMoveToTail(new DataStructValue<T>(data)); 
     }
 
     bool containsData(T data) {
-        return (this->containsNode(new DataStructValue<T>(data)) != nullptr);
+        return this->containsNode(DataStructValue<T>(data));
     }
 
     /**
@@ -313,8 +318,8 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * 
      * @param data The value to be removed.
      */
-    void removeData(T data) {
-        this->findRemoveNode(new DataStructValue<T>(data));
+        void removeData(T data) {
+            this->findRemoveNode(DataStructValue<T>(data));
     }
 };
 
