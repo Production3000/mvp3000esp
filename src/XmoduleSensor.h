@@ -139,6 +139,8 @@ class XmoduleSensor : public Xmodule {
 
     private:
 
+        NetWeb::WebPage webPageXmoduleDataInterface;
+
         DataProcessing dataProcessing;
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 

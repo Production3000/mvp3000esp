@@ -142,7 +142,7 @@ void NetWeb::loop() {
 
 void NetWeb::registerPage(WebPage& webPage) {
     server.on(webPage.uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request){
-        request->sendChunked("text/html", webPage.responseFiller, webPage.processor);
+        request->sendChunked(webPage.type, webPage.responseFiller, webPage.processor);
     });
 }
 

@@ -139,6 +139,39 @@ void XmoduleSensor::setup() {
         return true;
     }, "Scaling reset.");
 
+
+
+    webPageXmoduleDataInterface = NetWeb::WebPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+
+        if (index > 0)
+            return 0;
+            
+        Serial.println(maxLen);
+
+
+
+        String message = "";
+        for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
+            // Outputs:
+            //  1,2,3,4,5,6; for rowLength is max uint8/255
+            //  1,2,3;4,5,6; for rowLength is 3
+            // dataMatrixColumnCount defaults to 255, which is the maximum length of a single row
+            message += String(currentMeasurementScaled().values[i]);
+            message += ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? ";" : "," ;
+        }
+        
+        
+        // const char* html = "asdasdasdasd";
+        // size_t len = strlen(html);
+        // if (index + maxLen > len) {
+        //     maxLen = len - index;
+        // }
+        memcpy(buffer, message.c_str() + index, message.length());
+        return message.length();
+    }, "text/plain"); // use application/octet-stream to force download
+
+    mvp.net.netWeb.registerPage(webPageXmoduleDataInterface);
+
 };
 
 void XmoduleSensor::loop() {
