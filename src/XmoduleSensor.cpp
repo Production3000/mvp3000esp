@@ -52,6 +52,9 @@ void XmoduleSensor::setup() {
     <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%13%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%13%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
+<h3>Data Interface</h3> <ul>
+    <li>Live data: <a href='/sensorlive'>/sensorlive</a> </li>
+    <li>Stored data (CSV): <a href='/sensorcsv'>/sensorcsv</a> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>
     %30%
@@ -100,7 +103,6 @@ void XmoduleSensor::setup() {
                     for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
                         snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
                             i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataProcessing.offset.values[i], dataProcessing.scaling.values[i], dataProcessing.sampleToIntExponent.values[i]);
-                        Serial.println(message);
                         str += message;
                     }
                     return str;
@@ -140,37 +142,58 @@ void XmoduleSensor::setup() {
     }, "Scaling reset.");
 
 
-
-    webPageXmoduleDataInterface = NetWeb::WebPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-
-        if (index > 0)
+    // Define live data interface
+    webPageXmoduleDataLive = NetWeb::WebPage(uri + "live", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+        // This is just the most recent measurement. Depending on number of values in the row and their
+        // actual values, it should all fit into one call. On an ESP32 the buffer length was some 5000 bytes.
+        // Estimate: 100 values of 7 digit numbers, a sign, a seperator -> 100 * (7 + 1 + 1) = 900 bytes
+        if (index > 0) {
             return 0;
-            
-        Serial.println(maxLen);
-
-
-
-        String message = "";
-        for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-            // Outputs:
-            //  1,2,3,4,5,6; for rowLength is max uint8/255
-            //  1,2,3;4,5,6; for rowLength is 3
-            // dataMatrixColumnCount defaults to 255, which is the maximum length of a single row
-            message += String(currentMeasurementScaled().values[i]);
-            message += ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? ";" : "," ;
         }
-        
-        
-        // const char* html = "asdasdasdasd";
-        // size_t len = strlen(html);
-        // if (index + maxLen > len) {
-        //     maxLen = len - index;
-        // }
-        memcpy(buffer, message.c_str() + index, message.length());
-        return message.length();
-    }, "text/plain"); // use application/octet-stream to force download
 
-    mvp.net.netWeb.registerPage(webPageXmoduleDataInterface);
+        size_t len = 0;
+        for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
+            //  1,2,3,4,5,6; for dataValueCount is max uint8/255
+            //  1,2,3;4,5,6; for dataValueCount is 3
+
+            // Copy number string and delimetor to the correct position of the buffer
+            String temp = String(currentMeasurementScaled().values[i]);
+            memcpy(buffer + len, temp.c_str(), temp.length()); 
+            len += temp.length();
+            memcpy(buffer + len, ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? &(";") : &(","), 1);
+            len++;
+
+            // Check max length
+            if (len >= maxLen) {
+                mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
+                return maxLen;
+            }
+        }
+
+        return len;
+    }, "text/plain");
+
+    // Register live data interface
+    mvp.net.netWeb.registerPage(webPageXmoduleDataLive);
+
+
+
+
+    // Define CSV data interface
+    webPageXmoduleDataCSV = NetWeb::WebPage(uri + "csv", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+        if (index > 0) {
+            return 0;
+        }
+
+        memcpy(buffer, "TODO", 4);
+
+        return 4;
+    }, "application/octet-stream");
+
+    // Register live data interface
+    mvp.net.netWeb.registerPage(webPageXmoduleDataCSV);
+
+
 
 };
 
