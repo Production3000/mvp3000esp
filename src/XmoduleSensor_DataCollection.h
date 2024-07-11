@@ -18,7 +18,7 @@ limitations under the License.
 #define MVP3000_XMODULESENSOR_DATACOLLECTION
 
 #include "_LinkedList.h"
-#include "_NumberArray.h"
+#include "XmoduleSensor_DataCollection_NumberArray.h"
 
 
 struct DataCollection {
