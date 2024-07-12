@@ -62,6 +62,9 @@ struct DataCollection {
             // Using this-> as base class/function is templated
             this->appendNode(new DataStructSensor(data, size, time));
         }
+
+        
+
     };
 
 

@@ -151,6 +151,11 @@ void XmoduleSensor::setup() {
             return 0;
         }
 
+        // if (cfgXmoduleSensor.dataValueCount * (7 + 1 + 1) >= maxLen) {
+        //     mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
+        //     return 0;
+        // }
+
         size_t len = 0;
         for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
             //  1,2,3,4,5,6; for dataValueCount is max uint8/255
@@ -181,14 +186,54 @@ void XmoduleSensor::setup() {
 
     // Define CSV data interface
     webPageXmoduleDataCSV = NetWeb::WebPage(uri + "csv", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-        if (index > 0) {
-            return 0;
+
+        // live = always tail node
+        // csv = get nth node (or head) from tail, move towards tail
+        // csv needs to remember the node, then increment with each call until nullptr
+
+        if (index == 0) {
+            if (dataCollection.dataStoreSensor.getNodeAndBookmark(1, true, true) != nullptr) {
+                Serial.println(dataCollection.dataStoreSensor.getBookmarkData()->time);
+                memcpy(buffer, "TODO", 4);
+                return 4;
+            } else {
+                Serial.print("empty");
+                return 0;
+            }
+        } else {
+            if (dataCollection.dataStoreSensor.getNewerBookmark() != nullptr) {
+                Serial.println(dataCollection.dataStoreSensor.getBookmarkData()->time);
+                memcpy(buffer, "TODO", 4);
+                return 4;
+            } else {
+                Serial.print("empty");
+                return 0;
+            }
         }
 
-        memcpy(buffer, "TODO", 4);
 
-        return 4;
-    }, "application/octet-stream");
+
+            // SCALED = (RAW + offset) * scaling
+            // int32_t value = (dataCollection.dataStoreSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
+
+            // Copy number string and delimetor to the correct position of the buffer
+            // size_t len = 0;
+            // for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
+            //     // Copy number string and delimetor to the correct position of the buffer
+            //     String temp = String(data->data[i]);
+            //     memcpy(buffer + len, temp.c_str(), temp.length()); 
+            //     len += temp.length();
+            //     memcpy(buffer + len, ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? &(";") : &(","), 1);
+            //     len++;
+
+            //     // Check max length
+            //     if (len >= maxLen) {
+            //         mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
+            //         return maxLen;
+            //     }
+            // }
+
+    }, "text/plain"); // application/octet-stream
 
     // Register live data interface
     mvp.net.netWeb.registerPage(webPageXmoduleDataCSV);

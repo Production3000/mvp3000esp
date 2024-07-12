@@ -35,8 +35,8 @@ struct LinkedList3000 {
 
     struct Node {
         T* dataStruct;
-        Node* prev;
-        Node* next;
+        Node* prev; // towards head
+        Node* next; // towards tail
 
         Node(T* newDataStruct) {
             dataStruct = newDataStruct;
@@ -48,9 +48,11 @@ struct LinkedList3000 {
 
     Node* head = nullptr; // head is the oldest
     Node* tail = nullptr; // tail is the newest
+    Node* bookmark = nullptr; // bookmark is a temporary pointer, e.g. for slow looping
 
-    T* getOldestData() { return head->dataStruct; }
     T* getNewestData() { return tail->dataStruct; }
+    T* getOldestData() { return head->dataStruct; }
+    T* getBookmarkData() { return (bookmark != nullptr) ? bookmark->dataStruct : nullptr; }
 
     uint16_t size;
     uint16_t max_size;
@@ -119,6 +121,31 @@ struct LinkedList3000 {
     }
 
     /**
+     * @brief Gets the node at the given index and bookmarks it.
+     * 
+     * @param index The index of the node to be retrieved, starting from zero.
+     * @param reverse If true, the index is counted from latest/tail to first/head entry. Default is false.
+     * @return The node at the given index, or nullptr if the index is out of bounds.
+     */
+    Node* getNodeAndBookmark(uint16_t index, boolean reverse = false, boolean noNull = false) {
+        if (index >= size) {
+            if (noNull) { // Return the head or tail if index is out of bounds
+                bookmark = (reverse) ? tail : head;
+            } else { // Return nullptr if index is out of bounds
+                bookmark = nullptr;
+            }
+        } else { // Find the node at the given index
+            bookmark = (reverse) ? tail : head;
+            for (uint16_t i = 0; i < index; i++) {
+                bookmark = (reverse) ? bookmark->prev : bookmark->next;
+            }
+        }
+        return bookmark;
+    }
+    Node* getNewerBookmark() { if(bookmark != nullptr) bookmark = bookmark->next; return bookmark; }
+    Node* getOlderBookmark() { if(bookmark != nullptr) bookmark = bookmark->prev; return bookmark; }
+
+    /**
      * @brief Grows the maximum size of the linked list if enough memory is available.
      * 
      * @return True if the maximum size was increased, otherwise false.
@@ -175,9 +202,9 @@ struct LinkedList3000 {
      * The data structure is passed by reference, so it can be modified within the lambda function.
      * 
      * @param callback The callback function to be called for each node.
-     * @param reverse If true, the list is looped through in reverse order from latest/tail to first/head entry. Default is false.
+     * @param reverse If true, the list is looped from latest/tail to first/head entry. Default is false.
      */       
-    void loopNodes(std::function<void(T*&, uint16_t)> callback, bool reverse = false) {
+    void loopNodes(std::function<void(T*&, uint16_t)> callback, boolean reverse = false) {
         // This one only allows non-captive lambdas: loopNodes(void (*callback)(T"&, uint16_t))
         Node* current = (reverse) ? tail : head;
         uint16_t i = 0;
