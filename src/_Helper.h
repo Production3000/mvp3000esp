@@ -108,7 +108,7 @@ struct Helper {
         uint8_t minutes = remaining_s / 60;
         uint8_t seconds = remaining_s % 60;
         char buffer[16];
-        sprintf(buffer, "%dd %02d:%02d:%02d", days, hours, minutes, seconds);
+        snprintf(buffer, sizeof(buffer), "%dd %02d:%02d:%02d", days, hours, minutes, seconds);
         return String(buffer);
     }
 
