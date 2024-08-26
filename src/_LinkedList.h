@@ -58,8 +58,8 @@ struct LinkedList3000 {
     uint16_t max_size;
     boolean allow_growing;
 
-    uint8_t getSize() const { return size; }
-    uint8_t getMaxSize() const { return max_size; }
+    uint16_t getSize() const { return size; }
+    uint16_t getMaxSize() const { return max_size; }
     boolean getAdaptiveSize() const { return allow_growing; }
 
 
@@ -116,6 +116,7 @@ struct LinkedList3000 {
         if (existingNode == nullptr) {
             appendNode(newDataStruct);
         } else {
+            delete newDataStruct; // IMPORTANT: Delete object to not leak memory
             moveNodeToTail(existingNode);
         }
     }
@@ -151,10 +152,12 @@ struct LinkedList3000 {
      * @return True if the maximum size was increased, otherwise false.
      */
     bool growMaxSize() {
-        if ((allow_growing) && (ESP.getFreeHeap() > 16384)) {
-            // 16k free memory seems reasonable, to leave room vor web and other stuff
-            // An additional 10 elements seem also reasonable
-            max_size += 10;
+        // This is quite complex...
+        // 
+        if ((allow_growing) && (ESP.getFreeHeap() > 16384) && (ESPX.getHeapFragmentation() < 50)){
+            // 16k free memory seems reasonable for single core ESP8266
+            // However, ESP32 has two cores, with seperate heaps ....
+            max_size += 5;
             return true;
         }
         return false;
@@ -184,14 +187,17 @@ struct LinkedList3000 {
         }
         return nullptr;
     }
+    bool containsNode(T newdataStruct) {
+        return containsNode(&newdataStruct) != nullptr;
+    }
 
     /**
      * Searches the nodes for given content and removes the node.
      * 
      * @param dataStruct The data structure to be removed.
      */
-    void findRemoveNode(T* dataStruct) {
-        removeNode(containsNode(dataStruct));
+    void findRemoveNode(T dataStruct) {
+        removeNode(containsNode(&dataStruct));
     }
 
     /**
@@ -319,11 +325,12 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * @param data The value to be appended or moved to the top.
      */
     void appendDataOrMoveToTop(T data) {
-        this->appendNodeOrMoveToTail(new DataStructValue<T>(data));
+        // IMPORTANT: the dataStruct is deleted in the function if not appended
+        this->appendNodeOrMoveToTail(new DataStructValue<T>(data)); 
     }
 
     bool containsData(T data) {
-        return (this->containsNode(new DataStructValue<T>(data)) != nullptr);
+        return this->containsNode(DataStructValue<T>(data));
     }
 
     /**
@@ -340,8 +347,8 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * 
      * @param data The value to be removed.
      */
-    void removeData(T data) {
-        this->findRemoveNode(new DataStructValue<T>(data));
+        void removeData(T data) {
+            this->findRemoveNode(DataStructValue<T>(data));
     }
 };
 

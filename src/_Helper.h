@@ -107,12 +107,8 @@ struct Helper {
         remaining_s = total_s % 3600;
         uint8_t minutes = remaining_s / 60;
         uint8_t seconds = remaining_s % 60;
-        char buffer[15];
-        if (days > 0) {
-            sprintf(buffer, "%dd %02d:%02d:%02d", hours, minutes, seconds);
-        } else {
-            sprintf(buffer, "%02d:%02d:%02d", hours, minutes, seconds);
-        }            
+        char buffer[16];
+        sprintf(buffer, "%dd %02d:%02d:%02d", days, hours, minutes, seconds);
         return String(buffer);
     }
 

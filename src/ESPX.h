@@ -32,14 +32,25 @@ class EspClassX {
             for(uint8_t i = 0; i < 17; i = i + 8) {
                 chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
             }
+            ESP.getMinFreeHeap();
+            ESP.getMaxAllocHeap();
             return chipId;
         };
 
         int8_t getHeapFragmentation() {
-            // There are supposedly different definitions of fragmentation
-            //  Fragmentation = 1 - largest free block / total free memory
-            //  25% fragmentation with 1 kB free means 250 B can be allocated in one shot  
-            return 100 - heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) * 100 / ESP.getFreeHeap();
+            // The ESP32 has two cores, with separate heaps.
+            // If a thread (? linked list) allocates a lot of memory it seems to fill up the heap of the core it runs on.
+            // The getMaxAllocHeap() then still indicates a rather large allocatable memory. This is however on the other core.
+            // Best indicator is the shrinking difference between free and largest allocatable memory.
+            // It starts at 50% allocatable, because half of total for each core.
+            // It goes to >99% allocatable, with one heap quasi full, the other having all the space. 
+
+            // Math:
+            // 100 - 100 * (free - largest) / (total/2) -> initially 50 .. 100 in the end
+            // Stretch to 0..100: -50 *2
+            // 2* ( 50 - 100* (free - largest) / (total/2) )
+
+            return  max( (int)(100 - ((ESP.getFreeHeap() - ESP.getMaxAllocHeap()) * 200) / (ESP.getHeapSize() / 2)) , 0);
         }
 
         String getResetReason() {
