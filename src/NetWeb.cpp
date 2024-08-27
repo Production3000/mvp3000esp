@@ -22,7 +22,8 @@ extern MVP3000 mvp;
 
 void NetWeb::setup() {
     // Initialize folders/requests
-    // Root folder and module folders are initialized with registering the pages
+    // Root folder / and all module folders are initialized with registering the pages
+    // IMPORTANT: /foo is matched by foo, foo/, /foo/bar, /foo?bar - but not by /foobar
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/checksave", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/start", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
@@ -141,7 +142,7 @@ void NetWeb::loop() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::registerPage(WebPage& webPage) {
-    server.on(webPage.uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request){
+    server.on(webPage.uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
         request->sendChunked(webPage.type, webPage.responseFiller, webPage.processor);
     });
 }

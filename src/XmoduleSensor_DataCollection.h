@@ -32,6 +32,7 @@ struct DataCollection {
     struct DataStructSensor {
         uint32_t time;
         int32_t* data;
+        uint8_t size;
 
         /**
          * Constructor for data structure.
@@ -40,7 +41,7 @@ struct DataCollection {
          * @param size Size of data array
          * @param _time Time of data
          */
-        DataStructSensor(int32_t* _data, uint8_t size, uint32_t _time) : time(_time) {
+        DataStructSensor(int32_t* _data, uint8_t _size, uint32_t _time) : time(_time), size(_size) {
             data = new int32_t[size];
             for (uint8_t i = 0; i < size; i++) {
                 data[i] = _data[i];
@@ -48,6 +49,15 @@ struct DataCollection {
         }
         ~DataStructSensor() {
             delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
+        }
+
+        String toCVS() {            // TODO this should not be here but in data collection or elsewhere, not sure where
+            String str = String(time);
+            for (uint8_t i = 0; i < size; i++) {
+                str += "," + String(data[i]);
+            }
+            str += ";";
+            return str;
         }
     };
     
@@ -71,7 +81,7 @@ struct DataCollection {
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
     uint16_t dataStoreLength = 100;
-    LinkedListSensor dataStoreSensor = LinkedListSensor(dataStoreLength);
+    LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
     NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
@@ -110,7 +120,7 @@ struct DataCollection {
         avgCycleFinished = false;
 
         // Data storage
-        dataStoreSensor.clear();
+        linkedListSensor.clear();
     }
 
     void addSample(int32_t *newSample) {
@@ -134,7 +144,7 @@ struct DataCollection {
 
             // Calculate data and time averages and store
             avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value = nearbyintf( value / *averagingCountPtr ); } );
-            dataStoreSensor.append(avgDataSum.values, avgDataSum.value_size, nearbyintf( (avgStartTime + millis()) / 2 ));
+            linkedListSensor.append(avgDataSum.values, avgDataSum.value_size, nearbyintf( (avgStartTime + millis()) / 2 ));
 
             // Reset temporary values, counters            
             avgDataSum.resetValues();

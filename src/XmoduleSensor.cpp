@@ -87,7 +87,7 @@ void XmoduleSensor::setup() {
                     return cfgXmoduleSensor.infoDescription.c_str();
 
                 case 11:
-                    return String(dataCollection.dataStoreSensor.getSize()) + "/" + String(dataCollection.dataStoreSensor.getMaxSize()) + " (" + (dataCollection.dataStoreSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
+                    return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
                 case 12:
                     return String(cfgXmoduleSensor.sampleAveraging);
                 case 13:
@@ -144,103 +144,80 @@ void XmoduleSensor::setup() {
 
     // Define live data interface
     webPageXmoduleDataLive = NetWeb::WebPage(uri + "live", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-        // This is just the most recent measurement. Depending on number of values in the row and their
-        // actual values, it should all fit into one call. On an ESP32 the buffer length was some 5000 bytes.
-        // Estimate: 100 values of 7 digit numbers, a sign, a seperator -> 100 * (7 + 1 + 1) = 900 bytes
-        if (index > 0) {
-            return 0;
+
+
+        if (index == 0) {
+            dataCollection.linkedListSensor.setBookmark(0, true, true); // Latest data only
         }
+        return webPageCsvResponseFiller(buffer, maxLen, index);
 
-        // if (cfgXmoduleSensor.dataValueCount * (7 + 1 + 1) >= maxLen) {
-        //     mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
-        //     return 0;
-        // }
-
-        size_t len = 0;
-        for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-            //  1,2,3,4,5,6; for dataValueCount is max uint8/255
-            //  1,2,3;4,5,6; for dataValueCount is 3
-
-            // Copy number string and delimetor to the correct position of the buffer
-            String temp = String(currentMeasurementScaled().values[i]);
-            memcpy(buffer + len, temp.c_str(), temp.length()); 
-            len += temp.length();
-            memcpy(buffer + len, ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? &(";") : &(","), 1);
-            len++;
-
-            // Check max length
-            if (len >= maxLen) {
-                mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
-                return maxLen;
-            }
-        }
-
-        return len;
     }, "text/plain");
 
     // Register live data interface
     mvp.net.netWeb.registerPage(webPageXmoduleDataLive);
 
-
-
-
-    // Define CSV data interface
-    webPageXmoduleDataCSV = NetWeb::WebPage(uri + "csv", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-
-        // live = always tail node
-        // csv = get nth node (or head) from tail, move towards tail
-        // csv needs to remember the node, then increment with each call until nullptr
+    // Define CSV data interface, and register it
+    webPageXmoduleDataCSV = NetWeb::WebPage(uri + "csv", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        // The index relates only to string position, and does allow to select the next measurement
+        // Workaround is a bookmark in the linked list
 
         if (index == 0) {
-            if (dataCollection.dataStoreSensor.getNodeAndBookmark(1, true, true) != nullptr) {
-                Serial.println(dataCollection.dataStoreSensor.getBookmarkData()->time);
-                memcpy(buffer, "TODO", 4);
-                return 4;
-            } else {
-                Serial.print("empty");
-                return 0;
+            dataCollection.linkedListSensor.setBookmark(0, false, true); // Start with the oldest data
+        }
+        return webPageCsvResponseFiller(buffer, maxLen, index);
+
+    }, "application/octet-stream");
+    mvp.net.netWeb.registerPage(webPageXmoduleDataCSV);
+};
+
+
+// typedef std::function<size_t(uint8_t*, size_t, size_t)> AwsResponseFiller;
+size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index) {
+    // We assume the buffer is large enough for at least a single row
+    // It would be quite the effort to reliably split a row into multiple calls
+
+    size_t pos = 0;
+    while (true) {
+        // Prepare CSV string
+        String str = dataCollection.linkedListSensor.getBookmarkDataCSV();
+        if (str.length() == 0) {
+            break; // Empty string, should not happen
+        }
+        str += "\n";
+        uint16_t strLen = str.length();
+
+        // Make sure there is enough space in the buffer
+        if (pos + strLen >= maxLen) {
+            if (pos == 0) {
+                // Well, this should not happen, buffer full even before the first iteration of the loop
+                // But it does! The buffer is often just a few (<10) bytes long
+                // This is actually so common, it is not even worth an info message
+                // mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Web-CSV buffer too small for data: %d < %d.", maxLen, strLen);
+                // Workaround: Return a single space to indicate there is more data. The next buffer will be larger.
+                if (maxLen > 0) {
+                    memcpy(buffer, " ", 1);
+                    pos = 1;
+                } // we do not catch maxLen = 0, but that should really really not happen!
             }
-        } else {
-            if (dataCollection.dataStoreSensor.getNewerBookmark() != nullptr) {
-                Serial.println(dataCollection.dataStoreSensor.getBookmarkData()->time);
-                memcpy(buffer, "TODO", 4);
-                return 4;
-            } else {
-                Serial.print("empty");
-                return 0;
-            }
+            break;
         }
 
+        // Copy string to the position in the buffer and increment position/total length
+        memcpy(buffer + pos, str.c_str(), strLen); 
+        pos += strLen;
 
+        // Exit if this was the last measurement
+        if (!dataCollection.linkedListSensor.moveBookmark()) {
+            break;
+        }
+        // Exit if the next measurement would (probably, with some margin) not fit
+        if (pos + 1.2 * strLen > maxLen) {
+            break;
+        }
+    }
+    return pos;
+}
 
-            // SCALED = (RAW + offset) * scaling
-            // int32_t value = (dataCollection.dataStoreSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
-
-            // Copy number string and delimetor to the correct position of the buffer
-            // size_t len = 0;
-            // for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-            //     // Copy number string and delimetor to the correct position of the buffer
-            //     String temp = String(data->data[i]);
-            //     memcpy(buffer + len, temp.c_str(), temp.length()); 
-            //     len += temp.length();
-            //     memcpy(buffer + len, ((i == cfgXmoduleSensor.dataValueCount - 1) || ((i + 1) % (cfgXmoduleSensor.dataMatrixColumnCount) == 0) ) ? &(";") : &(","), 1);
-            //     len++;
-
-            //     // Check max length
-            //     if (len >= maxLen) {
-            //         mvp.logger.write(CfgLogger::Level::ERROR, "Buffer too small for data.");
-            //         return maxLen;
-            //     }
-            // }
-
-    }, "text/plain"); // application/octet-stream
-
-    // Register live data interface
-    mvp.net.netWeb.registerPage(webPageXmoduleDataCSV);
-
-
-
-};
 
 void XmoduleSensor::loop() {
     // Call only when there is something to do
@@ -278,7 +255,7 @@ void XmoduleSensor::measurementHandler(int32_t *newSample) {
 NumberArray<int32_t> XmoduleSensor::currentMeasurementRaw() {
     NumberArray<int32_t> currentMeasurementRaw = NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementRaw.loopArray([&](int32_t& value, uint8_t i) {
-        value = dataCollection.dataStoreSensor.getNewestData()->data[i];
+        value = dataCollection.linkedListSensor.getNewestData()->data[i];
     });
     return currentMeasurementRaw;
 }
@@ -287,7 +264,7 @@ NumberArray<int32_t> XmoduleSensor::currentMeasurementScaled() {
     NumberArray<int32_t> currentMeasurementScaled = NumberArray<int32_t>(cfgXmoduleSensor.dataValueCount, 0);
     currentMeasurementScaled.loopArray([&](int32_t& value, uint8_t i) {
         // SCALED = (RAW + offset) * scaling
-        value = (dataCollection.dataStoreSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
+        value = (dataCollection.linkedListSensor.getNewestData()->data[i] + dataProcessing.offset.values[i]) * dataProcessing.scaling.values[i];
     });
     return currentMeasurementScaled;
 }
@@ -334,9 +311,9 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
 void XmoduleSensor::measureOffsetScalingFinish() {
     // Calculate offset or scaling
     if (offsetRunning) {
-        dataProcessing.setOffset(dataCollection.dataStoreSensor.getNewestData()->data);
+        dataProcessing.setOffset(dataCollection.linkedListSensor.getNewestData()->data);
     } else if (scalingRunning) {
-        dataProcessing.setScaling(dataCollection.dataStoreSensor.getNewestData()->data);
+        dataProcessing.setScaling(dataCollection.linkedListSensor.getNewestData()->data);
     } else {
         mvp.logger.write(CfgLogger::Level::ERROR, "Offset/Scaling measurement finished without running.");
         return;

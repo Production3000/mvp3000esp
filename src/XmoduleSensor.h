@@ -141,6 +141,7 @@ class XmoduleSensor : public Xmodule {
 
         NetWeb::WebPage webPageXmoduleDataLive;
         NetWeb::WebPage webPageXmoduleDataCSV;
+        size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
 
         DataProcessing dataProcessing;
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);

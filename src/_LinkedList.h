@@ -126,25 +126,29 @@ struct LinkedList3000 {
      * 
      * @param index The index of the node to be retrieved, starting from zero.
      * @param reverse If true, the index is counted from latest/tail to first/head entry. Default is false.
-     * @return The node at the given index, or nullptr if the index is out of bounds.
      */
-    Node* getNodeAndBookmark(uint16_t index, boolean reverse = false, boolean noNull = false) {
+    void setBookmark(uint16_t index, boolean reverse = false, boolean noNull = false) {
         if (index >= size) {
-            if (noNull) { // Return the head or tail if index is out of bounds
-                bookmark = (reverse) ? tail : head;
+            if (noNull) { // Return the tail/head if index is out of bounds
+                bookmark = (reverse) ? head : tail;
             } else { // Return nullptr if index is out of bounds
                 bookmark = nullptr;
             }
-        } else { // Find the node at the given index
+        } else { // Find the node at the given index, start from head/tail
             bookmark = (reverse) ? tail : head;
             for (uint16_t i = 0; i < index; i++) {
                 bookmark = (reverse) ? bookmark->prev : bookmark->next;
             }
         }
-        return bookmark;
     }
-    Node* getNewerBookmark() { if(bookmark != nullptr) bookmark = bookmark->next; return bookmark; }
-    Node* getOlderBookmark() { if(bookmark != nullptr) bookmark = bookmark->prev; return bookmark; }
+    String getBookmarkDataCSV() {
+        // Return emty string if bookmark is empty
+        if (bookmark == nullptr) {
+            return "";
+        }
+        return bookmark->dataStruct->toCVS();
+    }
+    bool moveBookmark() { if(bookmark == nullptr) return false; bookmark = bookmark->next; if(bookmark == nullptr) return false; return true; }
 
     /**
      * @brief Grows the maximum size of the linked list if enough memory is available.
