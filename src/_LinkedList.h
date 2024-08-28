@@ -52,7 +52,6 @@ struct LinkedList3000 {
 
     T* getNewestData() { return tail->dataStruct; }
     T* getOldestData() { return head->dataStruct; }
-    T* getBookmarkData() { return (bookmark != nullptr) ? bookmark->dataStruct : nullptr; }
 
     uint16_t size;
     uint16_t max_size;
@@ -140,13 +139,6 @@ struct LinkedList3000 {
                 bookmark = (reverse) ? bookmark->prev : bookmark->next;
             }
         }
-    }
-    String getBookmarkDataCSV() {
-        // Return emty string if bookmark is empty
-        if (bookmark == nullptr) {
-            return "";
-        }
-        return bookmark->dataStruct->toCVS();
     }
     bool moveBookmark() { if(bookmark == nullptr) return false; bookmark = bookmark->next; if(bookmark == nullptr) return false; return true; }
 

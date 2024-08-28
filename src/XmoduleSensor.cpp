@@ -179,7 +179,7 @@ size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, s
     size_t pos = 0;
     while (true) {
         // Prepare CSV string
-        String str = dataCollection.linkedListSensor.getBookmarkDataCSV();
+        String str = dataCollection.linkedListSensor.getBookmarkDataCSV(cfgXmoduleSensor.dataMatrixColumnCount);
         if (str.length() == 0) {
             break; // Empty string, should not happen
         }

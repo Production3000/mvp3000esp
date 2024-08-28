@@ -51,12 +51,11 @@ struct DataCollection {
             delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
         }
 
-        String toCVS() {            // TODO this should not be here but in data collection or elsewhere, not sure where
-            String str = String(time);
+        String toCVS(uint8_t columnCount = std::numeric_limits<uint8_t>::max()) {
+            String str = String(time) + ";";
             for (uint8_t i = 0; i < size; i++) {
-                str += "," + String(data[i]);
+                str += String(data[i]) + ((i == size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",");
             }
-            str += ";";
             return str;
         }
     };
@@ -73,7 +72,17 @@ struct DataCollection {
             this->appendNode(new DataStructSensor(data, size, time));
         }
 
+        String getBookmarkDataCSV(uint8_t columnCount) {
+            // Return emty string if bookmark is empty
+            if (bookmark == nullptr) {
+                return "";
+            }
+            return bookmark->dataStruct->toCVS(columnCount);
+        }
         
+        String getNewestDataCSV(uint8_t columnCount) {
+            return tail->dataStruct->toCVS(columnCount);
+        }
 
     };
 
