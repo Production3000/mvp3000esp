@@ -81,6 +81,10 @@ struct DataProcessing : public JsonInterface {
         offset.loopArray([&](int32_t& value, uint8_t i) { value = - offsetMeasurement[i]; });
     };
 
+    void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
+        sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
+    };
+
     void setScaling(int32_t* scalingMeasurement) {
         // SCALING = TARGETVALUE / (sum/times + OFFSET)
         scaling.loopArray([&](float_t& value, uint8_t i) {
@@ -89,6 +93,25 @@ struct DataProcessing : public JsonInterface {
             }
         });
     };
+
+    void setScalingTarget(uint8_t valueIndex, int32_t targetValue) {
+        scalingTargetIndex = valueIndex;
+        scalingTargetValue = targetValue;
+    };
+
+
+    void applyScaling(NumberArray<int32_t> &newSample) {
+        // Apply offset and scaling to array
+        newSample.loopArray([&](int32_t& value, uint8_t i) {
+            value = applyScaling(value, i);
+        });
+    };
+    int32_t applyScaling(int32_t value, uint8_t i) {
+        // Apply offset and scaling to single value
+        // SCALED = (RAW + offset) * scaling
+        return nearbyintf( (value + offset.values[i]) * scaling.values[i] );
+    };
+
 };
 
 #endif

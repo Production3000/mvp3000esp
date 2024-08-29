@@ -19,15 +19,13 @@ limitations under the License.
 
 #include "_LinkedList.h"
 #include "XmoduleSensor_DataCollection_NumberArray.h"
+#include "XmoduleSensor_DataProcessing.h"
 
 
 struct DataCollection {
 
-    DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
-
-
     /**
-     * Derived data structure to store sensor data and its time.
+     * Data structure to store sensor data and its time.
      */
     struct DataStructSensor {
         uint32_t time;
@@ -50,14 +48,6 @@ struct DataCollection {
         ~DataStructSensor() {
             delete[] data; // IMPORTANT: Make sure to also free memory within the dataStruct
         }
-
-        String toCVS(uint8_t columnCount = std::numeric_limits<uint8_t>::max()) {
-            String str = String(time) + ";";
-            for (uint8_t i = 0; i < size; i++) {
-                str += String(data[i]) + ((i == size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",");
-            }
-            return str;
-        }
     };
     
     /**
@@ -72,20 +62,30 @@ struct DataCollection {
             this->appendNode(new DataStructSensor(data, size, time));
         }
 
-        String getBookmarkDataCSV(uint8_t columnCount) {
-            // Return emty string if bookmark is empty
-            if (bookmark == nullptr) {
+        String getBookmarkAsCsv(uint8_t columnCount, DataProcessing *processing) {
+            return nodeToCSV(bookmark, columnCount, processing);
+        }
+
+        String getLatestAsCsv(uint8_t columnCount, DataProcessing *processing) {
+            return nodeToCSV(tail, columnCount, processing);
+        }
+
+        String nodeToCSV(Node* node, uint8_t columnCount, DataProcessing *processing) {
+            // Return emty string if node is empty
+            if (node == nullptr) {
                 return "";
             }
-            return bookmark->dataStruct->toCVS(columnCount);
-        }
-        
-        String getNewestDataCSV(uint8_t columnCount) {
-            return tail->dataStruct->toCVS(columnCount);
+            String str = String(node->dataStruct->time) + ";";
+            for (uint8_t i = 0; i < node->dataStruct->size; i++) {
+                str += (processing == nullptr) ? node->dataStruct->data[i] : processing->applyScaling(node->dataStruct->data[i], i);
+                str += (i == node->dataStruct->size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",";
+            }
+            return str;
         }
 
     };
 
+    DataProcessing processing;
 
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
@@ -104,7 +104,11 @@ struct DataCollection {
     NumberArray<int32_t> dataMin;
 
 
+    DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
+
+
     void initDataValueSize(uint8_t dataValueSize) {
+        processing.initDataValueSize(dataValueSize);
         // Init all NumberArrays
         avgDataSum.lateInit(dataValueSize, 0);
         dataMax.lateInit(dataValueSize, std::numeric_limits<int32_t>::min());

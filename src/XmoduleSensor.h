@@ -25,7 +25,6 @@ limitations under the License.
 #include "Xmodule.h"
 
 #include "XmoduleSensor_DataCollection.h"
-#include "XmoduleSensor_DataProcessing.h"
 
 
 struct CfgXmoduleSensor : CfgJsonInterface {
@@ -92,7 +91,6 @@ class XmoduleSensor : public Xmodule {
         // Constructor to re-init arrays for changed value count
         XmoduleSensor(uint8_t valueCount) {
             cfgXmoduleSensor.initValueCount(valueCount);
-            dataProcessing.initDataValueSize(valueCount);
             dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
 
@@ -113,13 +111,13 @@ class XmoduleSensor : public Xmodule {
             // Shift data by decimals
             int32_t decimalShiftedSample[cfgXmoduleSensor.dataValueCount];
             for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-                decimalShiftedSample[i] = nearbyintf( newSample[i] * pow10(dataProcessing.sampleToIntExponent.values[i]) );
+                decimalShiftedSample[i] = nearbyintf( newSample[i] * pow10(dataCollection.processing.sampleToIntExponent.values[i]) );              // TODO move to data collection
             }
             measurementHandler(decimalShiftedSample);
         };
 
-        NumberArray<int32_t> currentMeasurementRaw();
-        NumberArray<int32_t> currentMeasurementScaled();
+        // NumberArray<int32_t> currentMeasurementRaw();
+        // NumberArray<int32_t> currentMeasurementScaled();
 
         void measureOffset();
         bool measureScaling(uint8_t valueNumber, int32_t targetValue);
@@ -133,17 +131,18 @@ class XmoduleSensor : public Xmodule {
          * 
          * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
          */
-        void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
-            dataProcessing.sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
+        void setSampleToIntExponent(int8_t *sampleToIntExponent) {
+            dataCollection.processing.setSampleToIntExponent(sampleToIntExponent);
         };
 
     private:
 
         NetWeb::WebPage webPageXmoduleDataLive;
-        NetWeb::WebPage webPageXmoduleDataCSV;
-        size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        NetWeb::WebPage webPageXmoduleDatasRaw;
+        NetWeb::WebPage webPageXmoduleDatasScaled;
+        // size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, std::function<String()> stringFunc);
 
-        DataProcessing dataProcessing;
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
         millisDelay sensorDelay;
