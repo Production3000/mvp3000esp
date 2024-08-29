@@ -131,11 +131,42 @@ void NetWeb::setup() {
     
     // Start server, independent of wifi status
     server.begin();
+
+
+
+    websocket.onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+        if (type == WS_EVT_CONNECT) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS client connected from: %s", client->remoteIP().toString().c_str());
+        } else if (type == WS_EVT_DISCONNECT) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS client disconnected from: %s", client->remoteIP().toString().c_str());
+        } else if (type == WS_EVT_ERROR) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s", client->remoteIP().toString().c_str());
+        } else if (type == WS_EVT_DATA) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Data from: %s", client->remoteIP().toString().c_str());
+            // void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
+            AwsFrameInfo *info = (AwsFrameInfo*)arg;
+            if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                data[len] = 0;
+                Serial.println((char*)data);
+            }
+        } else {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "XXX: %s", client->remoteIP().toString().c_str());
+        }
+    });
+
+    server.addHandler(&websocket);
+
+
 }
 
+uint64_t timer = 0;
+
 void NetWeb::loop() {
-    // Called from net.loop() only if network is up
     // There is actually nothing to do here, the async server is running in the background
+    if (millis() > timer) {
+        timer = millis() + 2000;
+        websocket.textAll(String(millis()));
+    }
 }
 
 

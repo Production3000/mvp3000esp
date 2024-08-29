@@ -176,6 +176,7 @@ class NetWeb {
     private:
 
         AsyncWebServer server = AsyncWebServer(80);
+        AsyncWebSocket websocket = AsyncWebSocket("/ws");
 
         // Message to serve on next page load after form save
         const char *postMessage = "";
