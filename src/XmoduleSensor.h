@@ -101,33 +101,17 @@ class XmoduleSensor : public Xmodule {
         /**
          * @brief Add a new sample array to the sensor module.
          * 
-         * This method is used to add a new sample array to the sensor module.
-         * 
          * @tparam T The numeric type of the sample, typically int or float.
          * @param newSample The new sample array to add.
          */
         template <typename T>
         void addSample(T *newSample)  {
-            // Shift data by decimals
-            int32_t decimalShiftedSample[cfgXmoduleSensor.dataValueCount];
-            for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-                decimalShiftedSample[i] = nearbyintf( newSample[i] * pow10(dataCollection.processing.sampleToIntExponent.values[i]) );              // TODO move to data collection
-            }
-            measurementHandler(decimalShiftedSample);
+            // This just adds the sample to the data collection for averaging, once count is done further work is done in the Loop()
+            dataCollection.addSampleNEW(newSample);
         };
 
-        // NumberArray<int32_t> currentMeasurementRaw();
-        // NumberArray<int32_t> currentMeasurementScaled();
-
-        void measureOffset();
-        bool measureScaling(uint8_t valueNumber, int32_t targetValue);
-        void resetOffset();
-        void resetScaling();
-
         /**
-         * @brief Set the sample to integer conversion exponent.
-         * 
-         * This method shifts the decimal point of the sample values by the given exponent.
+         * @brief Shift the decimal point of the sample values by the given exponent.
          * 
          * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
          */
@@ -135,28 +119,27 @@ class XmoduleSensor : public Xmodule {
             dataCollection.processing.setSampleToIntExponent(sampleToIntExponent);
         };
 
+        void measureOffset();
+        bool measureScaling(uint8_t valueNumber, int32_t targetValue);
+        void resetOffset();
+        void resetScaling();
+
     private:
 
         NetWeb::WebPage webPageXmoduleDataLive;
         NetWeb::WebPage webPageXmoduleDatasRaw;
         NetWeb::WebPage webPageXmoduleDatasScaled;
-        // size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, std::function<String()> stringFunc);
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
         millisDelay sensorDelay;
 
-        // Flag to indicate new data is stored
-        boolean newDataStored;
-
         // Offset and scaling
         boolean offsetRunning = false;
         boolean scalingRunning = false;
         int32_t scalingTargetValue;
         uint8_t scalingValueIndex;
-
-        void measurementHandler(int32_t *newSample);
 
         void measureOffsetScalingFinish();
 };

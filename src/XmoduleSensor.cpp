@@ -187,61 +187,16 @@ void XmoduleSensor::setup() {
 
 };
 
-
-// typedef std::function<size_t(uint8_t*, size_t, size_t)> AwsResponseFiller;
-size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, std::function<String()> stringFunc) {
-    // We assume the buffer is large enough for at least a single row
-    // It would be quite the effort to reliably split a row into multiple calls
-
-    size_t pos = 0;
-    while (true) {
-        // Prepare CSV string
-        String str = stringFunc();
-        if (str.length() == 0) {
-            break; // Empty string, should not happen
-        }
-        str += "\n";
-        uint16_t strLen = str.length();
-
-        // Make sure there is enough space in the buffer
-        if (pos + strLen >= maxLen) {
-            if (pos == 0) {
-                // Well, this should not happen, buffer full even before the first iteration of the loop
-                // But it does! The buffer is often just a few (<10) bytes long
-                // This is actually so common, it is not even worth an info message
-                // mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Web-CSV buffer too small for data: %d < %d.", maxLen, strLen);
-                // WORKAROUND: Return a single space to indicate there is more data. The next buffer will likely be larger.
-                if (maxLen > 0) {
-                    memcpy(buffer, " ", 1);
-                    pos++;
-                } // we do not catch maxLen = 0, but that should really really not happen!
-            }
-            break;
-        }
-
-        // Copy string to the position in the buffer and increment position/total length
-        memcpy(buffer + pos, str.c_str(), strLen); 
-        pos += strLen;
-
-        // Exit if this was the last measurement
-        if (!dataCollection.linkedListSensor.moveBookmark()) {
-            break;
-        }
-        // Exit if the next measurement would (probably, with some margin) not fit
-        if (pos + 1.2 * strLen > maxLen) {
-            break;
-        }
-    }
-
-    return pos;
-}
-
-
 void XmoduleSensor::loop() {
-    // Call only when there is something to do
-    if (!newDataStored)
+    // Check flag if there is something to do
+    if (!dataCollection.avgCycleFinished)
         return;
-    newDataStored = false;
+    dataCollection.avgCycleFinished = false;;
+
+    if (offsetRunning || scalingRunning) {
+        measureOffsetScalingFinish();
+        return;
+    }
 
     // Act only if remaining is 0: was never started or just finished
     if (sensorDelay.remaining() == 0) {
@@ -251,21 +206,6 @@ void XmoduleSensor::loop() {
         // Output data to serial and/or network
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
    }
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////
-
-// Called by addSample
-void XmoduleSensor::measurementHandler(int32_t *newSample) {
-    dataCollection.addSample(newSample);
-
-    if (dataCollection.avgCycleFinished) {
-        if (offsetRunning || scalingRunning)
-            measureOffsetScalingFinish();
-        else // normal measurement
-            newDataStored = true;
-    }
 }
 
 
@@ -341,4 +281,54 @@ void XmoduleSensor::resetOffset() {
 void XmoduleSensor::resetScaling() {
     dataCollection.processing.scaling.resetValues();
     mvp.config.writeCfg(dataCollection.processing);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+
+size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, std::function<String()> stringFunc) {
+    // We assume the buffer is large enough for at least a single row
+    // It would be quite the effort to reliably split a row into multiple calls
+
+    size_t pos = 0;
+    while (true) {
+        // Prepare CSV string
+        String str = stringFunc();
+        if (str.length() == 0) {
+            break; // Empty string, should not happen
+        }
+        str += "\n";
+        uint16_t strLen = str.length();
+
+        // Make sure there is enough space in the buffer
+        if (pos + strLen >= maxLen) {
+            if (pos == 0) {
+                // Well, this should not happen, buffer full even before the first iteration of the loop
+                // But it does! The buffer is often just a few (<10) bytes long
+                // This is actually so common, it is not even worth an info message
+                // mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Web-CSV buffer too small for data: %d < %d.", maxLen, strLen);
+                // WORKAROUND: Return a single space to indicate there is more data. The next buffer will likely be larger.
+                if (maxLen > 0) {
+                    memcpy(buffer, " ", 1);
+                    pos++;
+                } // we do not catch maxLen = 0, but that should really really not happen!
+            }
+            break;
+        }
+
+        // Copy string to the position in the buffer and increment position/total length
+        memcpy(buffer + pos, str.c_str(), strLen); 
+        pos += strLen;
+
+        // Exit if this was the last measurement
+        if (!dataCollection.linkedListSensor.moveBookmark()) {
+            break;
+        }
+        // Exit if the next measurement would (probably, with some margin) not fit
+        if (pos + 1.2 * strLen > maxLen) {
+            break;
+        }
+    }
+
+    return pos;
 }

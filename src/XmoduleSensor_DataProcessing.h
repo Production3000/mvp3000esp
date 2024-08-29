@@ -24,7 +24,6 @@ limitations under the License.
 
 
 struct DataProcessing : public JsonInterface {
-    DataProcessing() : JsonInterface("cfgDataProcessing") { }
 
     NumberArray<int32_t> offset;
     NumberArray<float_t> scaling;
@@ -33,11 +32,17 @@ struct DataProcessing : public JsonInterface {
     int32_t scalingTargetValue = 0;
     uint8_t scalingTargetIndex = 0;
 
+
+    DataProcessing() : JsonInterface("cfgDataProcessing") { }
+
     void initDataValueSize(uint8_t dataValueSize) {
         offset.lateInit(dataValueSize, 0);
         scaling.lateInit(dataValueSize, 1);
         sampleToIntExponent.lateInit(dataValueSize, 0);
     }
+
+
+//////////////////////////////////////////////////////////////////////////////////
 
     void exportToJson(JsonDocument &jsonDoc) {
         // No need to save if values are default
@@ -76,6 +81,9 @@ struct DataProcessing : public JsonInterface {
         return true;
     }
 
+
+//////////////////////////////////////////////////////////////////////////////////
+
     void setOffset(int32_t* offsetMeasurement) {
         // OFFSET = -1 * sum/times
         offset.loopArray([&](int32_t& value, uint8_t i) { value = - offsetMeasurement[i]; });
@@ -100,12 +108,24 @@ struct DataProcessing : public JsonInterface {
     };
 
 
-    void applyScaling(NumberArray<int32_t> &newSample) {
+//////////////////////////////////////////////////////////////////////////////////
+
+    template <typename T>
+    int32_t* applySampleToIntExponent(T *newSample) {
+        int32_t* decimalShiftedSample = new int32_t[sampleToIntExponent.value_size];
+        sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) {
+            decimalShiftedSample[i] = nearbyintf( (float_t)pow10(value) * newSample[i] );
+        });
+        return decimalShiftedSample;
+    };
+
+    void applyScaling(NumberArray<int32_t> &values) {
         // Apply offset and scaling to array
-        newSample.loopArray([&](int32_t& value, uint8_t i) {
+        values.loopArray([&](int32_t& value, uint8_t i) {
             value = applyScaling(value, i);
         });
     };
+
     int32_t applyScaling(int32_t value, uint8_t i) {
         // Apply offset and scaling to single value
         // SCALED = (RAW + offset) * scaling

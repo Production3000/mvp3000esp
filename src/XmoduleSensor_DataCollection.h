@@ -54,7 +54,7 @@ struct DataCollection {
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
     struct LinkedListSensor : LinkedList3000<DataStructSensor> {
-        LinkedListSensor(uint16_t _max_size) : LinkedList3000<DataStructSensor>(_max_size, true) { }
+        LinkedListSensor(uint16_t _max_size, boolean _allow_growing) : LinkedList3000<DataStructSensor>(_max_size, _allow_growing) { }
 
         void append(int32_t* data, uint8_t size, uint32_t time) {
             // Create data structure and add node to linked list
@@ -90,7 +90,7 @@ struct DataCollection {
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
     uint16_t dataStoreLength = 100;
-    LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
+    LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength, true);
 
     // Averaging
     NumberArray<int32_t> avgDataSum; // Temporary data storage for averaging
@@ -106,7 +106,6 @@ struct DataCollection {
 
     DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
 
-
     void initDataValueSize(uint8_t dataValueSize) {
         processing.initDataValueSize(dataValueSize);
         // Init all NumberArrays
@@ -114,6 +113,9 @@ struct DataCollection {
         dataMax.lateInit(dataValueSize, std::numeric_limits<int32_t>::min());
         dataMin.lateInit(dataValueSize, std::numeric_limits<int32_t>::max());
     }
+
+
+//////////////////////////////////////////////////////////////////////////////////
 
     // Called only when switching from normal measurement to offset/scaling measurement
     void setAveragingCountPtr(uint16_t *_averagingCount) {
@@ -135,6 +137,13 @@ struct DataCollection {
         // Data storage
         linkedListSensor.clear();
     }
+
+    template <typename T>
+    void addSampleNEW(T *newSample)  {
+        int32_t* decimalShiftedSample = processing.applySampleToIntExponent(newSample);
+        addSample(decimalShiftedSample);
+        delete[] decimalShiftedSample; // IMPORTANT
+    };
 
     void addSample(int32_t *newSample) {
         // This is the function to do most of the work
