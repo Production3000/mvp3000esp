@@ -251,7 +251,7 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
 void XmoduleSensor::measureOffsetScalingFinish() {
     // Calculate offset or scaling
     if (offsetRunning) {
-        dataCollection.processing.setOffset(dataCollection.linkedListSensor.getNewestData()->values);               // TODO move to collection / processing
+        dataCollection.processing.setOffset(dataCollection.linkedListSensor.getNewestData()->values);
     } else if (scalingRunning) {
         dataCollection.processing.setScaling(dataCollection.linkedListSensor.getNewestData()->values);
     } else {
