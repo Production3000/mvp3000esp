@@ -69,13 +69,16 @@ struct DataCollection {
         String getLatestAsCsv(uint8_t columnCount, DataProcessing *processing) {
             return nodeToCSV(tail, columnCount, processing);
         }
+        String getLatestAsCsvNoTime(uint8_t columnCount, DataProcessing *processing) {
+            return nodeToCSV(tail, columnCount, processing, false);
+        }
 
-        String nodeToCSV(Node* node, uint8_t columnCount, DataProcessing *processing) {
+        String nodeToCSV(Node* node, uint8_t columnCount, DataProcessing *processing, boolean withTime = true) {
             // Return emty string if node is empty
             if (node == nullptr) {
                 return "";
             }
-            String str = String(node->dataStruct->time) + ";";
+            String str = (withTime) ? String(node->dataStruct->time) + ";" : "";
             for (uint8_t i = 0; i < node->dataStruct->size; i++) {
                 str += (processing == nullptr) ? node->dataStruct->data[i] : processing->applyScaling(node->dataStruct->data[i], i);
                 str += (i == node->dataStruct->size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",";

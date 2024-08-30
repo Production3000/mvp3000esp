@@ -204,7 +204,7 @@ void XmoduleSensor::loop() {
             sensorDelay.repeat();
 
         // Output data to serial and/or network
-        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
+        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
    }
 }
 
