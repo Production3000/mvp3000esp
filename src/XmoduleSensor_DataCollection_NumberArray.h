@@ -20,6 +20,26 @@ limitations under the License.
 #include <Arduino.h>
 
 
+template <typename T>
+struct NumberArray {
+
+    T* values;
+    uint8_t value_size;
+
+    NumberArray(T* _values, uint8_t _value_size) : value_size(_value_size) {
+        values = new T[value_size];
+        for (uint8_t i = 0; i < value_size; i++) {
+            values[i] = _values[i];
+        }
+    }
+
+    ~NumberArray() {
+        delete[] values;
+    }
+};
+
+
+
 /**
  * A simple number array struct for the MVP3000 framework.
  * 
@@ -29,27 +49,12 @@ limitations under the License.
  * @tparam T The type of data to be stored in the array.
  */
 template <typename T>
-struct NumberArray {
+struct NumberArrayLateInit : NumberArray<T> {
 
-    T* values;
     T defaultValue;
-    uint8_t value_size;
 
-    /**
-     * Default constructor. The array is empty and has no size.
-     * 
-     * @param _valueSize The size of the array.
-     * @param _defaultValue The value to be used to initialize the values of the array.
-     */
-    NumberArray() : value_size(0), defaultValue(0) { }
-    NumberArray(uint8_t _valueSize, T _defaultValue = 0) : value_size(_valueSize), defaultValue(_defaultValue) {
-        values = new T[_valueSize];
-        resetValues();
-    }
-
-    ~NumberArray() {
-        delete[] values;
-    }
+    // Dummy constructor called during creation, initialization is done late
+    NumberArrayLateInit() : NumberArray<T>(0, 0) { }
 
     /**
      * (Re-)initializes the array with the given size and reset value during runtime.
@@ -57,20 +62,21 @@ struct NumberArray {
      * @param _valueSize The size of the array.
      * @param _defaultValue The value to be used to initialize the values in the array.
      */
-    void lateInit(uint8_t _valueSize, T _defaultValue = 0) {
-        value_size = _valueSize;
+    void lateInit(uint8_t _valueSize, T _defaultValue) {
+        this->value_size = _valueSize;
         defaultValue = _defaultValue;
-        delete [] values;
-        values = new T[value_size];
+        delete [] this->values;
+        this->values = new T[this->value_size];
         resetValues();
     }
+
 
     /**
      * Initializes the value in the array with the reset value.
      */
     void resetValues() {
-        loopArray([this](T& value, uint8_t i) {
-            values[i] = defaultValue;
+        this->loopArray([this](T& value, uint8_t i) {
+            this->values[i] = defaultValue;
         });
     }
 
@@ -81,8 +87,8 @@ struct NumberArray {
      * @param callback The callback function to be called for each element.
      */
     void loopArray(std::function<void(T&, uint8_t)> callback) {
-        for (uint8_t i = 0; i < value_size; i++) {
-            callback(values[i], i);
+        for (uint8_t i = 0; i < this->value_size; i++) {
+            callback(this->values[i], i);
         }
     }
 
@@ -91,7 +97,7 @@ struct NumberArray {
      */
     bool isDefault() {
         bool isDefault = true;
-        loopArray([&](T& value, uint8_t i) {
+        this->loopArray([&](T& value, uint8_t i) {
             if (value != defaultValue) {
                 isDefault = false;
             }

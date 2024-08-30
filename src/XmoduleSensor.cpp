@@ -204,7 +204,7 @@ void XmoduleSensor::loop() {
             sensorDelay.repeat();
 
         // Output data to serial and/or network
-        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
+        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
    }
 }
 
@@ -251,9 +251,9 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
 void XmoduleSensor::measureOffsetScalingFinish() {
     // Calculate offset or scaling
     if (offsetRunning) {
-        dataCollection.processing.setOffset(dataCollection.linkedListSensor.getNewestData()->data);
+        dataCollection.processing.setOffset(dataCollection.linkedListSensor.getNewestData()->values);
     } else if (scalingRunning) {
-        dataCollection.processing.setScaling(dataCollection.linkedListSensor.getNewestData()->data);
+        dataCollection.processing.setScaling(dataCollection.linkedListSensor.getNewestData()->values);
     } else {
         mvp.logger.write(CfgLogger::Level::ERROR, "Offset/Scaling measurement finished without running.");
         return;

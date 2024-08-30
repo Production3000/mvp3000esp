@@ -343,8 +343,8 @@ struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
      * 
      * @param data The value to be removed.
      */
-        void removeData(T data) {
-            this->findRemoveNode(DataStructValue<T>(data));
+    void removeData(T data) {
+        this->findRemoveNode(DataStructValue<T>(data));
     }
 };
 

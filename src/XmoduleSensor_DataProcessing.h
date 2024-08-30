@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef MVP3000_XMODULESENSOR_DATAPROCESSING
 #define MVP3000_XMODULESENSOR_DATAPROCESSING
 
+#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include "Config_JsonInterface.h"
@@ -25,9 +26,9 @@ limitations under the License.
 
 struct DataProcessing : public JsonInterface {
 
-    NumberArray<int32_t> offset;
-    NumberArray<float_t> scaling;
-    NumberArray<int8_t> sampleToIntExponent;
+    NumberArrayLateInit<int32_t> offset;
+    NumberArrayLateInit<float_t> scaling;
+    NumberArrayLateInit<int8_t> sampleToIntExponent;
 
     int32_t scalingTargetValue = 0;
     uint8_t scalingTargetIndex = 0;
@@ -119,7 +120,7 @@ struct DataProcessing : public JsonInterface {
         return decimalShiftedSample;
     };
 
-    void applyScaling(NumberArray<int32_t> &values) {
+    void applyScaling(NumberArrayLateInit<int32_t> &values) {
         // Apply offset and scaling to array
         values.loopArray([&](int32_t& value, uint8_t i) {
             value = applyScaling(value, i);
