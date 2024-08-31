@@ -34,7 +34,7 @@ limitations under the License.
 class NetWeb {
     public:
 
-        struct WebPageList {
+        struct WebPageColl {
             struct Node {
                 String uri;
                 const char* html;
@@ -59,8 +59,9 @@ class NetWeb {
                 }
             };
 
-            uint8_t nodeCount = 0;
             static const uint8_t nodesSize = 10;
+            uint8_t nodeCount = 0;
+
             Node* nodes[nodesSize];
 
             uint8_t add(String uri, const char* _html, AwsTemplateProcessor processor, String type) {
@@ -68,9 +69,8 @@ class NetWeb {
                     return 255;
                 }
                 nodes[nodeCount] = new Node(uri, _html, type, processor);
-                return nodeCount++; // Cool, this return the value before incrementing
+                return nodeCount++; // Cool, this returns the value before incrementing
             }
-
             uint8_t add(String uri, AwsResponseFiller responseFiller, String type) {
                 if (nodeCount >= nodesSize) {
                     return 255;
@@ -183,10 +183,10 @@ class NetWeb {
 
         void registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type = "text/html");
         void registerPage(String uri, AwsResponseFiller responseFiller, String type = "text/html");
-
-        void registerPage(uint8_t nodeIndex);
+        void registerPage(uint8_t nodeIndex); // Called by all registerPage functions
 
         void registerCfg(CfgJsonInterface* Cfg);
+
         void registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
 
     private:
@@ -197,7 +197,7 @@ class NetWeb {
         // Message to serve on next page load after form save
         const char *postMessage = "";
 
-        WebPageList webPageList;
+        WebPageColl webPageColl;
         WebCfgList webCfgList;
         WebActionList webActionList;
 
@@ -210,7 +210,6 @@ class NetWeb {
         void responsePrepareRestart(AsyncWebServerRequest *request);
 
         String webPageProcessor(const String& var);
-
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
@@ -234,7 +233,7 @@ class NetWeb {
         <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
         <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
 <p>&nbsp;</body></html>
-        )===";
+)===";
 
 };
 

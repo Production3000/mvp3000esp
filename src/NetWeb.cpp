@@ -92,70 +92,70 @@ void NetWeb::loop() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
-    registerPage(webPageList.add(uri, html, processor, type));
+    registerPage(webPageColl.add(uri, html, processor, type));
 }
 
 void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String type) {
-    registerPage(webPageList.add(uri, responseFiller, type));
+    registerPage(webPageColl.add(uri, responseFiller, type));
 }
 
 void NetWeb::registerPage(uint8_t nodeIndex) {
     // I am VERY sure this can be done better!!! It has to be done better!
     switch (nodeIndex) {
         case 0:
-            server.on(webPageList.nodes[0]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[0]->type, webPageList.nodes[0]->responseFiller, webPageList.nodes[0]->processor);
+            server.on(webPageColl.nodes[0]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[0]->type, webPageColl.nodes[0]->responseFiller, webPageColl.nodes[0]->processor);
             });
             break;
         case 1:
-            server.on(webPageList.nodes[1]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[1]->type, webPageList.nodes[1]->responseFiller, webPageList.nodes[1]->processor);
+            server.on(webPageColl.nodes[1]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[1]->type, webPageColl.nodes[1]->responseFiller, webPageColl.nodes[1]->processor);
             });
             break;
         case 2:
-            server.on(webPageList.nodes[2]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[2]->type, webPageList.nodes[2]->responseFiller, webPageList.nodes[2]->processor);
+            server.on(webPageColl.nodes[2]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[2]->type, webPageColl.nodes[2]->responseFiller, webPageColl.nodes[2]->processor);
             });
             break;
         case 3:
-            server.on(webPageList.nodes[3]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[3]->type, webPageList.nodes[3]->responseFiller, webPageList.nodes[3]->processor);
+            server.on(webPageColl.nodes[3]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[3]->type, webPageColl.nodes[3]->responseFiller, webPageColl.nodes[3]->processor);
             });
             break;
         case 4:
-            server.on(webPageList.nodes[4]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[4]->type, webPageList.nodes[4]->responseFiller, webPageList.nodes[4]->processor);
+            server.on(webPageColl.nodes[4]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[4]->type, webPageColl.nodes[4]->responseFiller, webPageColl.nodes[4]->processor);
             });
             break;
         case 5:
-            server.on(webPageList.nodes[5]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[5]->type, webPageList.nodes[5]->responseFiller, webPageList.nodes[5]->processor);
+            server.on(webPageColl.nodes[5]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[5]->type, webPageColl.nodes[5]->responseFiller, webPageColl.nodes[5]->processor);
             });
             break;
         case 6:
-            server.on(webPageList.nodes[6]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[6]->type, webPageList.nodes[6]->responseFiller, webPageList.nodes[6]->processor);
+            server.on(webPageColl.nodes[6]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[6]->type, webPageColl.nodes[6]->responseFiller, webPageColl.nodes[6]->processor);
             });
             break;
         case 7:
-            server.on(webPageList.nodes[7]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[7]->type, webPageList.nodes[7]->responseFiller, webPageList.nodes[7]->processor);
+            server.on(webPageColl.nodes[7]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[7]->type, webPageColl.nodes[7]->responseFiller, webPageColl.nodes[7]->processor);
             });
             break;
         case 8:
-            server.on(webPageList.nodes[8]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[8]->type, webPageList.nodes[8]->responseFiller, webPageList.nodes[8]->processor);
+            server.on(webPageColl.nodes[8]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[8]->type, webPageColl.nodes[8]->responseFiller, webPageColl.nodes[8]->processor);
             });
             break;
         case 9: 
-            server.on(webPageList.nodes[9]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageList.nodes[9]->type, webPageList.nodes[9]->responseFiller, webPageList.nodes[9]->processor);
+            server.on(webPageColl.nodes[9]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageColl.nodes[9]->type, webPageColl.nodes[9]->responseFiller, webPageColl.nodes[9]->processor);
             });
             break;
         
         case 255:
         default:
-            mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageList::nodesSize);
+            mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
             break;
     }
 }

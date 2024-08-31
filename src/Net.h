@@ -110,8 +110,8 @@ class Net {
         void cleanCfgKeepClientInfo();
 
     private:
-        String webPageProcessor(const String& var);
 
+        String webPageProcessor(const String& var);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
@@ -126,7 +126,7 @@ class Net {
         <li>Force client mode. WARNING: If the credentials are wrong, the device will be inaccessible via network, thus require re-flashing!
          <form action='/checksave' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %35% value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>
 <p>&nbsp;</body></html>
-        )===";
+)===";
 };
 
 #endif

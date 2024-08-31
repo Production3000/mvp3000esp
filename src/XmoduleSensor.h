@@ -139,9 +139,7 @@ class XmoduleSensor : public Xmodule {
         void measureOffsetScalingFinish();
 
         String webPageProcessor(const String& var);
-
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
-
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
@@ -173,7 +171,7 @@ class XmoduleSensor : public Xmodule {
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
         <td></td> </tr> </table>
 <p>&nbsp;</body></html>
-        )===";
+)===";
 
 };
 

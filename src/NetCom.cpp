@@ -188,7 +188,6 @@ void NetCom::mqttWrite(const char *message) {
 }
 
 String NetCom::webPageProcessor(const String& var) { 
-
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return var;

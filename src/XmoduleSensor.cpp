@@ -188,7 +188,7 @@ void XmoduleSensor::resetScaling() {
 //////////////////////////////////////////////////////////////////////////////////
 
 String XmoduleSensor::webPageProcessor(const String& var) {
-    // IMPORTANT: Make sure there is no additional % symbol in the html tamplate
+    // IMPORTANT: Make sure there is no additional % symbol in the html template
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
         return var;
