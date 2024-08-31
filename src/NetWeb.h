@@ -209,6 +209,33 @@ class NetWeb {
         void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
         void responsePrepareRestart(AsyncWebServerRequest *request);
 
+        String webPageProcessor(const String& var);
+
+        char* webPage = R"===(
+<!DOCTYPE html> <html lang='en'>
+<head> <title>MVP3000 - Device ID %0%</title>
+    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+<body> <h2>MVP3000 - Device ID %0%</h2> <h3 style='color: red;'>%1%</h3>
+    <h3>System</h3> <ul>
+        <li>ID: %0%</li>
+        <li>Build: %2%</li>
+        <li>Memory: %3%, fragmentation %4%&percnt;</li>
+        <li>Uptime: %5%</li>
+        <li>Last restart reason: %6%</li>
+        <li>CPU frequency: %7% MHz</li>
+        <li>Main loop duration: %8% ms (mean/min/max)</li> </ul>
+    <h3>Components</h3> <ul>
+        <li><a href='/net'>Network</a></li>
+        <li>%11% </ul>
+    <h3>Modules</h3> <ul>
+        %21% </ul>
+    <h3>Maintenance</h3> <ul>
+        <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
+        <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
+<p>&nbsp;</body></html>
+        )===";
+
 };
 
 #endif

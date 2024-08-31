@@ -51,50 +51,7 @@ void NetCom::setup() {
 
 
     // Define web page
-    mvp.net.netWeb.registerPage("/netcom", R"===(
-<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
-    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
-    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
-    <p><a href='/'>Home</a></p>
-    <h3>MQTT Communication</h3> <ul>
-        <li>Status: %51% </li>
-        <li>Auto-discovery port local broker: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-        <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%53%'> <input type='submit' value='Save'> </form> </li>
-        <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%54%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-        <li>Topic: <br> <form action='/save' method='post'> %55% <input name='mqttTopicSuffix' value='%56%' minlength='5'> <input type='submit' value='Save'> </form> </li> </ul>
-<p>&nbsp;</body></html>
-    )===" ,[&](const String& var) -> String {
-        if (!mvp.helper.isValidInteger(var)) {
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-            return var;
-        }
-
-        switch (var.toInt()) {
-            case 0:
-                return String(ESPX.getChipId());
-
-            case 51:
-                return controllerConnectedString().c_str();
-            case 52:
-                return String(cfgNetCom.discoveryPort);
-            case 53:
-                return cfgNetCom.mqttForcedBroker.c_str();
-            case 54:
-                return String(cfgNetCom.mqttPort);
-            case 55:
-                return mqttTopicPrefix.c_str();
-            case 56:
-                return cfgNetCom.mqttTopicSuffix.c_str();
-
-            default:
-                break;
-        }
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
-    });
-
+    mvp.net.netWeb.registerPage("/netcom", webPage ,  std::bind(&NetCom::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetCom);
 };
@@ -228,4 +185,35 @@ void NetCom::mqttWrite(const char *message) {
     mqttClient.beginMessage(mqttTopicPrefix + cfgNetCom.mqttTopicSuffix);
     mqttClient.print(message);
     mqttClient.endMessage();
+}
+
+String NetCom::webPageProcessor(const String& var) { 
+
+    if (!mvp.helper.isValidInteger(var)) {
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+        return var;
+    }
+
+    switch (var.toInt()) {
+        case 0:
+            return String(ESPX.getChipId());
+
+        case 51:
+            return controllerConnectedString().c_str();
+        case 52:
+            return String(cfgNetCom.discoveryPort);
+        case 53:
+            return cfgNetCom.mqttForcedBroker.c_str();
+        case 54:
+            return String(cfgNetCom.mqttPort);
+        case 55:
+            return mqttTopicPrefix.c_str();
+        case 56:
+            return cfgNetCom.mqttTopicSuffix.c_str();
+
+        default:
+            break;
+    }
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+    return var;
 }

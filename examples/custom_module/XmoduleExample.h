@@ -60,21 +60,34 @@ class XmoduleExample : public Xmodule {
             mvp.config.readCfg(cfgXmoduleExample);
 
             // Define the module's web interface
-            mvp.net.netWeb.registerPage(uri, R"===(
-<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
-    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
-    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
-    <p><a href='/'>Home</a></p>
-    <h3>%1%</h3>
-    <h3>Settings</h3> <ul>
-        <li>Some fixed number: %11% </li>
-        <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%12%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
-    <h3>Action</h3> <ul>
-        <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
-<p>&nbsp;</body></html>         
-                )===", [&](const String& var) -> String {
+            mvp.net.netWeb.registerPage(uri, webPage, std::bind(&webPageProcessor, this, std::placeholders::_1));
+
+            // Register config
+            mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
+
+            // Register action
+            mvp.net.netWeb.registerAction("someAction", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+                // argKey(0) is the action name
+                someAction();
+                return true;
+            }, "Some action was performed.");
+                
+
+            // Custom setup code here
+        }
+
+        void loop() override {
+            // Custom loop code here
+        }
+
+        // Module custom methods
+
+        void someAction() {
+            mvp.logger.write(CfgLogger::INFO, "Some action performed.");
+        }
+
+String webPageProcessor(const String& var) {
+
                     if (!mvp.helper.isValidInteger(var)) {
                         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
                         return var;
@@ -104,32 +117,25 @@ class XmoduleExample : public Xmodule {
                     }
                     mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
                     return var;
-                }
-            );
+    
+}
 
-            // Register config
-            mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
+        char* webPage = R"===(
+<!DOCTYPE html> <html lang='en'>
+<head> <title>MVP3000 - Device ID %0%</title>
+    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+<body> <h2>MVP3000 - Device ID %0%</h2>
+    <p><a href='/'>Home</a></p>
+    <h3>%1%</h3>
+    <h3>Settings</h3> <ul>
+        <li>Some fixed number: %11% </li>
+        <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%12%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
+    <h3>Action</h3> <ul>
+        <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
+<p>&nbsp;</body></html>         
+        )===";
 
-            // Register action
-            mvp.net.netWeb.registerAction("someAction", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
-                // argKey(0) is the action name
-                someAction();
-                return true;
-            }, "Some action was performed.");
-                
-
-            // Custom setup code here
-        }
-
-        void loop() override {
-            // Custom loop code here
-        }
-
-        // Module custom methods
-
-        void someAction() {
-            mvp.logger.write(CfgLogger::INFO, "Some action performed.");
-        }
 };
 
 #endif

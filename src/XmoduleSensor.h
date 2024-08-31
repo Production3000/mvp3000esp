@@ -138,6 +138,8 @@ class XmoduleSensor : public Xmodule {
 
         void measureOffsetScalingFinish();
 
+        String webPageProcessor(const String& var);
+
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
 
         char* webPage = R"===(

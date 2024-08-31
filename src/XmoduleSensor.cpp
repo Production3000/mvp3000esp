@@ -36,53 +36,9 @@ void XmoduleSensor::setup() {
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorDelay.start(cfgXmoduleSensor.reportingInterval);
 
+
     // Register sensor module web pagey
-    mvp.net.netWeb.registerPage(uri, webPage, [&](const String& var) -> String {
-            // IMPORTANT: Make sure there is no additional % symbol in the
-            if (!mvp.helper.isValidInteger(var)) {
-                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
-                return var;
-            }
-
-            String str;
-            switch (var.toInt()) {
-                case 0:
-                    return String(ESPX.getChipId());
-
-                case 1:
-                    return description.c_str();
-                case 2:
-                    return cfgXmoduleSensor.infoName.c_str();
-                case 3:
-                    return cfgXmoduleSensor.infoDescription.c_str();
-
-                case 11:
-                    return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
-                case 12:
-                    return String(cfgXmoduleSensor.sampleAveraging);
-                case 13:
-                    return String(cfgXmoduleSensor.averagingOffsetScaling);
-                case 14:
-                    return String(cfgXmoduleSensor.reportingInterval);
-
-                case 21:
-                    return String(cfgXmoduleSensor.dataValueCount);
-
-                case 30: // Sensor details: type, unit, offset, scaling, float to int exponent
-                    char message[128];
-                    for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-                        snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
-                            i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataCollection.processing.offset.values[i], dataCollection.processing.scaling.values[i], dataCollection.processing.sampleToIntExponent.values[i]);
-                        str += message;
-                    }
-                    return str;
-
-                default:
-                    break;
-            }
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-            return var;
-        });
+    mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleSensor::webPageProcessor, this, std::placeholders::_1));
 
     // Register config to make it web-editable
     mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
@@ -130,7 +86,7 @@ void XmoduleSensor::setup() {
             return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
         });
     }, "application/octet-stream");
-};
+}
 
 void XmoduleSensor::loop() {
     // Check flag if there is something to do
@@ -230,6 +186,53 @@ void XmoduleSensor::resetScaling() {
 
 
 //////////////////////////////////////////////////////////////////////////////////
+
+String XmoduleSensor::webPageProcessor(const String& var) {
+    // IMPORTANT: Make sure there is no additional % symbol in the html tamplate
+    if (!mvp.helper.isValidInteger(var)) {
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
+        return var;
+    }
+
+    String str;
+    switch (var.toInt()) {
+        case 0:
+            return String(ESPX.getChipId());
+
+        case 1:
+            return description.c_str();
+        case 2:
+            return cfgXmoduleSensor.infoName.c_str();
+        case 3:
+            return cfgXmoduleSensor.infoDescription.c_str();
+
+        case 11:
+            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
+        case 12:
+            return String(cfgXmoduleSensor.sampleAveraging);
+        case 13:
+            return String(cfgXmoduleSensor.averagingOffsetScaling);
+        case 14:
+            return String(cfgXmoduleSensor.reportingInterval);
+
+        case 21:
+            return String(cfgXmoduleSensor.dataValueCount);
+
+        case 30: // Sensor details: type, unit, offset, scaling, float to int exponent
+            char message[128];
+            for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
+                snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
+                    i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataCollection.processing.offset.values[i], dataCollection.processing.scaling.values[i], dataCollection.processing.sampleToIntExponent.values[i]);
+                str += message;
+            }
+            return str;
+
+        default:
+            break;
+    }
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
+    return var;
+}
 
 size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc) {
     // We assume the buffer is large enough for at least the first single row
