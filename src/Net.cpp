@@ -32,7 +32,7 @@ void Net::setup() {
     netCom.setup();
 
     // Define web page
-    webPageNet = new NetWeb::WebPage("/net", R"===(
+    mvp.net.netWeb.registerPage("/net", R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -73,8 +73,6 @@ void Net::setup() {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return var;
     });
-    // Register web page
-    netWeb.registerPage(*webPageNet);
 
     // Register config
     netWeb.registerCfg(&cfgNet);

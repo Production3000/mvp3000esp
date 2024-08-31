@@ -70,8 +70,6 @@ class NetCom {
         };
         COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLEDX;
 
-        NetWeb::WebPage* webPageNetCom;
-
         WiFiClient wifiClient;
         MqttClient mqttClient = NULL;
 

@@ -35,8 +35,8 @@ void NetWeb::setup() {
     // Initialize cfgList
     webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-    // Define home page
-    webPageHome = new WebPage("/", R"===(
+    // Register home page
+    registerPage("/", R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %0%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -116,8 +116,6 @@ void NetWeb::setup() {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return var;
     });
-    // Register home page
-    registerPage(*webPageHome);
 
     // Register actions
     registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
@@ -172,10 +170,73 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerPage(WebPage& webPage) {
-    server.on(webPage.uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-        request->sendChunked(webPage.type, webPage.responseFiller, webPage.processor);
-    });
+void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
+    registerPage(webPageList.add(uri, html, processor, type));
+}
+
+void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String type) {
+    registerPage(webPageList.add(uri, responseFiller, type));
+}
+
+void NetWeb::registerPage(uint8_t nodeIndex) {
+    // I am VERY sure this can be done better!!! It has to be done better!
+    switch (nodeIndex) {
+        case 0:
+            server.on(webPageList.nodes[0]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[0]->type, webPageList.nodes[0]->responseFiller, webPageList.nodes[0]->processor);
+            });
+            break;
+        case 1:
+            server.on(webPageList.nodes[1]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[1]->type, webPageList.nodes[1]->responseFiller, webPageList.nodes[1]->processor);
+            });
+            break;
+        case 2:
+            server.on(webPageList.nodes[2]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[2]->type, webPageList.nodes[2]->responseFiller, webPageList.nodes[2]->processor);
+            });
+            break;
+        case 3:
+            server.on(webPageList.nodes[3]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[3]->type, webPageList.nodes[3]->responseFiller, webPageList.nodes[3]->processor);
+            });
+            break;
+        case 4:
+            server.on(webPageList.nodes[4]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[4]->type, webPageList.nodes[4]->responseFiller, webPageList.nodes[4]->processor);
+            });
+            break;
+        case 5:
+            server.on(webPageList.nodes[5]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[5]->type, webPageList.nodes[5]->responseFiller, webPageList.nodes[5]->processor);
+            });
+            break;
+        case 6:
+            server.on(webPageList.nodes[6]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[6]->type, webPageList.nodes[6]->responseFiller, webPageList.nodes[6]->processor);
+            });
+            break;
+        case 7:
+            server.on(webPageList.nodes[7]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[7]->type, webPageList.nodes[7]->responseFiller, webPageList.nodes[7]->processor);
+            });
+            break;
+        case 8:
+            server.on(webPageList.nodes[8]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[8]->type, webPageList.nodes[8]->responseFiller, webPageList.nodes[8]->processor);
+            });
+            break;
+        case 9: 
+            server.on(webPageList.nodes[9]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                request->sendChunked(webPageList.nodes[9]->type, webPageList.nodes[9]->responseFiller, webPageList.nodes[9]->processor);
+            });
+            break;
+        
+        case 255:
+        default:
+            mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageList::nodesSize);
+            break;
+    }
 }
 
 void NetWeb::registerCfg(CfgJsonInterface *Cfg) {

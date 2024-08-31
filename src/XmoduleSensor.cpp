@@ -36,39 +36,8 @@ void XmoduleSensor::setup() {
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorDelay.start(cfgXmoduleSensor.reportingInterval);
 
-    // Define web page
-    webPageXmodule = new NetWeb::WebPage(uri, R"===(
-<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
-    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
-    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
-    <p><a href='/'>Home</a></p>
-<h3>%1%</h3> <ul>
-    <li>Product: %2% </li>
-    <li>Description: %3% </li> </ul>
-<h3>Data Handling</h3> <ul>
-    <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%13%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%13%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
-<h3>Data Interface</h3> <ul>
-    <li>Data storage: %11%</li>
-    <li>Current data: <a href='/sensordata'>/sensordata</a> </li>
-    <li>Live websocket: TODO </li>
-    <li>CSV data: <a href='/sensordatasscaled'>/sensordatasscaled</a>, <a href='/sensordatasraw'>/sensordatasraw</a> </li> </ul>
-<h3>Sensor Details</h3> <table>
-    <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>
-    %30%
-    <tr> <td colspan='3'></td>
-        <td valign='bottom'> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%21%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
-        <td></td> </tr>
-    <tr> <td colspan='3'></td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
-        <td></td> </tr> </table>
-<p>&nbsp;</body></html>
-        )===" ,[&](const String& var) -> String {
+    // Register sensor module web pagey
+    mvp.net.netWeb.registerPage(uri, webPage, [&](const String& var) -> String {
             // IMPORTANT: Make sure there is no additional % symbol in the
             if (!mvp.helper.isValidInteger(var)) {
                 mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
@@ -114,13 +83,11 @@ void XmoduleSensor::setup() {
             mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
             return var;
         });
-    // Register web page
-    mvp.net.netWeb.registerPage(*webPageXmodule);
 
-    // Register config
+    // Register config to make it web-editable
     mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 
-    // Register actions
+    // Register webpage actions
     mvp.net.netWeb.registerAction("measureOffset", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         measureOffset();
         return true;
@@ -143,48 +110,26 @@ void XmoduleSensor::setup() {
     }, "Scaling reset.");
 
 
-    // Define current data interface, and register it
-    webPageXmoduleDataLive = NetWeb::WebPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-        // Single measurement should be sent out on first call
-        // There are cases of a few byte small buffers, but hopefully not during the first call, and even if we just dont care
-        if (index > 0) {
-            return 0;
-        }
-        return webPageCsvResponseFiller(buffer, maxLen, index, [&]() -> String {
+    // Data interface for latest data
+    mvp.net.netWeb.registerPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
+        return webPageCsvResponseFiller(buffer, maxLen, index, true, [&]() -> String {
             return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
         });
+    });
 
-    }, "text/plain");
-    mvp.net.netWeb.registerPage(webPageXmoduleDataLive);
-
-    // Define CSV data interface, and register it
-    webPageXmoduleDatasRaw = NetWeb::WebPage(uri + "datasraw", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        // The index relates only to string position, and does allow to select the next measurement
-        // Workaround is a bookmark in the linked list
-        if (index == 0) {
-            dataCollection.linkedListSensor.setBookmark(0, false, true); // Start with the oldest data
-        }
-        return webPageCsvResponseFiller(buffer, maxLen, index, [&]() -> String {
+    // Data interface for raw CSV data
+    mvp.net.netWeb.registerPage(uri + "datasraw", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
             return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, nullptr);
         });
-
     }, "application/octet-stream");
-    mvp.net.netWeb.registerPage(webPageXmoduleDatasRaw);
 
-    webPageXmoduleDatasScaled = NetWeb::WebPage(uri + "datasscaled", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        // The index relates only to string position, and does allow to select the next measurement
-        // Workaround is a bookmark in the linked list
-        if (index == 0) {
-            dataCollection.linkedListSensor.setBookmark(0, false, true); // Start with the oldest data
-        }
-        return webPageCsvResponseFiller(buffer, maxLen, index, [&]() -> String {
+    // Data interface for scaled CSV data
+    mvp.net.netWeb.registerPage(uri + "datasscaled", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
             return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
         });
-
     }, "application/octet-stream");
-    mvp.net.netWeb.registerPage(webPageXmoduleDatasScaled);
-
-
 };
 
 void XmoduleSensor::loop() {
@@ -286,9 +231,20 @@ void XmoduleSensor::resetScaling() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, std::function<String()> stringFunc) {
-    // We assume the buffer is large enough for at least a single row
+size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc) {
+    // We assume the buffer is large enough for at least the first single row
     // It would be quite the effort to reliably split a row into multiple calls
+
+    if (firstOnly && index > 0) {
+        // Single measurement should be sent out on first call
+        // There are cases of a few byte small buffers, but hopefully not during the first call, and even if we just dont care
+        return 0;
+    }
+    if (!firstOnly && (index == 0)) {
+        // The index relates only to string position, and does allow to select the next measurement
+        // Workaround is a bookmark in the linked list
+        dataCollection.linkedListSensor.setBookmark(0, false, true); // Start with the oldest data
+    }
 
     size_t pos = 0;
     while (true) {

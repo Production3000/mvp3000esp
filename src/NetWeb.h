@@ -34,39 +34,51 @@ limitations under the License.
 class NetWeb {
     public:
 
-        struct WebPage {
-            String uri;
-            const char* html;
-            String type;
-            AwsResponseFiller responseFiller;
-            AwsTemplateProcessor processor;
+        struct WebPageList {
+            struct Node {
+                String uri;
+                const char* html;
+                String type;
+                AwsResponseFiller responseFiller;
+                AwsTemplateProcessor processor;
 
-            /**
-             * @brief Construct a new Web Page object
-             * 
-             * Make sure there is no unencoded percent symbol in the html string or any of replacment strings as it messes up the placeholder parsing.
-             * The ESPAsyncWebServer URL matching is not perfect. If /example is defined, /example/something will yield crazy results.
-             * 
-             * @param uri The URI of the page.
-             * @param html The HTML content of the page.
-             * @param responseFiller The response filler to use for the page. Warning, it is called a very last time after the string is already at its end, probably to make sure everything was sent
-             * @param processor The processor to use for the page.
-             * @param type The url-content type of the connection. Use 'application/octet-stream' for data to force download in browser.
-             */
-            WebPage() { }
-            WebPage(String _uri, const char* _html, AwsTemplateProcessor _processor, String _type = "text/html") : uri(_uri), html(_html), processor(_processor), type(_type) {
-                // Generate the response filler for the provided html string
-                responseFiller = [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-                    // Put the substring from html into the buffer, starting at index until index + maxLen
+                Node () { }
+                Node(String uri, const char* html, String type, AwsTemplateProcessor processor) : uri(uri), html(html), type(type), processor(processor) { 
+                    responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                }
+                Node(String uri, String type, AwsResponseFiller responseFiller) : uri(uri), html(""), type(type), responseFiller(responseFiller), processor(nullptr) { }
+
+                size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+                    // Chunked response filler for the html template
                     size_t len = strlen(html);
                     if (index + maxLen > len) {
                         maxLen = len - index;
                     }
                     memcpy(buffer, html + index, maxLen);
                     return maxLen;
-                };
+                }
+            };
+
+            uint8_t nodeCount = 0;
+            static const uint8_t nodesSize = 10;
+            Node* nodes[nodesSize];
+
+            uint8_t add(String uri, const char* _html, AwsTemplateProcessor processor, String type) {
+                if (nodeCount >= nodesSize) {
+                    return 255;
+                }
+                nodes[nodeCount] = new Node(uri, _html, type, processor);
+                return nodeCount++; // Cool, this return the value before incrementing
             }
-            WebPage(String _uri, AwsResponseFiller _responseFiller, String _type = "text/html") : uri(_uri), responseFiller(_responseFiller), type(_type) { }
+
+            uint8_t add(String uri, AwsResponseFiller responseFiller, String type) {
+                if (nodeCount >= nodesSize) {
+                    return 255;
+                }
+                nodes[nodeCount] = new Node(uri, type, responseFiller);
+                return nodeCount++;
+            }
+
         };
 
         struct WebCfgList {
@@ -169,7 +181,11 @@ class NetWeb {
         void setup();
         void loop();
 
-        void registerPage(WebPage& webPage);
+        void registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type = "text/html");
+        void registerPage(String uri, AwsResponseFiller responseFiller, String type = "text/html");
+
+        void registerPage(uint8_t nodeIndex);
+
         void registerCfg(CfgJsonInterface* Cfg);
         void registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
 
@@ -181,10 +197,9 @@ class NetWeb {
         // Message to serve on next page load after form save
         const char *postMessage = "";
 
+        WebPageList webPageList;
         WebCfgList webCfgList;
         WebActionList webActionList;
-
-        WebPage* webPageHome;
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

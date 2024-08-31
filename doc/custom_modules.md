@@ -56,7 +56,7 @@ The most important part for integration of the module in the MVP3000 framwork is
                 mvp.config.readCfg(cfgXmoduleExample);
 
                 // Define the module's web interface
-                webPageXmodule = new NetWeb::WebPage(uri,  R"===(
+                mvp.net.netWeb.registerPage(uri,  R"===(
     <!DOCTYPE html> <html lang='en'>
     <head> <title>MVP3000 - Device ID %0%</title>
         <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -102,7 +102,6 @@ The most important part for integration of the module in the MVP3000 framwork is
                         return var;
                     }
                 );
-                mvp.net.netWeb.registerPage(*webPageXmodule);
 
                 // Register config
                 mvp.net.netWeb.registerCfg(&cfgXmoduleExample);

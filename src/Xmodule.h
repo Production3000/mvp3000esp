@@ -40,8 +40,6 @@ class Xmodule {
         String description = "MVP3000 module base class";
         String uri = "/xmodule"; // Leave blank to only list module in web interface but not link it
 
-        NetWeb::WebPage* webPageXmodule;
-
         /**
          * @brief Virtual method for module setup.
          * 
