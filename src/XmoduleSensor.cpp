@@ -44,11 +44,11 @@ void XmoduleSensor::setup() {
     mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 
     // Register webpage actions
-    mvp.net.netWeb.registerAction("measureOffset", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    mvp.net.netWeb.registerAction("measureOffset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         measureOffset();
         return true;
     }, "Measuring offset, this may take a few seconds ...");
-    mvp.net.netWeb.registerAction("measureScaling", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    mvp.net.netWeb.registerAction("measureScaling", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         if ( (args == 3) &&  (argKey(1) == "valueNumber") && (argKey(2) == "targetValue") ) {
             if (measureScaling(argValue(1).toInt(), argValue(2).toInt())) {
                 return true;
@@ -56,11 +56,11 @@ void XmoduleSensor::setup() {
         }
         return false;
     }, "Measuring scaling, this may take a few seconds ...");
-    mvp.net.netWeb.registerAction("resetOffset", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    mvp.net.netWeb.registerAction("resetOffset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         resetOffset();
         return true;
     }, "Offset reset.");
-    mvp.net.netWeb.registerAction("resetScaling", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    mvp.net.netWeb.registerAction("resetScaling", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         resetScaling();
         return true;
     }, "Scaling reset.");

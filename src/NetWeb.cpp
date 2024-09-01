@@ -39,10 +39,10 @@ void NetWeb::setup() {
     registerPage("/", webPage, std::bind(&NetWeb::webPageProcessor, this, std::placeholders::_1));
 
     // Register actions
-    registerAction("restart", WebActionList::ResponseType::RESTART, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    registerAction("restart", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         return true;
-    });
-    registerAction("reset", WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    }, true);
+    registerAction("reset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // If keepwifi is checked it is present in the args, otherwise not
         mvp.config.delayedFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
         return true;
@@ -92,64 +92,64 @@ void NetWeb::loop() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
-    registerPage(webPageColl.add(uri, html, processor, type));
+    registerPageMain(webPageColl.add(uri, html, processor, type));
 }
 
 void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String type) {
-    registerPage(webPageColl.add(uri, responseFiller, type));
+    registerPageMain(webPageColl.add(uri, responseFiller, type));
 }
 
-void NetWeb::registerPage(uint8_t nodeIndex) {
+void NetWeb::registerPageMain(uint8_t nodeIndex) {
     // I am VERY sure this can be done better!!! It has to be done better!
     switch (nodeIndex) {
         case 0:
             server.on(webPageColl.nodes[0]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[0]->type, webPageColl.nodes[0]->responseFiller, webPageColl.nodes[0]->processor);
+                request->sendChunked(webPageColl.nodes[0]->contentType, webPageColl.nodes[0]->responseFiller, webPageColl.nodes[0]->processor);
             });
             break;
         case 1:
             server.on(webPageColl.nodes[1]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[1]->type, webPageColl.nodes[1]->responseFiller, webPageColl.nodes[1]->processor);
+                request->sendChunked(webPageColl.nodes[1]->contentType, webPageColl.nodes[1]->responseFiller, webPageColl.nodes[1]->processor);
             });
             break;
         case 2:
             server.on(webPageColl.nodes[2]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[2]->type, webPageColl.nodes[2]->responseFiller, webPageColl.nodes[2]->processor);
+                request->sendChunked(webPageColl.nodes[2]->contentType, webPageColl.nodes[2]->responseFiller, webPageColl.nodes[2]->processor);
             });
             break;
         case 3:
             server.on(webPageColl.nodes[3]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[3]->type, webPageColl.nodes[3]->responseFiller, webPageColl.nodes[3]->processor);
+                request->sendChunked(webPageColl.nodes[3]->contentType, webPageColl.nodes[3]->responseFiller, webPageColl.nodes[3]->processor);
             });
             break;
         case 4:
             server.on(webPageColl.nodes[4]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[4]->type, webPageColl.nodes[4]->responseFiller, webPageColl.nodes[4]->processor);
+                request->sendChunked(webPageColl.nodes[4]->contentType, webPageColl.nodes[4]->responseFiller, webPageColl.nodes[4]->processor);
             });
             break;
         case 5:
             server.on(webPageColl.nodes[5]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[5]->type, webPageColl.nodes[5]->responseFiller, webPageColl.nodes[5]->processor);
+                request->sendChunked(webPageColl.nodes[5]->contentType, webPageColl.nodes[5]->responseFiller, webPageColl.nodes[5]->processor);
             });
             break;
         case 6:
             server.on(webPageColl.nodes[6]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[6]->type, webPageColl.nodes[6]->responseFiller, webPageColl.nodes[6]->processor);
+                request->sendChunked(webPageColl.nodes[6]->contentType, webPageColl.nodes[6]->responseFiller, webPageColl.nodes[6]->processor);
             });
             break;
         case 7:
             server.on(webPageColl.nodes[7]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[7]->type, webPageColl.nodes[7]->responseFiller, webPageColl.nodes[7]->processor);
+                request->sendChunked(webPageColl.nodes[7]->contentType, webPageColl.nodes[7]->responseFiller, webPageColl.nodes[7]->processor);
             });
             break;
         case 8:
             server.on(webPageColl.nodes[8]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[8]->type, webPageColl.nodes[8]->responseFiller, webPageColl.nodes[8]->processor);
+                request->sendChunked(webPageColl.nodes[8]->contentType, webPageColl.nodes[8]->responseFiller, webPageColl.nodes[8]->processor);
             });
             break;
         case 9: 
             server.on(webPageColl.nodes[9]->uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
-                request->sendChunked(webPageColl.nodes[9]->type, webPageColl.nodes[9]->responseFiller, webPageColl.nodes[9]->processor);
+                request->sendChunked(webPageColl.nodes[9]->contentType, webPageColl.nodes[9]->responseFiller, webPageColl.nodes[9]->processor);
             });
             break;
         
@@ -164,9 +164,21 @@ void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
     webCfgList.add(Cfg);
 }
 
-void NetWeb::registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+    registerActionMain(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
+};
+
+void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart) {
+    if (restart) {
+        registerActionMain(action, WebActionList::ResponseType::RESTART, actionFkt, "");
+    } else {
+        registerActionMain(action, WebActionList::ResponseType::MESSAGE, actionFkt, ""); // this is the same as an empty string
+    }
+};
+
+void NetWeb::registerActionMain(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
     webActionList.add(action, successResponse, actionFkt, successMessage);
-}
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////////

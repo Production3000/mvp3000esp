@@ -33,96 +33,43 @@ limitations under the License.
 
 class NetWeb {
     public:
+        void setup();
+        void loop();
 
-        struct WebPageColl {
-            struct Node {
-                String uri;
-                const char* html;
-                String type;
-                AwsResponseFiller responseFiller;
-                AwsTemplateProcessor processor;
+        /**
+         * @brief Register a new page for the web interface.
+         * 
+         * @param uri The URI of the page.
+         * @param html The HTML content of the page, used together with the processor to fill the template.
+         * @param processor The processor function for the page.
+         * @param responseFiller The response filler function for the page, typically used for large pages or datasets.
+         * @param contentType The content type of the page, optional, Default is "text/html".
+         */
+        void registerPage(String uri, const char* html, AwsTemplateProcessor processor, String contentType = "text/html");
+        void registerPage(String uri, AwsResponseFiller responseFiller, String contentType = "text/html");
 
-                Node () { }
-                Node(String uri, const char* html, String type, AwsTemplateProcessor processor) : uri(uri), html(html), type(type), processor(processor) { 
-                    responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-                }
-                Node(String uri, String type, AwsResponseFiller responseFiller) : uri(uri), html(""), type(type), responseFiller(responseFiller), processor(nullptr) { }
+        /**
+         * @brief Register a configuration object to be automatically editable using the web interface.
+         * 
+         * @param Cfg The configuration to add.
+         */
+        void registerCfg(CfgJsonInterface* Cfg);
 
-                size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
-                    // Chunked response filler for the html template
-                    size_t len = strlen(html);
-                    if (index + maxLen > len) {
-                        maxLen = len - index;
-                    }
-                    memcpy(buffer, html + index, maxLen);
-                    return maxLen;
-                }
-            };
+        /**
+         * @brief Register an action to be executed using the web interface.
+         * 
+         * @param action The action to add.
+         * @param actionFkt The function to execute.
+         * @param successMessage The message to display on success. Leave empty to omit message. Only displayed if device is not restarted.
+         * @param restart If true, the device will be restarted after the action.
+         */
+        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
+        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart);
 
-            static const uint8_t nodesSize = 10;
-            uint8_t nodeCount = 0;
 
-            Node* nodes[nodesSize];
+    private:
 
-            uint8_t add(String uri, const char* _html, AwsTemplateProcessor processor, String type) {
-                if (nodeCount >= nodesSize) {
-                    return 255;
-                }
-                nodes[nodeCount] = new Node(uri, _html, type, processor);
-                return nodeCount++; // Cool, this returns the value before incrementing
-            }
-            uint8_t add(String uri, AwsResponseFiller responseFiller, String type) {
-                if (nodeCount >= nodesSize) {
-                    return 255;
-                }
-                nodes[nodeCount] = new Node(uri, type, responseFiller);
-                return nodeCount++;
-            }
-
-        };
-
-        struct WebCfgList {
-            struct Node {
-                CfgJsonInterface* Cfg;
-                Node* next;
-            };
-            Node* head = nullptr;
-
-            std::function<void(CfgJsonInterface&)> saveCfgFkt; // Function to save the configuration
-
-            WebCfgList() { }
-            WebCfgList(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
-                this->saveCfgFkt = saveCfgFkt;
-            }
-
-            /**
-             * @brief Make a configuration available for web interface.
-             * 
-             * @param Cfg The configuration to add.
-             */
-            void add(CfgJsonInterface* Cfg) {
-                Node* newNode = new Node;
-                newNode->Cfg = Cfg;
-                newNode->next = head;
-                head = newNode;
-            }
-
-            // Loops through all cfgs and updates the value if found
-            bool loopUpdateSingleValue(String key, String value) {
-                Node* current = head;
-                // Loop through all nodes
-                while (current != nullptr) {
-                    // Try to update value, if successful save Cfg and return
-                    if (current->Cfg->updateSingleValue(key, value)) {
-                        saveCfgFkt(*current->Cfg);
-                        return true;
-                    }
-                    current = current->next;
-                }
-                return false;
-            }
-        };
-
+        // Linked list for action callbacks
         struct WebActionList {
             enum ResponseType {
                 NONE = 0,
@@ -141,14 +88,6 @@ class NetWeb {
 
             WebActionList() { }
 
-            /**
-             * @brief Make a configuration available for web interface.
-             * 
-             * @param action The action of the configuration.
-             * @param successResponse The response type on success.
-             * @param actionFkt The function to execute.
-             * @param successMessage The message to display on success.
-             */
             void add(String action, ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "") {
                 Node* newNode = new Node;
                 newNode->action = action;
@@ -178,18 +117,91 @@ class NetWeb {
             }
         };
 
-        void setup();
-        void loop();
+        // Linked list for configuration objects
+        struct WebCfgList {
+            struct Node {
+                CfgJsonInterface* Cfg;
+                Node* next;
+            };
+            Node* head = nullptr;
 
-        void registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type = "text/html");
-        void registerPage(String uri, AwsResponseFiller responseFiller, String type = "text/html");
-        void registerPage(uint8_t nodeIndex); // Called by all registerPage functions
+            std::function<void(CfgJsonInterface&)> saveCfgFkt; // Function to save the configuration
 
-        void registerCfg(CfgJsonInterface* Cfg);
+            WebCfgList() { }
+            WebCfgList(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
+                this->saveCfgFkt = saveCfgFkt;
+            }
 
-        void registerAction(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
+            void add(CfgJsonInterface* Cfg) {
+                Node* newNode = new Node;
+                newNode->Cfg = Cfg;
+                newNode->next = head;
+                head = newNode;
+            }
 
-    private:
+            // Loops through all cfgs and updates the value if found
+            bool loopUpdateSingleValue(String key, String value) {
+                Node* current = head;
+                // Loop through all nodes
+                while (current != nullptr) {
+                    // Try to update value, if successful save Cfg and return
+                    if (current->Cfg->updateSingleValue(key, value)) {
+                        saveCfgFkt(*current->Cfg);
+                        return true;
+                    }
+                    current = current->next;
+                }
+                return false;
+            }
+        };
+
+        // Collection of web pages
+        struct WebPageColl {
+            struct Node {
+                String uri;
+                const char* html;
+                String contentType;
+                AwsResponseFiller responseFiller;
+                AwsTemplateProcessor processor;
+
+                Node () { }
+                Node(String uri, const char* html, String contentType, AwsTemplateProcessor processor) : uri(uri), html(html), contentType(contentType), processor(processor) { 
+                    responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                }
+                Node(String uri, String contentType, AwsResponseFiller responseFiller) : uri(uri), html(""), contentType(contentType), responseFiller(responseFiller), processor(nullptr) { }
+
+                size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+                    // Chunked response filler for the html template
+                    size_t len = strlen(html);
+                    if (index + maxLen > len) {
+                        maxLen = len - index;
+                    }
+                    memcpy(buffer, html + index, maxLen);
+                    return maxLen;
+                }
+            };
+
+            static const uint8_t nodesSize = 10;
+            uint8_t nodeCount = 0;
+
+            Node* nodes[nodesSize];
+
+            uint8_t add(String uri, const char* _html, AwsTemplateProcessor processor, String contentType) {
+                if (nodeCount >= nodesSize) {
+                    return 255;
+                }
+                nodes[nodeCount] = new Node(uri, _html, contentType, processor);
+                return nodeCount++; // Cool, this returns the value before incrementing
+            }
+            uint8_t add(String uri, AwsResponseFiller responseFiller, String contentType) {
+                if (nodeCount >= nodesSize) {
+                    return 255;
+                }
+                nodes[nodeCount] = new Node(uri, contentType, responseFiller);
+                return nodeCount++;
+            }
+
+        };
 
         AsyncWebServer server = AsyncWebServer(80);
         AsyncWebSocket websocket = AsyncWebSocket("/ws");
@@ -197,9 +209,13 @@ class NetWeb {
         // Message to serve on next page load after form save
         const char *postMessage = "";
 
-        WebPageColl webPageColl;
-        WebCfgList webCfgList;
         WebActionList webActionList;
+        void registerActionMain(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage);
+
+        WebCfgList webCfgList;
+
+        WebPageColl webPageColl;
+        void registerPageMain(uint8_t nodeIndex); // Called by all registerPage functions
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

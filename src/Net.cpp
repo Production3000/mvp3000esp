@@ -38,7 +38,7 @@ void Net::setup() {
     netWeb.registerCfg(&cfgNet);
 
     // Register actions
-    netWeb.registerAction("setwifi", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    netWeb.registerAction("setwifi", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // argValue(0) is the action name
         if (args != 3)
             return false;

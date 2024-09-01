@@ -66,7 +66,7 @@ class XmoduleExample : public Xmodule {
             mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
 
             // Register action
-            mvp.net.netWeb.registerAction("someAction", NetWeb::WebActionList::ResponseType::MESSAGE, [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+            mvp.net.netWeb.registerAction("someAction", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
                 // argKey(0) is the action name
                 someAction();
                 return true;
