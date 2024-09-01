@@ -69,6 +69,42 @@ class NetWeb {
 
     private:
 
+
+        // Collection of web pages
+        struct WebSocketColl {
+            struct Node {
+                String uri;
+                AsyncWebSocket* websocket;
+
+                std::function<void(char*)> datacallback;
+
+                Node() { }
+                Node(String uri, std::function<void(char*)> datacallback) {
+                    websocket = new AsyncWebSocket(uri);
+                    this->datacallback = datacallback;
+                }
+            };
+
+            Node* node;
+
+            void add(String uri, std::function<void(char*)> datacallback) {
+                node = new Node(uri, datacallback);
+            };
+
+        };
+
+        WebSocketColl webSocketColl;
+
+        void registerWebSocket(String uri);
+        void registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
+
+        void webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback);
+
+
+        void webSocketCallback(char* data); // Callback for the websocket in the module
+
+
+
         // Linked list for action callbacks
         struct WebActionList {
             enum ResponseType {
@@ -204,7 +240,6 @@ class NetWeb {
         };
 
         AsyncWebServer server = AsyncWebServer(80);
-        AsyncWebSocket websocket = AsyncWebSocket("/ws");
 
         // Message to serve on next page load after form save
         const char *postMessage = "";
