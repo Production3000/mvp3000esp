@@ -138,6 +138,11 @@ class XmoduleSensor : public Xmodule {
 
         void measureOffsetScalingFinish();
 
+
+        void webSocketCallback(char* data); // Callback for to receive data from the websocket
+        std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
+
+
         String webPageProcessor(const String& var);
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
         char* webPage = R"===(

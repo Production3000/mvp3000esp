@@ -50,71 +50,10 @@ void NetWeb::setup() {
     
     // Start server, independent of wifi status
     server.begin();
-
-
-
-    registerWebSocket("/ws", std::bind(&NetWeb::webSocketCallback, this, std::placeholders::_1));
 }
-
-void NetWeb::registerWebSocket(String uri) {
-    registerWebSocket(uri, nullptr);
-}
-
-void NetWeb::registerWebSocket(String uri, std::function<void(char*)> dataCallback) {
-
-    webSocketColl.add(uri, dataCallback);
-    
-    webSocketColl.node->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-        webSocketEvents(server, client, type, arg, data, len, [&](char* data) {
-            webSocketColl.node->datacallback(data);
-        });
-    });
-
-    server.addHandler(webSocketColl.node->websocket);
-};
-
-void NetWeb::webSocketCallback(char* data) {
-    Serial.println(data);
-}
-
-void NetWeb::webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback) {
-    switch (type) {
-        case WS_EVT_CONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client connected from: %s", client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DISCONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client disconnected from: %s", client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_ERROR:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s", client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DATA:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS data from: %s", client->remoteIP().toString().c_str());
-            if (dataCallback != nullptr) {
-                AwsFrameInfo *info = (AwsFrameInfo*)arg;
-                if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-                    data[len] = 0; // Terminate string
-                    // Execute callback
-                    dataCallback((char*)data);
-                }
-            }
-            break;
-        default:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS unhandled event from: %s", client->remoteIP().toString().c_str());
-            break;
-    }
-}
-
-
-uint64_t timer = 0;
 
 void NetWeb::loop() {
     // There is actually nothing to do here, the async server is running in the background
-    if (millis() > timer) {
-        timer = millis() + 2000;
-        // websocket->textAll(String(millis()));
-        webSocketColl.node->websocket->textAll(String(millis()));
-    }
 }
 
 
@@ -208,6 +147,75 @@ void NetWeb::registerAction(String action, std::function<bool(int, std::function
 void NetWeb::registerActionMain(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
     webActionList.add(action, successResponse, actionFkt, successMessage);
 };
+
+std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, std::function<void(char*)> dataCallback) {
+    // Create new websocket
+    uint8_t nodeIndex = webSocketColl.add(uri, dataCallback);
+
+    switch (nodeIndex) {
+        case 0:
+            // Bind event callback to this specific websocket
+            webSocketColl.nodes[0]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[0]->datacallback);
+            });
+            // Add handler to server
+            server.addHandler(webSocketColl.nodes[0]->websocket);
+            // Return function to print to this websocket
+            return webSocketColl.nodes[0]->getTextAll();
+
+        case 1:
+            // Bind event callback to this specific websocket
+            webSocketColl.nodes[1]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[1]->datacallback);
+            });
+            // Add handler to server
+            server.addHandler(webSocketColl.nodes[1]->websocket);
+            // Return function to print to this websocket
+            return webSocketColl.nodes[1]->getTextAll();
+
+        case 2:
+            // Bind event callback to this specific websocket
+            webSocketColl.nodes[2]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[2]->datacallback);
+            });
+            // Add handler to server
+            server.addHandler(webSocketColl.nodes[2]->websocket);
+            // Return function to print to this websocket
+            return webSocketColl.nodes[2]->getTextAll();
+
+        default:
+            mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many websockets registered, max %d", WebSocketColl::nodesSize);
+    }
+    return nullptr;
+};
+
+void NetWeb::webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client connected from: %s", client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client disconnected from: %s", client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_ERROR:
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s", client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DATA:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS data from: %s", client->remoteIP().toString().c_str());
+            if (dataCallback != nullptr) { // Only parse data if there is something to do
+                AwsFrameInfo *info = (AwsFrameInfo*)arg;
+                if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                    data[len] = 0; // Terminate string
+                    // Execute callback
+                    dataCallback((char*)data);
+                }
+            }
+            break;
+        default:
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS unhandled event from: %s", client->remoteIP().toString().c_str());
+            break;
+    }
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////

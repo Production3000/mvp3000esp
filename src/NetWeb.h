@@ -67,43 +67,12 @@ class NetWeb {
         void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart);
 
 
+
+        std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
+        std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
+
+
     private:
-
-
-        // Collection of web pages
-        struct WebSocketColl {
-            struct Node {
-                String uri;
-                AsyncWebSocket* websocket;
-
-                std::function<void(char*)> datacallback;
-
-                Node() { }
-                Node(String uri, std::function<void(char*)> datacallback) {
-                    websocket = new AsyncWebSocket(uri);
-                    this->datacallback = datacallback;
-                }
-            };
-
-            Node* node;
-
-            void add(String uri, std::function<void(char*)> datacallback) {
-                node = new Node(uri, datacallback);
-            };
-
-        };
-
-        WebSocketColl webSocketColl;
-
-        void registerWebSocket(String uri);
-        void registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
-
-        void webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback);
-
-
-        void webSocketCallback(char* data); // Callback for the websocket in the module
-
-
 
         // Linked list for action callbacks
         struct WebActionList {
@@ -239,6 +208,41 @@ class NetWeb {
 
         };
 
+        // Collection of websockets
+        struct WebSocketColl {
+            struct Node {
+                String uri;
+                AsyncWebSocket* websocket;
+
+                std::function<void(char*)> datacallback;
+
+                Node() { }
+                Node(String uri, std::function<void(char*)> datacallback) {
+                    websocket = new AsyncWebSocket(uri);
+                    this->datacallback = datacallback;
+                }
+
+                std::function<void(const String &message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
+                void textAll(const String &message) {
+                    websocket->textAll(message);
+                }
+            };
+
+            static const uint8_t nodesSize = 3;
+            uint8_t nodeCount = 0;
+
+            Node* nodes[nodesSize];
+
+            uint8_t add(String uri, std::function<void(char*)> datacallback) {
+                if (nodeCount >= nodesSize) {
+                    return 255;
+                }
+                nodes[nodeCount] = new Node(uri, datacallback);
+                return nodeCount++; // Cool, this returns the value before incrementing
+            }
+        };
+
+
         AsyncWebServer server = AsyncWebServer(80);
 
         // Message to serve on next page load after form save
@@ -251,6 +255,9 @@ class NetWeb {
 
         WebPageColl webPageColl;
         void registerPageMain(uint8_t nodeIndex); // Called by all registerPage functions
+
+        WebSocketColl webSocketColl;
+        void webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback);
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

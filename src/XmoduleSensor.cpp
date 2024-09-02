@@ -20,6 +20,7 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
+
 void XmoduleSensor::setup() {
     description = "Sensor Module";
     uri = "/sensor";
@@ -37,7 +38,7 @@ void XmoduleSensor::setup() {
         sensorDelay.start(cfgXmoduleSensor.reportingInterval);
 
 
-    // Register sensor module web pagey
+    // Register sensor module web page
     mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleSensor::webPageProcessor, this, std::placeholders::_1));
 
     // Register config to make it web-editable
@@ -65,7 +66,6 @@ void XmoduleSensor::setup() {
         return true;
     }, "Scaling reset.");
 
-
     // Data interface for latest data
     mvp.net.netWeb.registerPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
         return webPageCsvResponseFiller(buffer, maxLen, index, true, [&]() -> String {
@@ -86,7 +86,19 @@ void XmoduleSensor::setup() {
             return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
         });
     }, "application/octet-stream");
+
+
+    // Register websocket
+    webSocketPrint = mvp.net.netWeb.registerWebSocket("/ws", std::bind(&XmoduleSensor::webSocketCallback, this, std::placeholders::_1));
 }
+
+
+
+void XmoduleSensor::webSocketCallback(char* data) {
+    Serial.println(data);
+}
+
+
 
 void XmoduleSensor::loop() {
     // Check flag if there is something to do
@@ -106,6 +118,8 @@ void XmoduleSensor::loop() {
 
         // Output data to serial and/or network
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
+        // Output data to websocket
+        webSocketPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing));
    }
 }
 
