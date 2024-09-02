@@ -89,7 +89,7 @@ void XmoduleSensor::setup() {
 
 
     // Register websocket
-    webSocketPrint = mvp.net.netWeb.registerWebSocket("/ws", std::bind(&XmoduleSensor::webSocketCallback, this, std::placeholders::_1));
+    webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::webSocketCallback, this, std::placeholders::_1));
 }
 
 
@@ -221,13 +221,15 @@ String XmoduleSensor::webPageProcessor(const String& var) {
             return cfgXmoduleSensor.infoDescription.c_str();
 
         case 11:
-            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
-        case 12:
             return String(cfgXmoduleSensor.sampleAveraging);
-        case 13:
+        case 12:
             return String(cfgXmoduleSensor.averagingOffsetScaling);
-        case 14:
+        case 13:
             return String(cfgXmoduleSensor.reportingInterval);
+        case 14:
+            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
+        case 15:
+            return mvp.net.myIp.toString();
 
         case 21:
             return String(cfgXmoduleSensor.dataValueCount);

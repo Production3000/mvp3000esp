@@ -156,13 +156,13 @@ class XmoduleSensor : public Xmodule {
     <li>Product: %2% </li>
     <li>Description: %3% </li> </ul>
 <h3>Data Handling</h3> <ul>
-    <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%13%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%11%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%13%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Data Interface</h3> <ul>
-    <li>Data storage: %11%</li>
+    <li>Data storage: %14%</li>
     <li>Current data: <a href='/sensordata'>/sensordata</a> </li>
-    <li>Live websocket: TODO </li>
+    <li>Live websocket: ws://%15%/wssensor </li>
     <li>CSV data: <a href='/sensordatasscaled'>/sensordatasscaled</a>, <a href='/sensordatasraw'>/sensordatasraw</a> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>

@@ -1,0 +1,35 @@
+<!-- 
+Copyright Production 3000
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>MVP3000 - WebSocket Example</title>
+    <script src="sensor_display.js"></script>
+    <style>
+        input:invalid { background-color: #eeccdd; }
+    </style>
+</head>
+<body onload="initWebSocket">
+    <h2>MVP3000 - WebSocket Example</h2>
+    <h3>Device</h3>
+    <p><input type="text" id="websocketurl" placeholder="192.168.1.1/wssensor"> <button id="connect">Connect</button></p>
+    <h3>Data</h3>
+    <p><span id="coninfo">Not connected</span></p>
+    <p><span id="data">No data</span></p>
+    <p><button id="action">Tare</button></p>
+</body>
+</html>

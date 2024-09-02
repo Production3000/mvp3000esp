@@ -103,6 +103,8 @@ class Net {
 
         String apSsid = "device" + String(ESPX.getChipId());
 
+        IPAddress myIp = INADDR_NONE;
+
         void setup();
         void loop();
 

@@ -138,6 +138,7 @@ void Net::startAp() {
     }
 
     netState = NET_STATE_TYPE::AP;
+    myIp = WiFi.softAPIP();
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started, %s, %s", apSsid.c_str(), WiFi.softAPIP().toString().c_str());
 }
 
@@ -167,10 +168,12 @@ void Net::WiFiGotIP() {
     clientConnectFails = 0;
     // Reconnect endlessly to a previously sucessfully connected network (until reboot)
     clientConnectSuccess = true;
+    myIp = WiFi.localIP();
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connection established: %s", WiFi.localIP().toString().c_str() );
 }
 
 void Net::WiFiStationDisconnected() {
+    myIp = INADDR_NONE;
     netState = NET_STATE_TYPE::CONNECTING;
     if (clientConnectSuccess || cfgNet.forceClientMode) {
         mvp.logger.write(CfgLogger::Level::INFO, "Network disconnected.");
@@ -184,7 +187,6 @@ void Net::WiFiStationDisconnected() {
 }
 
 String Net::webPageProcessor(const String& var) {
-
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return var;
