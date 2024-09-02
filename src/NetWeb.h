@@ -49,14 +49,14 @@ class NetWeb {
         void registerPage(String uri, AwsResponseFiller responseFiller, String contentType = "text/html");
 
         /**
-         * @brief Register a configuration object to be automatically editable using the web interface.
+         * @brief Register a configuration interface to make its settings editable using a form on the web interface.
          * 
          * @param Cfg The configuration to add.
          */
         void registerCfg(CfgJsonInterface* Cfg);
 
         /**
-         * @brief Register an action to be executed using the web interface.
+         * @brief Register an action to be executed using a form on the web interface.
          * 
          * @param action The action to add.
          * @param actionFkt The function to execute.
@@ -71,7 +71,7 @@ class NetWeb {
          * 
          * @param uri The URI of the websocket.
          * @param dataCallback The function to execute when data is received.
-         * @return A function to write data to the websocket.
+         * @return Returns the function to write data to the websocket.
          */
         std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
         std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
@@ -235,9 +235,9 @@ class NetWeb {
                 std::function<void(AsyncWebSocketClient *, AwsEventType)> webSocketEventLog;
 
                 Node() { }
-                Node(String uri, std::function<void(char*)> _dataCallback, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
+                Node(String uri, std::function<void(char*)> _dataCallback, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
                     websocket = new AsyncWebSocket(uri);
-
+                    // Event log and custom handerl
                     websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
                         // General event log
                         webSocketEventLog(client, type);
@@ -251,6 +251,8 @@ class NetWeb {
                             }
                         }
                     });
+                    // Attach
+                    server->addHandler(websocket);
                 }
 
                 std::function<void(const String &message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
@@ -275,14 +277,12 @@ class NetWeb {
                 if (nodeCount >= nodesSize) {
                     return false;
                 }
-                nodes[nodeCount] = new Node(uri, dataCallback, webSocketEventLog);
-                server->addHandler(nodes[nodeCount]->websocket);
-                nodeCount++;
+                nodes[nodeCount++] = new Node(uri, dataCallback, webSocketEventLog, server);
                 return true;
             }
 
             std::function<void(const String &message)> getTextAll() {
-                return nodes[nodeCount - 1]->getTextAll();
+                return (nodeCount > 0) ? nodes[nodeCount - 1]->getTextAll() : nullptr;
             }
         };
 

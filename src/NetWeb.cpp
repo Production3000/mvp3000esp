@@ -59,6 +59,19 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+    webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
+};
+
+void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart) {
+    // Restart false is the same as an empty string
+    webActionList.add(action, (restart) ? WebActionList::ResponseType::RESTART : WebActionList::ResponseType::MESSAGE, actionFkt, "");
+}
+
+void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
+    webCfgList.add(Cfg);
+}
+
 void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
     if (!webPageColl.add(uri, html, processor, type))
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
@@ -67,19 +80,6 @@ void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor pro
 void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String type) {
     if (!webPageColl.add(uri, responseFiller, type))
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
-}
-
-void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
-    webCfgList.add(Cfg);
-}
-
-void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
-    webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
-};
-
-void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart) {
-    // Restart false is the same as an empty string
-    webActionList.add(action, (restart) ? WebActionList::ResponseType::RESTART : WebActionList::ResponseType::MESSAGE, actionFkt, "");
 }
 
 std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, std::function<void(char*)> dataCallback) {
@@ -104,8 +104,7 @@ void NetWeb::webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type) 
         case WS_EVT_DATA:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS data from: %s", client->remoteIP().toString().c_str());
             break;
-        default:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS unhandled event from: %s", client->remoteIP().toString().c_str());
+        default: // WS_EVT_PONG
             break;
     }
 }
@@ -199,6 +198,8 @@ void NetWeb::responsePrepareRestart(AsyncWebServerRequest *request) {
     mvp.delayedRestart(25);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////
 
 String NetWeb::webPageProcessor(const String& var) {
     if (!mvp.helper.isValidInteger(var)) {
