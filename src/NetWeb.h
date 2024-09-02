@@ -211,15 +211,28 @@ class NetWeb {
         // Collection of websockets
         struct WebSocketColl {
             struct Node {
-                String uri;
                 AsyncWebSocket* websocket;
 
-                std::function<void(char*)> datacallback;
+                std::function<void(char*)> dataCallback;
+                std::function<void(AsyncWebSocketClient *, AwsEventType)> webSocketEventLog;
 
                 Node() { }
-                Node(String uri, std::function<void(char*)> datacallback) {
+                Node(String uri, std::function<void(char*)> _dataCallback, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
                     websocket = new AsyncWebSocket(uri);
-                    this->datacallback = datacallback;
+
+                    websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                        // General event log
+                        webSocketEventLog(client, type);
+                        // Custom callback for data input from websocket
+                        if ((type == WS_EVT_DATA) && (dataCallback != nullptr)) { // Only parse data if there is something to do
+                            AwsFrameInfo *info = (AwsFrameInfo*)arg;
+                            if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                                data[len] = 0; // Terminate string
+                                // Execute callback
+                                dataCallback((char*)data);
+                            }
+                        }
+                    });
                 }
 
                 std::function<void(const String &message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
@@ -233,12 +246,20 @@ class NetWeb {
 
             Node* nodes[nodesSize];
 
-            uint8_t add(String uri, std::function<void(char*)> datacallback) {
+            AsyncWebServer *server;
+            std::function<void(AsyncWebSocketClient *, AwsEventType)> webSocketEventLog;
+
+
+            WebSocketColl(AsyncWebServer *_server, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
+
+
+            std::function<void(const String &message)> add(String uri, std::function<void(char*)> dataCallback) {
                 if (nodeCount >= nodesSize) {
-                    return 255;
+                    return nullptr;
                 }
-                nodes[nodeCount] = new Node(uri, datacallback);
-                return nodeCount++; // Cool, this returns the value before incrementing
+                nodes[nodeCount] = new Node(uri, dataCallback, webSocketEventLog);
+                server->addHandler(nodes[nodeCount]->websocket);
+                return nodes[nodeCount++]->getTextAll(); // Cool, this returns the value before incrementing
             }
         };
 
@@ -256,8 +277,8 @@ class NetWeb {
         WebPageColl webPageColl;
         void registerPageMain(uint8_t nodeIndex); // Called by all registerPage functions
 
-        WebSocketColl webSocketColl;
-        void webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback);
+        void webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type);
+        WebSocketColl webSocketColl = WebSocketColl(&server, std::bind(&NetWeb::webSocketEventLog, this, std::placeholders::_1, std::placeholders::_2));
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

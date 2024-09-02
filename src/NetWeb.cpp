@@ -148,48 +148,12 @@ void NetWeb::registerActionMain(String action, WebActionList::ResponseType succe
     webActionList.add(action, successResponse, actionFkt, successMessage);
 };
 
+
 std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, std::function<void(char*)> dataCallback) {
-    // Create new websocket
-    uint8_t nodeIndex = webSocketColl.add(uri, dataCallback);
-
-    switch (nodeIndex) {
-        case 0:
-            // Bind event callback to this specific websocket
-            webSocketColl.nodes[0]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[0]->datacallback);
-            });
-            // Add handler to server
-            server.addHandler(webSocketColl.nodes[0]->websocket);
-            // Return function to print to this websocket
-            return webSocketColl.nodes[0]->getTextAll();
-
-        case 1:
-            // Bind event callback to this specific websocket
-            webSocketColl.nodes[1]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[1]->datacallback);
-            });
-            // Add handler to server
-            server.addHandler(webSocketColl.nodes[1]->websocket);
-            // Return function to print to this websocket
-            return webSocketColl.nodes[1]->getTextAll();
-
-        case 2:
-            // Bind event callback to this specific websocket
-            webSocketColl.nodes[2]->websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-                webSocketEvents(server, client, type, arg, data, len, webSocketColl.nodes[2]->datacallback);
-            });
-            // Add handler to server
-            server.addHandler(webSocketColl.nodes[2]->websocket);
-            // Return function to print to this websocket
-            return webSocketColl.nodes[2]->getTextAll();
-
-        default:
-            mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many websockets registered, max %d", WebSocketColl::nodesSize);
-    }
-    return nullptr;
+    return webSocketColl.add(uri, dataCallback);
 };
 
-void NetWeb::webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, std::function<void(char*)> dataCallback) {
+void NetWeb::webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type) {
     switch (type) {
         case WS_EVT_CONNECT:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client connected from: %s", client->remoteIP().toString().c_str());
@@ -202,14 +166,6 @@ void NetWeb::webSocketEvents(AsyncWebSocket *server, AsyncWebSocketClient *clien
             break;
         case WS_EVT_DATA:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS data from: %s", client->remoteIP().toString().c_str());
-            if (dataCallback != nullptr) { // Only parse data if there is something to do
-                AwsFrameInfo *info = (AwsFrameInfo*)arg;
-                if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-                    data[len] = 0; // Terminate string
-                    // Execute callback
-                    dataCallback((char*)data);
-                }
-            }
             break;
         default:
             mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS unhandled event from: %s", client->remoteIP().toString().c_str());
