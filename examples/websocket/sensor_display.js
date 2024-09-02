@@ -20,7 +20,8 @@ window.addEventListener('load', initWebSocket);
 
 function initWebSocket() {
     document.getElementById('connect').addEventListener('click', connect);
-    document.getElementById('action').addEventListener('click', () => { websocket.send('Action button pressed'); } );
+    document.getElementById('tare').addEventListener('click', () => { websocket.send('TARE'); } );
+    document.getElementById('clear').addEventListener('click', () => { websocket.send('CLEAR'); } );
 }
 
 function connect() {

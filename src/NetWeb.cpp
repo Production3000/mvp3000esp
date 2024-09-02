@@ -92,16 +92,16 @@ std::function<void(const String &message)> NetWeb::registerWebSocket(String uri,
 void NetWeb::webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type) {
     switch (type) {
         case WS_EVT_CONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client connected from: %s", client->remoteIP().toString().c_str());
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d connected from: %s", client->id(), client->remoteIP().toString().c_str());
             break;
         case WS_EVT_DISCONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client disconnected from: %s", client->remoteIP().toString().c_str());
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
             break;
         case WS_EVT_ERROR:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s", client->remoteIP().toString().c_str());
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s, client %d", client->remoteIP().toString().c_str());
             break;
         case WS_EVT_DATA:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS data from: %s", client->remoteIP().toString().c_str());
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d data from: %s", client->id(), client->remoteIP().toString().c_str());
             break;
         default: // WS_EVT_PONG
             break;

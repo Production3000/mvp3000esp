@@ -63,7 +63,7 @@ struct DataCollection {
             }
             String str = (withTime) ? String(node->dataStruct->time) + ";" : "";
             for (uint8_t i = 0; i < node->dataStruct->value_size; i++) {
-                str += (processing == nullptr) ? node->dataStruct->values[i] : processing->applyScaling(node->dataStruct->values[i], i);
+                str += (processing == nullptr) ? node->dataStruct->values[i] : processing->applyProcessing(node->dataStruct->values[i], i);
                 str += (i == node->dataStruct->value_size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",";
             }
             return str;

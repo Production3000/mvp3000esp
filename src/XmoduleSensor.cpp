@@ -92,14 +92,6 @@ void XmoduleSensor::setup() {
     webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::webSocketCallback, this, std::placeholders::_1));
 }
 
-
-
-void XmoduleSensor::webSocketCallback(char* data) {
-    Serial.println(data);
-}
-
-
-
 void XmoduleSensor::loop() {
     // Check flag if there is something to do
     if (!dataCollection.avgCycleFinished)
@@ -198,8 +190,27 @@ void XmoduleSensor::resetScaling() {
     mvp.config.writeCfg(dataCollection.processing);
 }
 
+void XmoduleSensor::clearTare() {
+    dataCollection.processing.tare.resetValues();
+}
+
+void XmoduleSensor::setTare() {
+    dataCollection.processing.setTare(dataCollection.linkedListSensor.getNewestData()->values);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
+
+void XmoduleSensor::webSocketCallback(char* data) {
+    // data can be 'TARE' or 'CLEAR'
+    if (strcmp(data, "TARE") == 0) {
+        setTare();
+    } else if (strcmp(data, "CLEAR") == 0) {
+        clearTare();
+    } else {
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown websocket command: %s", data);
+    }
+}
 
 String XmoduleSensor::webPageProcessor(const String& var) {
     // IMPORTANT: Make sure there is no additional % symbol in the html template

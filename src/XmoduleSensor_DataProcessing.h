@@ -26,20 +26,25 @@ limitations under the License.
 
 struct DataProcessing : public JsonInterface {
 
+    // Data processing for sensor values:
+    // Exponent is fixed in code, offset and scaling are stored, tare is forgotten after reboot
+    // { [ ( raw * pow10(exponent) ) + offset ] * scaling } + tare
+
     NumberArrayLateInit<int32_t> offset;
-    NumberArrayLateInit<float_t> scaling;
     NumberArrayLateInit<int8_t> sampleToIntExponent;
+    NumberArrayLateInit<float_t> scaling;
+    NumberArrayLateInit<int32_t> tare;
 
     int32_t scalingTargetValue = 0;
     uint8_t scalingTargetIndex = 0;
 
-
     DataProcessing() : JsonInterface("cfgDataProcessing") { }
 
     void initDataValueSize(uint8_t dataValueSize) {
+        sampleToIntExponent.lateInit(dataValueSize, 0);
         offset.lateInit(dataValueSize, 0);
         scaling.lateInit(dataValueSize, 1);
-        sampleToIntExponent.lateInit(dataValueSize, 0);
+        tare.lateInit(dataValueSize, 0);
     }
 
 
@@ -86,7 +91,7 @@ struct DataProcessing : public JsonInterface {
 //////////////////////////////////////////////////////////////////////////////////
 
     void setOffset(int32_t* offsetMeasurement) {
-        // OFFSET = -1 * sum/times
+        // OFFSET = -1 * RAW
         offset.loopArray([&](int32_t& value, uint8_t i) { value = - offsetMeasurement[i]; });
     };
 
@@ -95,7 +100,7 @@ struct DataProcessing : public JsonInterface {
     };
 
     void setScaling(int32_t* scalingMeasurement) {
-        // SCALING = TARGETVALUE / (sum/times + OFFSET)
+        // SCALING = TARGETVALUE / (RAW + OFFSET)
         scaling.loopArray([&](float_t& value, uint8_t i) {
             if (i == scalingTargetIndex) {
                 value = (float_t)scalingTargetValue / (scalingMeasurement[i] + offset.values[i])  ;
@@ -106,6 +111,11 @@ struct DataProcessing : public JsonInterface {
     void setScalingTarget(uint8_t valueIndex, int32_t targetValue) {
         scalingTargetIndex = valueIndex;
         scalingTargetValue = targetValue;
+    };
+
+    void setTare(int32_t* lastMeasurement) {
+        // TARE = -1 * ( (lastRAW - OFFSET) * SCALING )
+        tare.loopArray([&](int32_t& value, uint8_t i) { value = - ( (lastMeasurement[i] - offset.values[i]) * scaling.values[i] ); });
     };
 
 
@@ -120,17 +130,17 @@ struct DataProcessing : public JsonInterface {
         return decimalShiftedSample;
     };
 
-    void applyScaling(NumberArrayLateInit<int32_t> &values) {
+    void applyProcessing(NumberArrayLateInit<int32_t> &values) {
         // Apply offset and scaling to array
         values.loopArray([&](int32_t& value, uint8_t i) {
-            value = applyScaling(value, i);
+            value = applyProcessing(value, i);
         });
     };
 
-    int32_t applyScaling(int32_t value, uint8_t i) {
+    int32_t applyProcessing(int32_t value, uint8_t i) {
         // Apply offset and scaling to single value
-        // SCALED = (RAW + offset) * scaling
-        return nearbyintf( (value + offset.values[i]) * scaling.values[i] );
+        // SCALED = (RAW + OFFSET) * SCALING + TARE
+        return nearbyintf( ( (value + offset.values[i]) * scaling.values[i] ) + tare.values[i] );
     };
 
 };

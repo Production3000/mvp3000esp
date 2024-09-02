@@ -123,6 +123,8 @@ class XmoduleSensor : public Xmodule {
         bool measureScaling(uint8_t valueNumber, int32_t targetValue);
         void resetOffset();
         void resetScaling();
+        void clearTare();
+        void setTare();
 
     private:
 
