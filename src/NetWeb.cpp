@@ -41,7 +41,7 @@ void NetWeb::setup() {
     // Register actions
     registerAction("restart", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         return true;
-    }, true);
+    });
     registerAction("reset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
         // If keepwifi is checked it is present in the args, otherwise not
         mvp.config.delayedFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
@@ -59,14 +59,13 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt) {
+    webActionList.add(action, WebActionList::ResponseType::RESTART, actionFkt, "");
+}
+
 void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
     webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
 };
-
-void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart) {
-    // Restart false is the same as an empty string
-    webActionList.add(action, (restart) ? WebActionList::ResponseType::RESTART : WebActionList::ResponseType::MESSAGE, actionFkt, "");
-}
 
 void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
     webCfgList.add(Cfg);
@@ -141,7 +140,7 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
         return;
     }
 
-    // Report success and 
+    // Report success or restart
     switch (result->successResponse) {
         case WebActionList::ResponseType::MESSAGE:
             responseRedirect(request, result->successMessage.c_str());
@@ -150,7 +149,7 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
             responsePrepareRestart(request); // Restarts after 25 ms, page reloads after 4 s
             break;
 
-        default:// WebActionList::ResponseType::NONE - should never occur?
+        default:// WebActionList::ResponseType::NONE - should not occur
             responseRedirect(request);
             break;
     }

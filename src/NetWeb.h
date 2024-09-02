@@ -60,11 +60,10 @@ class NetWeb {
          * 
          * @param action The action to add.
          * @param actionFkt The function to execute.
-         * @param successMessage The message to display on success. Leave empty to omit message. Only displayed if device is not restarted.
-         * @param restart If true, the device will be restarted after the action.
+         * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will restart itself after the action is completed
          */
-        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
-        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart);
+        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt);
+        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage);
 
         /**
          * @brief Register a websocket to be used with the web interface.
@@ -91,18 +90,18 @@ class NetWeb {
                 ResponseType successResponse;
                 String successMessage;
                 std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt;
+                
                 Node* next;
+
+                Node() { }
+                Node(String _action, ResponseType _successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> _actionFkt, String _successMessage) : action(_action), successResponse(_successResponse), actionFkt(_actionFkt), successMessage(_successMessage) { }
             };
+
             Node* head = nullptr;
 
-            WebActionList() { }
 
-            void add(String action, ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "") {
-                Node* newNode = new Node;
-                newNode->action = action;
-                newNode->successResponse = successResponse;
-                newNode->successMessage = successMessage;
-                newNode->actionFkt = actionFkt;
+            void add(String action, ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+                Node* newNode = new Node(action, successResponse, actionFkt, successMessage);
                 newNode->next = head;
                 head = newNode;
             }
