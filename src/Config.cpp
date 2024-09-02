@@ -140,9 +140,9 @@ void Config::writeJsonToFile(const char *fileName) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Config::delayedFactoryResetDevice(boolean keepWifi) {
-    // This is a workaround to not trigger the ESP32 watchdog on the web server
-    // It still floods the serial
+void Config::asyncFactoryResetDevice(boolean keepWifi) {
+    // This is a workaround to not trigger the ESP32 watchdog on the web server, it still floods the serial
+    // Also it allows to show a message on the web server while the device is resetting
     delayedFactoryReset_ms = millis() + 25;
     delayedFactoryResetKeepWifi = keepWifi;
 }

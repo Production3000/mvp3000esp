@@ -60,7 +60,7 @@ class NetWeb {
          * 
          * @param action The action to add.
          * @param actionFkt The function to execute.
-         * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will restart itself after the action is completed
+         * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will display a 'restarting'-page, but not restart itself automatically.
          */
         void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt);
         void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage);
@@ -306,7 +306,7 @@ class NetWeb {
         bool formInputCheck(AsyncWebServerRequest *request);
 
         void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
-        void responsePrepareRestart(AsyncWebServerRequest *request);
+        void responseMetaRefresh(AsyncWebServerRequest *request);
 
         String webPageProcessor(const String& var);
         char* webPage = R"===(

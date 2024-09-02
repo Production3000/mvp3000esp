@@ -40,11 +40,11 @@ void NetWeb::setup() {
 
     // Register actions
     registerAction("restart", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+        mvp.delayedRestart(25); // Restarts after 25 ms
         return true;
     });
     registerAction("reset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
-        // If keepwifi is checked it is present in the args, otherwise not
-        mvp.config.delayedFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // also calls restart, but whatever
+        mvp.config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
         return true;
     }, "Factory reset initiated, this takes some 10 s ...");
     
@@ -146,7 +146,7 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
             responseRedirect(request, result->successMessage.c_str());
             break;
         case WebActionList::ResponseType::RESTART:
-            responsePrepareRestart(request); // Restarts after 25 ms, page reloads after 4 s
+            responseMetaRefresh(request); // Restarts after 25 ms, page reloads after 4 s
             break;
 
         default:// WebActionList::ResponseType::NONE - should not occur
@@ -190,11 +190,9 @@ void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *messag
     request->redirect("/");                                            // TODO redirect for modules after save/action
 }
 
-void NetWeb::responsePrepareRestart(AsyncWebServerRequest *request) {
+void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
     // http-equiv seems to not show up in history
     request->send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
-    // Initiate delayed restart
-    mvp.delayedRestart(25);
 }
 
 

@@ -58,7 +58,7 @@ class Config {
         void factoryResetDevice(boolean keepWifi = false);
         uint32_t delayedFactoryReset_ms = 0;
         boolean delayedFactoryResetKeepWifi = true;
-        void delayedFactoryResetDevice(boolean keepWifi = false);
+        void asyncFactoryResetDevice(boolean keepWifi = false);
 };
 
 #endif
