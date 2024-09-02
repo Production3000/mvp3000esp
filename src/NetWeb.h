@@ -66,11 +66,15 @@ class NetWeb {
         void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage = "");
         void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, boolean restart);
 
-
-
+        /**
+         * @brief Register a websocket to be used with the web interface.
+         * 
+         * @param uri The URI of the websocket.
+         * @param dataCallback The function to execute when data is received.
+         * @return A function to write data to the websocket.
+         */
         std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
         std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
-
 
     private:
 
@@ -170,10 +174,19 @@ class NetWeb {
                 AwsTemplateProcessor processor;
 
                 Node () { }
-                Node(String uri, const char* html, String contentType, AwsTemplateProcessor processor) : uri(uri), html(html), contentType(contentType), processor(processor) { 
+                Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessor _processor, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processor(_processor) { 
                     responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                    attach(server);
                 }
-                Node(String uri, String contentType, AwsResponseFiller responseFiller) : uri(uri), html(""), contentType(contentType), responseFiller(responseFiller), processor(nullptr) { }
+                Node(String _uri, String _contentType, AwsResponseFiller _responseFiller, AsyncWebServer *server) : uri(_uri), html(""), contentType(_contentType), responseFiller(_responseFiller), processor(nullptr) {
+                    attach(server);
+                }
+
+                void attach(AsyncWebServer *server) {
+                    server->on(uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
+                        request->sendChunked(contentType, responseFiller, processor);
+                    });
+                }
 
                 size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
                     // Chunked response filler for the html template
@@ -191,21 +204,26 @@ class NetWeb {
 
             Node* nodes[nodesSize];
 
-            uint8_t add(String uri, const char* _html, AwsTemplateProcessor processor, String contentType) {
-                if (nodeCount >= nodesSize) {
-                    return 255;
-                }
-                nodes[nodeCount] = new Node(uri, _html, contentType, processor);
-                return nodeCount++; // Cool, this returns the value before incrementing
-            }
-            uint8_t add(String uri, AwsResponseFiller responseFiller, String contentType) {
-                if (nodeCount >= nodesSize) {
-                    return 255;
-                }
-                nodes[nodeCount] = new Node(uri, contentType, responseFiller);
-                return nodeCount++;
-            }
+            AsyncWebServer *server;
 
+
+            WebPageColl(AsyncWebServer *_server) : server(_server) { }
+
+
+            bool add(String uri, const char* _html, AwsTemplateProcessor processor, String contentType) {
+                if (nodeCount >= nodesSize) {
+                    return false;
+                }
+                nodes[nodeCount++] = new Node(uri, _html, contentType, processor, server);
+                return true;
+            }
+            bool add(String uri, AwsResponseFiller responseFiller, String contentType) {
+                if (nodeCount >= nodesSize) {
+                    return false;
+                }
+                nodes[nodeCount++] = new Node(uri, contentType, responseFiller, server);
+                return true;
+            }
         };
 
         // Collection of websockets
@@ -253,13 +271,18 @@ class NetWeb {
             WebSocketColl(AsyncWebServer *_server, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
 
 
-            std::function<void(const String &message)> add(String uri, std::function<void(char*)> dataCallback) {
+            bool add(String uri, std::function<void(char*)> dataCallback) {
                 if (nodeCount >= nodesSize) {
-                    return nullptr;
+                    return false;
                 }
                 nodes[nodeCount] = new Node(uri, dataCallback, webSocketEventLog);
                 server->addHandler(nodes[nodeCount]->websocket);
-                return nodes[nodeCount++]->getTextAll(); // Cool, this returns the value before incrementing
+                nodeCount++;
+                return true;
+            }
+
+            std::function<void(const String &message)> getTextAll() {
+                return nodes[nodeCount - 1]->getTextAll();
             }
         };
 
@@ -270,12 +293,10 @@ class NetWeb {
         const char *postMessage = "";
 
         WebActionList webActionList;
-        void registerActionMain(String action, WebActionList::ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage);
 
         WebCfgList webCfgList;
 
-        WebPageColl webPageColl;
-        void registerPageMain(uint8_t nodeIndex); // Called by all registerPage functions
+        WebPageColl webPageColl = WebPageColl(&server);
 
         void webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type);
         WebSocketColl webSocketColl = WebSocketColl(&server, std::bind(&NetWeb::webSocketEventLog, this, std::placeholders::_1, std::placeholders::_2));
