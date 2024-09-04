@@ -43,9 +43,6 @@ void NetCom::setup() {
 
     comState = COM_STATE_TYPE::WAITING;
 
-    // Redefine needed with network, otherwise mqttClient.connected() crashes
-    mqttClient = MqttClient(wifiClient);
-
     // Start UDP even if external forcedBroker is set, to allow reverse-discovery of this ESP device
     udp.begin(cfgNetCom.discoveryPort);
 
@@ -65,85 +62,61 @@ void NetCom::setup() {
 void NetCom::loop() {
     // Called from net.loop() only if wifi is up and in client mode
 
-    switch (comState) {
-        case COM_STATE_TYPE::CONNECTED:
-            // Check if state is still connected
-            if (mqttClient.connected()) {
-                // Check for UDP packet, in that case handle it
-                if (udp.parsePacket())
-                    udpReceiveMessage();
+    // switch (comState) {
+    //     case COM_STATE_TYPE::CONNECTED:
+    //         // Check if state is still connected
+    //         if (mqttClient.connected()) {
+    //             // Check for UDP packet, in that case handle it
+    //             if (udp.parsePacket())
+    //                 udpReceiveMessage();
 
-                // Handle MQTT messages, keep-alive, etc. 
-                // mqttClient.poll();
-                // Check if a MQTT message was received
-                // Would be nicer with the mqttClient.onMessage() method, but that seems to not work in a class
-                int messageSize = mqttClient.parseMessage();
-                if (messageSize > 0) { // parseMessage already calls poll()
-                    onMqttMessage(messageSize);
-                }
+    //             // Handle MQTT messages, keep-alive, etc. 
+    //             // mqttClient.poll();
+    //             // Check if a MQTT message was received
+    //             // Would be nicer with the mqttClient.onMessage() method, but that seems to not work in a class
+    //             int messageSize = mqttClient.parseMessage();
+    //             if (messageSize > 0) { // parseMessage already calls poll()
+    //                 onMqttMessage(messageSize);
+    //             }
 
 
-            } else {
-                comState = COM_STATE_TYPE::WAITING;
-                mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
-            }
-            break;
+    //         } else {
+    //             comState = COM_STATE_TYPE::WAITING;
+    //             mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
+    //         }
+    //         break;
 
-        case COM_STATE_TYPE::WAITING:
-            if (!mqttClient.connected()) {
-                // Only work to do if interval not yet started or just finished
-                if (!brokerDelay.isRunning() || brokerDelay.justFinished()) {
-                    // Connect to forced broker or discover broker on local network
-                    if ((mqttBrokerIp != INADDR_NONE) || (cfgNetCom.mqttForcedBroker.length() > 0)) {
-                        // Connect to broker
-                        mqttConnect();
-                    } else {
-                        // Auto-discover local broker IP only if no forced broker
-                        udpDiscoverMqtt();
-                    }
-                    // (Re)start interval
-                    brokerDelay.start(brokerInterval);
-                }
-            } else {
-                comState = COM_STATE_TYPE::CONNECTED;
-                brokerDelay.stop();
-                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
+    //     case COM_STATE_TYPE::WAITING:
+    //         if (!mqttClient.connected()) {
+    //             // Only work to do if interval not yet started or just finished
+    //             if (!brokerDelay.isRunning() || brokerDelay.justFinished()) {
+    //                 // Connect to forced broker or discover broker on local network
+    //                 if ((mqttBrokerIp != INADDR_NONE) || (cfgNetCom.mqttForcedBroker.length() > 0)) {
+    //                     // Connect to broker
+    //                     mqttConnect();
+    //                 } else {
+    //                     // Auto-discover local broker IP only if no forced broker
+    //                     udpDiscoverMqtt();
+    //                 }
+    //                 // (Re)start interval
+    //                 brokerDelay.start(brokerInterval);
+    //             }
+    //         } else {
+    //             comState = COM_STATE_TYPE::CONNECTED;
+    //             brokerDelay.stop();
+    //             mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
 
-                mqttTopicList.subscribeAll();
+    //             mqttTopicList.subscribeAll();
 
-            }
-            break;
+    //         }
+    //         break;
         
-        case COM_STATE_TYPE::DISABLEDX: // Nothing to do
-            break;
+    //     case COM_STATE_TYPE::DISABLEDX: // Nothing to do
+    //         break;
 
-        default:
-            break;
-    }
-}
-
-
-
-std::function<void(const String &message)> NetCom::registerMqtt(String topic, std::function<void(char*)> dataCallback) {
-    // Store topic and callback for registering with MQTT, return the function to write to this topic
-    return mqttTopicList.add(topic, dataCallback);
-}
-
-void NetCom::onMqttMessage(int messageSize) {
-    // Check if message is a duplicate, requires QoS 1+ and needs to be implemented by the sender and the receiver
-    if (mqttClient.messageDup())
-        return; // Handling of duplicates not implemented
-
-    String topic = mqttClient.messageTopic();
-    
-    // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
-    uint8_t buf[messageSize + 1];
-    mqttClient.read(buf, messageSize + 1);
-    buf[messageSize] = '\0';
-
-    // Find the topic in the list and execute callback
-    if (!mqttTopicList.findAndExecute(topic, (char *)buf))
-        mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "MQTT control with unknown topic '%s'", topic.c_str());
+    //     default:
+    //         break;
+    // }
 }
 
 
@@ -210,18 +183,6 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 }
 
 
-void NetCom::mqttConnect() {
-    if ((cfgNetCom.mqttForcedBroker.length() > 0))
-        // Connect to forced broker
-        mqttClient.connect(cfgNetCom.mqttForcedBroker.c_str(), cfgNetCom.mqttPort);
-    else
-        // Connect to discovered broker
-        // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
-        mqttClient.connect(mqttBrokerIp.toString().c_str(), cfgNetCom.mqttPort);
-
-    mvp.logger.write(CfgLogger::Level::INFO, "Connect request sent to broker.");
-}
-
 
 String NetCom::webPageProcessor(const String& var) { 
     if (!mvp.helper.isValidInteger(var)) {
@@ -233,18 +194,8 @@ String NetCom::webPageProcessor(const String& var) {
         case 0:
             return String(ESPX.getChipId());
 
-        case 51:
-            return controllerConnectedString().c_str();
         case 52:
             return String(cfgNetCom.discoveryPort);
-        case 53:
-            return cfgNetCom.mqttForcedBroker.c_str();
-        case 54:
-            return String(cfgNetCom.mqttPort);
-        case 55:
-            return mqttTopicPrefix.c_str();
-        case 56:
-            return cfgNetCom.mqttTopicSuffix.c_str();
 
         default:
             break;

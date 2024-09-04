@@ -29,6 +29,7 @@ void Net::setup() {
 
     // Init web interface and MQTT communication
     netWeb.setup();
+    netCom.setup();
     netMqtt.setup();
 
     // Define web page
@@ -54,6 +55,7 @@ void Net::loop() {
         case NET_STATE_TYPE::CLIENT:
             // Communication only for client
             netMqtt.loop();
+            netCom.loop();
             break;
         case NET_STATE_TYPE::AP:
             // Captive portal only for AP

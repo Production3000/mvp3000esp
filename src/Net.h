@@ -27,6 +27,7 @@ limitations under the License.
 
 #include "Config.h"
 #include "NetMqtt.h"
+#include "NetCom.h"
 #include "NetWeb.h"
 #include "ESPX.h"
 #ifdef ESP8266
@@ -99,6 +100,7 @@ class Net {
         CfgNet cfgNet;
 
         NetWeb netWeb;
+        NetCom netCom;
         NetMqtt netMqtt;
 
         String apSsid = "device" + String(ESPX.getChipId());
