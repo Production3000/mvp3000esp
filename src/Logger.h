@@ -27,7 +27,7 @@ struct CfgLogger {
         USER = 0,
         ERROR = 1,
         WARNING = 2,
-        DATA = 3,
+        DATA = 3,                                                        // ADD level CTRL (green), for commands recieved from webock/mqtt and maybe web or so                            
         INFO = 4,
     };
 

@@ -54,6 +54,12 @@ void NetCom::setup() {
     mvp.net.netWeb.registerPage("/netcom", webPage ,  std::bind(&NetCom::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetCom);
+
+    // For some reason the mqttClient.onMessage() method does not work when the function is in a class ...
+    // mqttClient.onMessage(onMqttMessage); // argument of type "void (NetCom::*)(int messageSize)" is incompatible with parameter of type "void (*)(int)"
+    // mqttClient.onMessage([] (int messageSize) { onMqttMessage; }); // invalid use of non-static member function 'void NetCom::onMqttMessage(int)'
+    // mqttClient.onMessage([&] (int messageSize) { onMqttMessage; }); // no suitable conversion function from "lambda [](int messageSize)->void" to "void (*)(int)" exists
+    // mqttClient.onMessage(std::bind(&NetCom::onMqttMessage, this, std::placeholders::_1)); // no suitable conversion function from "std::_Bind_helper<false, void (NetCom::*)(int messageSize), NetCom *, const std::_Placeholder<1> &>::type" (aka "std::_Bind<std::__remove_cv_t<void (NetCom::*)(int messageSize)> (std::__remove_cv_t<NetCom *>, std::__remove_cv_t<const std::_Placeholder<1>>)>") to "void (*)(int)" exists
 };
 
 void NetCom::loop() {
@@ -66,6 +72,17 @@ void NetCom::loop() {
                 // Check for UDP packet, in that case handle it
                 if (udp.parsePacket())
                     udpReceiveMessage();
+
+                // Handle MQTT messages, keep-alive, etc. 
+                // mqttClient.poll();
+                // Check if a MQTT message was received
+                // Would be nicer with the mqttClient.onMessage() method, but that seems to not work in a class
+                int messageSize = mqttClient.parseMessage();
+                if (messageSize > 0) { // parseMessage already calls poll()
+                    onMqttMessage(messageSize);
+                }
+
+
             } else {
                 comState = COM_STATE_TYPE::WAITING;
                 mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
@@ -91,6 +108,9 @@ void NetCom::loop() {
                 comState = COM_STATE_TYPE::CONNECTED;
                 brokerDelay.stop();
                 mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
+
+                mqttTopicList.subscribeAll();
+
             }
             break;
         
@@ -101,6 +121,32 @@ void NetCom::loop() {
             break;
     }
 }
+
+
+
+std::function<void(const String &message)> NetCom::registerMqtt(String topic, std::function<void(char*)> dataCallback) {
+    // Store topic and callback for registering with MQTT, return the function to write to this topic
+    return mqttTopicList.add(topic, dataCallback);
+}
+
+void NetCom::onMqttMessage(int messageSize) {
+    // Check if message is a duplicate, requires QoS 1+ and needs to be implemented by the sender and the receiver
+    if (mqttClient.messageDup())
+        return; // Handling of duplicates not implemented
+
+    String topic = mqttClient.messageTopic();
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Received a MQTT message with topic '%s'", topic.c_str());
+    
+    // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
+    uint8_t buf[messageSize + 1];
+    mqttClient.read(buf, messageSize + 1);
+    buf[messageSize] = '\0';
+
+    // Find the topic in the list and execute callback
+    mqttTopicList.findAndExecute(topic, (char *)buf);
+}
+
+
 
 void NetCom::udpDiscoverMqtt() {
     // Send DIscover SERVer to broadcast
@@ -176,16 +222,6 @@ void NetCom::mqttConnect() {
     mvp.logger.write(CfgLogger::Level::INFO, "Connect request sent to broker.");
 }
 
-void NetCom::mqttWrite(const char *message) {
-    // Check if MQTT is connected
-    if (comState != COM_STATE_TYPE::CONNECTED)
-        return;
-
-    // Send message
-    mqttClient.beginMessage(mqttTopicPrefix + cfgNetCom.mqttTopicSuffix);
-    mqttClient.print(message);
-    mqttClient.endMessage();
-}
 
 String NetCom::webPageProcessor(const String& var) { 
     if (!mvp.helper.isValidInteger(var)) {

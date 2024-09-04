@@ -48,8 +48,8 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {         
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH))
         serialWrite(targetLevel, message);
     // MQTT output
-    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))
-        mvp.net.netCom.mqttWrite(message);
+    // if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))                   // TODO remove mqtt from here but add MQTT channel for log messages ?
+    //     mvp.net.netCom.mqttWrite(message);
 }
 
 void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount) {

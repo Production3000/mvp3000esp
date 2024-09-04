@@ -27,14 +27,16 @@ limitations under the License.
 
     <h3>Broker</h3>
     <p> Eclipse Mosquitto MQTT server/broker for testing: ws://test.mosquitto.org:8080/mqtt</p>
-    <p><input type="text" id="websocketurl" placeholder="ws://test.mosquitto.org:8080/mqtt"> <button id="connect">Connect</button></p>
+    <p><input type="text" id="websocketurl" placeholder="ws://test.mosquitto.org:8080/mqtt"> <button id="connect">Connect & Subscribe</button></p>
     <p><span id="coninfo">Not connected</span></p>
 
     <h3>Subscribe</h3>
     <p>MQTT has no 'declared' topics. The only way to know whether a topic exists (is spelled correctly) is to subscribe to it and see if a message turns up.<br>
-        At least on the public test server it is recommended to use unique topics.</p>
-    <p><input type="text" id="topic" placeholder="uniquetopic123"> <button id="subscribe">Connect</button></p>
-    <p>Subscriptions: <span id="subinfo">-</span></p>
+        Obviously, on the public test server it is recommended to use unique topics.<br>
+        The sensor example uses DEVICEID_sensor_data and DEVICEID_sensor_ctrl for the channels (automatically added).</p>
+    <p><input type="text" id="topic" placeholder="DEVICEID"> _sensor_SUFFIX <button id="subscribe">Subscribe</button></p>
+    <p>Subscriptions: <span id="subinfo">-</span><br>
+        Controll: <span id="ctrlinfo">-</span></p>
 
     <h3>Data</h3>
     <p><span id="data">No data</span></p>

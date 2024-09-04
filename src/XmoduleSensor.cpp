@@ -89,7 +89,10 @@ void XmoduleSensor::setup() {
 
 
     // Register websocket
-    webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::webSocketCallback, this, std::placeholders::_1));
+    webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
+
+    // Register MQTT
+    mqttPrint = mvp.net.netCom.registerMqtt("10381640_sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));     // TODO device ID not hardcoded topic please!!!
 }
 
 void XmoduleSensor::loop() {
@@ -108,10 +111,10 @@ void XmoduleSensor::loop() {
         if (sensorDelay.justFinished()) // || !sensorDelay.isRunning()
             sensorDelay.repeat();
 
-        // Output data to serial and/or network
+        // Output data to serial, websocket, MQTT
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
-        // Output data to websocket
         webSocketPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing));
+        mqttPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing));
    }
 }
 
@@ -201,7 +204,7 @@ void XmoduleSensor::setTare() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleSensor::webSocketCallback(char* data) {
+void XmoduleSensor::networkCtrlCallback(char* data) {
     // data can be 'TARE' or 'CLEAR'
     if (strcmp(data, "TARE") == 0) {
         setTare();

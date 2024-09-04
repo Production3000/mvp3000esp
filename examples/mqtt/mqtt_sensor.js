@@ -16,6 +16,7 @@ limitations under the License.
 
 
 var client = null;
+var topic = null;
 
 window.addEventListener('load', initWebSocket);
 
@@ -41,9 +42,9 @@ function connect() {
     client = new Paho.MQTT.Client(websocketurl, "clientId");
 
     client.onConnectionLost = function(e) {
-        document.getElementById('coninfo').innerHTML = "Not connected";
+        document.getElementById('coninfo').innerHTML = "Not connected: " + e.errorMessage;
         document.getElementById('subinfo').innerHTML = "-";
-        console.log('Connection closed: ' + e.errorMessage);
+        document.getElementById('ctrlinfo').innerHTML = "-";
     }
 
     client.onMessageArrived = function(e) {
@@ -60,31 +61,32 @@ function onConnect() {
 }
 
 function subscribe() {
-    let topic = document.getElementById('topic').value;
+    topic = document.getElementById('topic').value + "_sensor";
     if (!topic) {
         return;
     }
-    topic += "_sensor";
 
-    client.subscribe(topic);
+    let _topic = topic + "_data";
+    client.subscribe(_topic);
 
     if (document.getElementById('subinfo').innerHTML.length == 1) {
-        document.getElementById('subinfo').innerHTML = topic;
+        document.getElementById('subinfo').innerHTML = _topic;
     } else {
-        document.getElementById('subinfo').innerHTML += ", " + topic;
+        document.getElementById('subinfo').innerHTML = _topic + ", " + document.getElementById('subinfo').innerHTML;
     }
+
+    document.getElementById('ctrlinfo').innerHTML = topic + "_ctrl";
 }
 
 function sendmessage(text) {
-    let topic = document.getElementById('topic').value;
     if (!topic) {
         return;
     }
 
-    message = new Paho.MQTT.Message(text);
-    message.destinationName = topic + "_ctrl";
-    client.send(message);
+    let _topic = topic + "_ctrl";
 
-    console.log('Message sent: ' + text);
+    message = new Paho.MQTT.Message(text);
+    message.destinationName = _topic;
+    client.send(message);
 };
 

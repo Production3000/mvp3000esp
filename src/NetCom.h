@@ -39,6 +39,9 @@ limitations under the License.
 #include "NetWeb.h"
 
 
+// #include "_LinkedList.h"
+
+
 struct CfgNetCom : public CfgJsonInterface {
 
     // Fixed settings
@@ -86,6 +89,78 @@ class NetCom {
 
     public:
 
+        struct MqttTopicList {
+            struct Node {
+                String topic;
+                std::function<void(char*)> dataCallback;
+
+                Node* next;
+
+            MqttClient* mqttClient;
+
+                Node() { }
+                Node(String topic, std::function<void(char*)> dataCallback, MqttClient* mqttClient) : topic(topic), dataCallback(dataCallback), mqttClient(mqttClient) { }
+
+                String getCtrlTopic() { return topic + "_ctrl"; }
+                String getDataTopic() { return topic + "_data"; }
+
+                std::function<void(const String &message)> getMqttPrint() { return std::bind(&Node::mqttPrint, this, std::placeholders::_1); }
+                void mqttPrint(const String &message) {
+                    // Only write if connected
+                    if (mqttClient->connected()) {
+                        mqttClient->beginMessage(getDataTopic());
+                        mqttClient->print(message);
+                        mqttClient->endMessage();
+                    }
+                }
+            };
+
+            Node* head = nullptr;
+
+            MqttClient* mqttClient;
+
+            MqttTopicList(MqttClient* mqttClient) : mqttClient(mqttClient) { }
+
+            std::function<void(const String &message)> add(String topic, std::function<void(char*)> dataCallback) {
+                Node* newNode = new Node(topic , dataCallback, mqttClient);
+                newNode->next = head;
+                head = newNode;
+
+                return newNode->getMqttPrint();
+            }
+
+            boolean hasTopics() { return head != nullptr; }
+
+            void findAndExecute(String topic, char* data) {
+                Node* current = head;
+                while (current != nullptr) {
+                    if (current->topic.compareTo(topic)) {
+                        current->dataCallback(data);
+                        return;
+                    }
+                    current = current->next;
+                }
+            }
+
+            void subscribeAll() {
+                Node* current = head;
+                while (current != nullptr) {
+                    // Only subscribe if there is a callback
+                    if (current->dataCallback != nullptr)
+                        mqttClient->subscribe(current->getCtrlTopic().c_str());
+                    current = current->next;
+                }
+            }
+
+        };
+
+        MqttTopicList mqttTopicList = MqttTopicList(&mqttClient);
+
+        std::function<void(const String &message)> registerMqtt(String topic, std::function<void(char*)> dataCallback = nullptr);
+        void onMqttMessage(int messageSize);
+
+
+
         WiFiUDP udp;
 
         CfgNetCom cfgNetCom;
@@ -97,7 +172,6 @@ class NetCom {
 
         String mqttTopicPrefix = "MVP3000_" + String(ESPX.getChipId()) + "_";
 
-        void mqttWrite(const char *message);
 
     private:
 
