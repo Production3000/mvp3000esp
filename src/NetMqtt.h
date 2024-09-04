@@ -158,11 +158,12 @@ class NetMqtt {
         MQTT_STATE mqttState = MQTT_STATE::DISCONNECTED;
         MqttTopicList mqttTopicList = MqttTopicList(&mqttClient);
 
-        IPAddress brokerIp = INADDR_NONE; // compare with == operator, there is
-        uint16_t brokerInterval = 5000;
-        millisDelay brokerDelay;
+        IPAddress localBrokerIp = INADDR_NONE; // compare with == operator, there is
 
+        uint16_t connectInterval = 5000;
+        millisDelay connectDelay;
         void mqttConnect();
+
         void handleMessage(int messageSize);
 
 

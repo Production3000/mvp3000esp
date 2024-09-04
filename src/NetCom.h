@@ -26,7 +26,6 @@ limitations under the License.
     #include <IPAddress.h>
 #endif
 #include <WiFiUdp.h>
-#include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
 
 #include "Config.h"
 #include "ESPX.h"
@@ -71,9 +70,8 @@ class NetCom {
         IPAddress serverIp = INADDR_NONE; // compare with == operator, there is
         String serverSkills = "";
 
-        uint16_t brokerInterval = 5000;
-        millisDelay brokerDelay;
-
+        uint64_t lastDiscovery = 0;
+        uint16_t discoveryInterval = 5000; // 5 seconds
         void sendDiscovery();
 
         void udpReceiveMessage();

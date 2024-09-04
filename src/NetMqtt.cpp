@@ -104,23 +104,23 @@ std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, s
 
 void NetMqtt::mqttConnect() {
     // Only work to do if interval not yet started or just finished
-    if (brokerDelay.isRunning() && !brokerDelay.justFinished())
+    if (connectDelay.isRunning() && !connectDelay.justFinished())                                                                               // TODO there should be a upper limit of iterations/connect tries
         return;
     // (Re)start interval
-    brokerDelay.start(brokerInterval);
+    connectDelay.start(connectInterval);
 
     if (cfgNetMqtt.mqttForcedBroker.length() > 0) {
         // Connect to forced broker
         mqttClient.connect(cfgNetMqtt.mqttForcedBroker.c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
-    } else if (brokerIp != INADDR_NONE) {
+    } else if (localBrokerIp != INADDR_NONE) {
         // Connect to discovered broker
         // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
-        mqttClient.connect(brokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", brokerIp.toString().c_str());                    // TODO count tries, remove / give up after 3 tries
+        mqttClient.connect(localBrokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", localBrokerIp.toString().c_str());                    // TODO count tries, remove / give up after 3 tries
     } else {
         // Auto-discover local broker IP only if no forced broker
-        brokerIp = mvp.net.netCom.checkSkill("MQTT");
+        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
     }
 }
 

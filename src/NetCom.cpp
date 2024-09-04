@@ -59,25 +59,37 @@ void NetCom::loop() {
 
     // Check for UDP packet, in that case handle it
     if (udp.parsePacket())
-        udpReceiveMessage();                                                                    // TODO there is never a discovery sent, so no skills are ever received
+        udpReceiveMessage();
+
+    // First time in the loop, send out a discovery request
+    if (lastDiscovery == 0)
+        sendDiscovery();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 IPAddress NetCom::checkSkill(String requestedSkill) {
-    if (serverIp == INADDR_NONE)
+    // Check if the server IP is known at all
+    if (serverIp == INADDR_NONE) {
+        sendDiscovery();
         return INADDR_NONE;
-
+    }
     // Check if the requested skill is in the string of skills
-    if (serverSkills.indexOf(requestedSkill) == -1)
+    if (serverSkills.indexOf(requestedSkill) == -1) {
+        sendDiscovery();
         return INADDR_NONE;
-
+    }
     return serverIp;
 }
 
 void NetCom::sendDiscovery() {
-    udpSendMessage("MVP3000", WiFi.broadcastIP()); 
+    // Do not hammer the network, everything should be discovered on the first try anyway and there will not be much change afterwards
+    if (millis() < lastDiscovery + discoveryInterval)
+        return;
+    lastDiscovery = millis();
+
+    udpSendMessage("MVP3000", WiFi.broadcastIP());
     mvp.logger.write(CfgLogger::Level::INFO, "Discovery request sent.");
 }
 
@@ -111,30 +123,21 @@ void NetCom::udpReceiveMessage() {
 void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
     // Test this using netcat: nc -ul [laptopIP] [port]
 
-    // Standard call is without remoteIp and defaults to controller IP
-    // if (remoteIp == INADDR_NONE) {
-    //     // Check if controller is available
-    //     if (serverIp == INADDR_NONE) {
-    //         mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, no remote/controller IP.");
-    //         return;
-    //     }
-    //     remoteIp = serverIp;
-    // }
-
-    // Return for empty message/datastring
-    // if (strlen(message) == 0) {
-    //     mvp.logger.write(CfgLogger::Level::INFO, "UDP not sent, message empty.");
-    //     return;
-    // }
-
+    if (!cfgNetCom.udpEnabled) {
+        mvp.logger.write(CfgLogger::Level::WARNING, "UDP disabled.");
+        return;
+}
     // Send UDP packet
-    if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort))
+    if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort)) {
         mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");
+        return;
+    }
     for (uint16_t i = 0; i < strlen(message); i++) {
         udp.write((uint8_t)message[i]);
     }
-    if (!udp.endPacket())
-        mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");   
+    if (!udp.endPacket()) {
+        mvp.logger.write(CfgLogger::Level::WARNING, "UDP not completed, send error.");
+    }
 }
 
 
