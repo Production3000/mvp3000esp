@@ -158,7 +158,7 @@ class NetMqtt {
         MQTT_STATE mqttState = MQTT_STATE::DISCONNECTED;
         MqttTopicList mqttTopicList = MqttTopicList(&mqttClient);
 
-        IPAddress mqttBrokerIp = INADDR_NONE; // compare with == operator, there is
+        IPAddress brokerIp = INADDR_NONE; // compare with == operator, there is
         uint16_t brokerInterval = 5000;
         millisDelay brokerDelay;
 

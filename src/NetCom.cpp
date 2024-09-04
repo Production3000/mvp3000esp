@@ -18,10 +18,9 @@ limitations under the License.
 
 /*
 
-    Server sends a DIscover SENSor to broadcast, ESP responds with REsponse SENSor
-        DISENS RESENS
-    ESP sends a DIscover SERVer to broadcast, server responds with REsponse SERVer
-        DISERV RESERV
+Sends out MVP3000 to broadcast
+Devices respond with DEVICE[ID]
+Server responds with SERVER;SKILL;SKILL;SKILL
 
 */
 
@@ -38,118 +37,74 @@ void NetCom::setup() {
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetCom);
 
-    if (!cfgNetCom.mqttEnabled)
+    // This can be complately disabled to allow external UDP uses, in a Xmodule or other.
+    if (!cfgNetCom.udpEnabled)
         return;
-
-    comState = COM_STATE_TYPE::WAITING;
 
     // Start UDP even if external forcedBroker is set, to allow reverse-discovery of this ESP device
     udp.begin(cfgNetCom.discoveryPort);
-
 
     // Define web page
     mvp.net.netWeb.registerPage("/netcom", webPage ,  std::bind(&NetCom::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetCom);
 
-    // For some reason the mqttClient.onMessage() method does not work when the function is in a class ...
-    // mqttClient.onMessage(onMqttMessage); // argument of type "void (NetCom::*)(int messageSize)" is incompatible with parameter of type "void (*)(int)"
-    // mqttClient.onMessage([] (int messageSize) { onMqttMessage; }); // invalid use of non-static member function 'void NetCom::onMqttMessage(int)'
-    // mqttClient.onMessage([&] (int messageSize) { onMqttMessage; }); // no suitable conversion function from "lambda [](int messageSize)->void" to "void (*)(int)" exists
-    // mqttClient.onMessage(std::bind(&NetCom::onMqttMessage, this, std::placeholders::_1)); // no suitable conversion function from "std::_Bind_helper<false, void (NetCom::*)(int messageSize), NetCom *, const std::_Placeholder<1> &>::type" (aka "std::_Bind<std::__remove_cv_t<void (NetCom::*)(int messageSize)> (std::__remove_cv_t<NetCom *>, std::__remove_cv_t<const std::_Placeholder<1>>)>") to "void (*)(int)" exists
 };
 
 void NetCom::loop() {
     // Called from net.loop() only if wifi is up and in client mode
 
-    // switch (comState) {
-    //     case COM_STATE_TYPE::CONNECTED:
-    //         // Check if state is still connected
-    //         if (mqttClient.connected()) {
-    //             // Check for UDP packet, in that case handle it
-    //             if (udp.parsePacket())
-    //                 udpReceiveMessage();
+    if (!cfgNetCom.udpEnabled)
+        return;
 
-    //             // Handle MQTT messages, keep-alive, etc. 
-    //             // mqttClient.poll();
-    //             // Check if a MQTT message was received
-    //             // Would be nicer with the mqttClient.onMessage() method, but that seems to not work in a class
-    //             int messageSize = mqttClient.parseMessage();
-    //             if (messageSize > 0) { // parseMessage already calls poll()
-    //                 onMqttMessage(messageSize);
-    //             }
-
-
-    //         } else {
-    //             comState = COM_STATE_TYPE::WAITING;
-    //             mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
-    //         }
-    //         break;
-
-    //     case COM_STATE_TYPE::WAITING:
-    //         if (!mqttClient.connected()) {
-    //             // Only work to do if interval not yet started or just finished
-    //             if (!brokerDelay.isRunning() || brokerDelay.justFinished()) {
-    //                 // Connect to forced broker or discover broker on local network
-    //                 if ((mqttBrokerIp != INADDR_NONE) || (cfgNetCom.mqttForcedBroker.length() > 0)) {
-    //                     // Connect to broker
-    //                     mqttConnect();
-    //                 } else {
-    //                     // Auto-discover local broker IP only if no forced broker
-    //                     udpDiscoverMqtt();
-    //                 }
-    //                 // (Re)start interval
-    //                 brokerDelay.start(brokerInterval);
-    //             }
-    //         } else {
-    //             comState = COM_STATE_TYPE::CONNECTED;
-    //             brokerDelay.stop();
-    //             mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
-
-    //             mqttTopicList.subscribeAll();
-
-    //         }
-    //         break;
-        
-    //     case COM_STATE_TYPE::DISABLEDX: // Nothing to do
-    //         break;
-
-    //     default:
-    //         break;
-    // }
+    // Check for UDP packet, in that case handle it
+    if (udp.parsePacket())
+        udpReceiveMessage();                                                                    // TODO there is never a discovery sent, so no skills are ever received
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
 
-void NetCom::udpDiscoverMqtt() {
-    // Send DIscover SERVer to broadcast
-    udpSendMessage("DISERV", WiFi.broadcastIP()); 
+IPAddress NetCom::checkSkill(String requestedSkill) {
+    if (serverIp == INADDR_NONE)
+        return INADDR_NONE;
 
+    // Check if the requested skill is in the string of skills
+    if (serverSkills.indexOf(requestedSkill) == -1)
+        return INADDR_NONE;
+
+    return serverIp;
+}
+
+void NetCom::sendDiscovery() {
+    udpSendMessage("MVP3000", WiFi.broadcastIP()); 
     mvp.logger.write(CfgLogger::Level::INFO, "Discovery request sent.");
 }
 
 void NetCom::udpReceiveMessage() {
-    char packetBuffer[8];
-    uint8_t len = udp.read(packetBuffer, 8);
+    char packetBuffer[256];
+    uint8_t len = udp.read(packetBuffer, 256);
 
-    // Length is 4, 6, 6+4, 6+4+2+2 characters
-    if (len != 6)
+    // Length is 7 or more caracters
+    if (len < 7)
         return;
 
     // Terminate char string
     packetBuffer[len] = '\0';
 
-    switch (mvp.helper.hashStringDjb2(packetBuffer)) {
-        case mvp.helper.hashStringDjb2("RESERV"): // RESERV Discovery response from server received
-            // Remember controller IP, stop interval, registering with broker is done in next loop
-            mqttBrokerIp = udp.remoteIP();
-            brokerDelay.stop();
-            mvp.logger.write(CfgLogger::Level::INFO, "Discovery response received.");
-            break;
-        case mvp.helper.hashStringDjb2("DISENS"): // DISENS Discovery request received, send discovery response
-            udpSendMessage("RESENS", udp.remoteIP());
-            mvp.logger.write(CfgLogger::Level::INFO, "Discovery request received.");
-            break;
+    // Do nothing if a DEVICE message is received.
+    // Check for MVP3000, respond with DEVICE[ID]
+    if (strncmp(packetBuffer, "MVP3000", 7) == 0) {
+        udpSendMessage((String("DEVICE") + String(ESPX.getChipId())).c_str() , udp.remoteIP());
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery response sent to: %s", udp.remoteIP().toString().c_str());
+        return;
+    }
+    // Check for SERVER, store the IP and the SKILL string
+    if (strncmp(packetBuffer, "SERVER", 6) == 0) {
+        serverIp = udp.remoteIP();
+        serverSkills = packetBuffer + 7;
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Server response: %s from %s", serverSkills.c_str(), serverIp.toString().c_str());
+        return;
     }
 }
 
@@ -157,20 +112,20 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
     // Test this using netcat: nc -ul [laptopIP] [port]
 
     // Standard call is without remoteIp and defaults to controller IP
-    if (remoteIp == INADDR_NONE) {
-        // Check if controller is available
-        if (mqttBrokerIp == INADDR_NONE) {
-            mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, no remote/controller IP.");
-            return;
-        }
-        remoteIp = mqttBrokerIp;
-    }
+    // if (remoteIp == INADDR_NONE) {
+    //     // Check if controller is available
+    //     if (serverIp == INADDR_NONE) {
+    //         mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, no remote/controller IP.");
+    //         return;
+    //     }
+    //     remoteIp = serverIp;
+    // }
 
     // Return for empty message/datastring
-    if (strlen(message) == 0) {
-        mvp.logger.write(CfgLogger::Level::INFO, "UDP not sent, message empty.");
-        return;
-    }
+    // if (strlen(message) == 0) {
+    //     mvp.logger.write(CfgLogger::Level::INFO, "UDP not sent, message empty.");
+    //     return;
+    // }
 
     // Send UDP packet
     if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort))
@@ -183,6 +138,7 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
 
 String NetCom::webPageProcessor(const String& var) { 
     if (!mvp.helper.isValidInteger(var)) {

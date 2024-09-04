@@ -109,19 +109,18 @@ void NetMqtt::mqttConnect() {
     // (Re)start interval
     brokerDelay.start(brokerInterval);
 
-    
     if (cfgNetMqtt.mqttForcedBroker.length() > 0) {
         // Connect to forced broker
         mqttClient.connect(cfgNetMqtt.mqttForcedBroker.c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
-    } else if (mqttBrokerIp != INADDR_NONE) {
+    } else if (brokerIp != INADDR_NONE) {
         // Connect to discovered broker
         // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
-        mqttClient.connect(mqttBrokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", mqttBrokerIp.toString().c_str());
+        mqttClient.connect(brokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", brokerIp.toString().c_str());                    // TODO count tries, remove / give up after 3 tries
     } else {
         // Auto-discover local broker IP only if no forced broker
-        // udpDiscoverMqtt();                                                                                                       // TODO: Implement
+        brokerIp = mvp.net.netCom.checkSkill("MQTT");
     }
 }
 

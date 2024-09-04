@@ -41,7 +41,7 @@ struct CfgNetCom : public CfgJsonInterface {
 
     // Fixed settings
 
-    boolean mqttEnabled = true;
+    boolean udpEnabled = true;
 
     // Modifiable settings saved to SPIFF
 
@@ -54,36 +54,31 @@ struct CfgNetCom : public CfgJsonInterface {
 
 
 class NetCom {
-    private:
-        enum class COM_STATE_TYPE: uint8_t {
-            CONNECTED = 0,
-            WAITING = 1,
-            DISABLEDX = 2
-        };
-        COM_STATE_TYPE comState = COM_STATE_TYPE::DISABLEDX;
-        IPAddress mqttBrokerIp = INADDR_NONE; // compare with == operator, there is
-
-        uint16_t brokerInterval = 5000;
-        millisDelay brokerDelay;
-
-        void udpDiscoverMqtt();
-        void udpReceiveMessage();
-        void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
-
 
     public:
-
-
-        WiFiUDP udp;
-
-        CfgNetCom cfgNetCom;
 
         void setup();
         void loop();
 
-
+        IPAddress checkSkill(String requestedSkill);
 
     private:
+
+        CfgNetCom cfgNetCom;
+
+        WiFiUDP udp;
+
+        IPAddress serverIp = INADDR_NONE; // compare with == operator, there is
+        String serverSkills = "";
+
+        uint16_t brokerInterval = 5000;
+        millisDelay brokerDelay;
+
+        void sendDiscovery();
+
+        void udpReceiveMessage();
+        void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
+
 
         String webPageProcessor(const String& var);
         char* webPage = R"===(
