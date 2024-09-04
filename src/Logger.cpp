@@ -31,7 +31,7 @@ void Logger::setup() {
         yield();
     Serial.println();
 
-    if (cfgLogger.target == CfgLogger::Target::NETWORK)
+    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))
         write(CfgLogger::Level::WARNING, "Logging to network not implemented.");
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
@@ -47,9 +47,9 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {         
     // Serial output
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH))
         serialWrite(targetLevel, message);
-    // MQTT output
-    // if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))                   // TODO remove mqtt from here but add MQTT channel for log messages ?
-    //     mvp.net.netCom.mqttWrite(message);
+    // Network output
+    // if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))                   // TODO implement logging to network, ex DATA/CONTROLL ?
+    //     true;
 }
 
 void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount) {
@@ -86,6 +86,7 @@ bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
     // Logging is turned off, nothing to do
     if (cfgLogger.target == CfgLogger::Target::NONE)
         return false;
+
     // Message level is below logging level, nothing to do
     if (targetLevel > cfgLogger.level)
         return false;
@@ -99,6 +100,7 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
 
     // Add type literal
     switch (targetLevel) {
+        case CfgLogger::Level::CONTROL: Serial.print(" [C] "); break;
         case CfgLogger::Level::DATA: Serial.print(" [D] "); break;
         case CfgLogger::Level::ERROR : Serial.print(" [E] "); break;
         case CfgLogger::Level::INFO: Serial.print(" [I] "); break;
@@ -109,6 +111,7 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
     // Color-code messages for easier readability
     // ANSI escape sequences \033[XXXm where XXX is a series of semicolon-separated parameters.
     //  red     31
+    //  green   32
     //  yellow  33
     //  blue    34
     //  magenta 95
@@ -116,6 +119,7 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
     // To reset: \033[0m
     if (cfgLogger.ansiColor)
         switch (targetLevel) {
+            case CfgLogger::Level::CONTROL: Serial.print("\033[32m"); break; // green
             case CfgLogger::Level::DATA: Serial.print("\033[34m"); break; // blue
             case CfgLogger::Level::ERROR : Serial.print("\033[31;1m"); break; // red, bold
             case CfgLogger::Level::INFO: Serial.print("\033[90m"); break; // bright black, also called dark grey by commoners

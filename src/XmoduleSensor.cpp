@@ -208,10 +208,12 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
     // data can be 'TARE' or 'CLEAR'
     if (strcmp(data, "TARE") == 0) {
         setTare();
+        mvp.logger.write(CfgLogger::Level::CONTROL, "Set Tare.");
     } else if (strcmp(data, "CLEAR") == 0) {
         clearTare();
+        mvp.logger.write(CfgLogger::Level::CONTROL, "Clear Tare.");
     } else {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown websocket command: %s", data);
+        mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown command '%s' received.", data);
     }
 }
 

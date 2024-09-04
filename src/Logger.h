@@ -27,8 +27,9 @@ struct CfgLogger {
         USER = 0,
         ERROR = 1,
         WARNING = 2,
-        DATA = 3,                                                        // ADD level CTRL (green), for commands recieved from webock/mqtt and maybe web or so                            
-        INFO = 4,
+        CONTROL = 3,
+        DATA = 4,                       
+        INFO = 5,
     };
 
     Level level = Level::INFO;
@@ -40,11 +41,10 @@ struct CfgLogger {
         BOTH = 3,
     };
 
-    Target target = Target::BOTH;
+    Target target = Target::CONSOLE;
 
     boolean ansiColor = true;
 
-    // Inits
     CfgLogger() { };
     CfgLogger(Target _target) : target(_target) { };
     CfgLogger(Target _target, Level _level) : target(_target), level(_level) { };

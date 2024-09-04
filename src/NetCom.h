@@ -131,15 +131,16 @@ class NetCom {
 
             boolean hasTopics() { return head != nullptr; }
 
-            void findAndExecute(String topic, char* data) {
+            boolean findAndExecute(String topic, char* data) {
                 Node* current = head;
                 while (current != nullptr) {
                     if (current->topic.compareTo(topic)) {
                         current->dataCallback(data);
-                        return;
+                        return true;
                     }
                     current = current->next;
                 }
+                return false;
             }
 
             void subscribeAll() {

@@ -135,7 +135,6 @@ void NetCom::onMqttMessage(int messageSize) {
         return; // Handling of duplicates not implemented
 
     String topic = mqttClient.messageTopic();
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Received a MQTT message with topic '%s'", topic.c_str());
     
     // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
     uint8_t buf[messageSize + 1];
@@ -143,7 +142,8 @@ void NetCom::onMqttMessage(int messageSize) {
     buf[messageSize] = '\0';
 
     // Find the topic in the list and execute callback
-    mqttTopicList.findAndExecute(topic, (char *)buf);
+    if (!mqttTopicList.findAndExecute(topic, (char *)buf))
+        mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "MQTT control with unknown topic '%s'", topic.c_str());
 }
 
 
