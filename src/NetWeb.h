@@ -325,7 +325,7 @@ class NetWeb {
         <li>Main loop duration: %8% ms (mean/min/max)</li> </ul>
     <h3>Components</h3> <ul>
         <li><a href='/net'>Network</a></li>
-        <li>%11% </ul>
+        <li><a href='/netmqtt'>MQTT communication</a></li></ul>
     <h3>Modules</h3> <ul>
         %21% </ul>
     <h3>Maintenance</h3> <ul>

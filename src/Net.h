@@ -26,7 +26,7 @@ limitations under the License.
 #include <DNSServer.h> // for captive portal
 
 #include "Config.h"
-#include "NetCom.h"
+#include "NetMqtt.h"
 #include "NetWeb.h"
 #include "ESPX.h"
 #ifdef ESP8266
@@ -99,7 +99,7 @@ class Net {
         CfgNet cfgNet;
 
         NetWeb netWeb;
-        NetCom netCom;
+        NetMqtt netMqtt;
 
         String apSsid = "device" + String(ESPX.getChipId());
 

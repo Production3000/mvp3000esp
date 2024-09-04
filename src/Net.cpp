@@ -29,7 +29,7 @@ void Net::setup() {
 
     // Init web interface and MQTT communication
     netWeb.setup();
-    netCom.setup();
+    netMqtt.setup();
 
     // Define web page
     mvp.net.netWeb.registerPage("/net", webPage , std::bind(&Net::webPageProcessor, this, std::placeholders::_1));
@@ -53,7 +53,7 @@ void Net::loop() {
     switch (netState) {
         case NET_STATE_TYPE::CLIENT:
             // Communication only for client
-            netCom.loop();
+            netMqtt.loop();
             break;
         case NET_STATE_TYPE::AP:
             // Captive portal only for AP

@@ -92,7 +92,7 @@ void XmoduleSensor::setup() {
     webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
 
     // Register MQTT
-    mqttPrint = mvp.net.netCom.registerMqtt("10381640_sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));     // TODO device ID not hardcoded topic please!!!
+    mqttPrint = mvp.net.netMqtt.registerMqtt("10381640_sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));     // TODO device ID not hardcoded topic please!!!
 }
 
 void XmoduleSensor::loop() {

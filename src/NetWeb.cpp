@@ -228,13 +228,6 @@ String NetWeb::webPageProcessor(const String& var) {
         case 8:
             return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
 
-        case 11:
-            if (mvp.net.netCom.cfgNetCom.mqttEnabled) {
-                return "<a href='/netcom'>MQTT communication</a></li>";
-            } else {
-                return "MQTT communication (disabled)</li>";
-            }
-
         case 21:
             if (mvp.moduleCount == 0)
                 return "<li>None</li>";
