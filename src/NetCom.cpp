@@ -52,9 +52,8 @@ void NetCom::setup() {
 };
 
 void NetCom::loop() {
-    // Called from net.loop() only if wifi is up and in client mode
-
-    if (!cfgNetCom.udpEnabled)
+    // Called from net.loop() only if wifi is up and in client mode, check again
+    if (!cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
         return;
 
     // Check for UDP packet, in that case handle it
@@ -88,7 +87,7 @@ void NetCom::sendDiscovery() {
     }
 
     udpSendMessage("MVP3000", WiFi.broadcastIP());
-    mvp.logger.write(CfgLogger::Level::CONTROL, "Discovery request sent.");
+    mvp.logger.write(CfgLogger::Level::INFO, "Discovery request sent.");
 }
 
 void NetCom::udpReceiveMessage() {

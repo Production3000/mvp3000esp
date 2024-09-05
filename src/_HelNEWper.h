@@ -67,6 +67,10 @@ struct LimitTimer {
         _next_ms = 0; // Next call of justFinished() will return true
         _plusOne_ms = std::numeric_limits<uint64_t>::max();
     }
+
+    bool running() {
+        return ( (_limit_count == 0) || (_counter < _limit_count) || ((_counter == _limit_count) && (_plusOne_ms != std::numeric_limits<uint64_t>::max()) ) ) ? true : false;
+    }
 };
 
 #endif

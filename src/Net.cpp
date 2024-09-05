@@ -27,7 +27,7 @@ void Net::setup() {
     // Start wifi
     startWifi();
 
-    // Init web interface and MQTT communication
+    // Init web interface, UDP discovery and MQTT (in that order)
     netWeb.setup();
     netCom.setup();
     netMqtt.setup();

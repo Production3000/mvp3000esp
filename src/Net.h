@@ -64,7 +64,7 @@ struct CfgNet : public CfgJsonInterface  {
 
 
 class Net {
-    private:
+    private:                                        // TODO clean up
         DNSServer dnsServer;
 
         // Counter for client connect fails
@@ -112,6 +112,8 @@ class Net {
 
         bool editClientConnection(String newSsid, String newPass);
         void cleanCfgKeepClientInfo();
+
+        boolean connectedAsClient() { return (netState == NET_STATE_TYPE::CLIENT); }
 
     private:
 

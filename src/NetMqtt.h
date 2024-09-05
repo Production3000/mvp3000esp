@@ -41,17 +41,15 @@ limitations under the License.
 
 struct CfgNetMqtt : public CfgJsonInterface {
 
-    // Fixed settings
-
-    boolean mqttEnabled = true;
-
     // Modifiable settings saved to SPIFF
 
+    boolean mqttEnabled = true;
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
     String mqttForcedBroker = ""; // test.mosquitto.org
     String mqttTopicSuffix = "myesp";
 
     CfgNetMqtt() : CfgJsonInterface("cfgNetMqtt") {
+        addSetting<boolean>("mqttEnabled", &mqttEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
         addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](String x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
         addSetting<String>("mqttTopicSuffix", &mqttTopicSuffix, [](String x) { return (x.length() < 5) ? false : true; }); // min 5 chars
@@ -116,7 +114,7 @@ class NetMqtt {
             MqttTopicList(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
 
-            std::function<void(const String &message)> add(String topic, std::function<void(char*)> dataCallback) {
+            std::function<void(const String &message)> add(String topic, std::function<void(char*)> dataCallback = nullptr) {
                 Node* newNode = new Node(topic , dataCallback, mqttClient);
                 newNode->next = head;
                 head = newNode;
@@ -142,10 +140,23 @@ class NetMqtt {
                 Node* current = head;
                 while (current != nullptr) {
                     // Only subscribe if there is a callback
-                    if (current->dataCallback != nullptr)
+                    if (current->dataCallback != nullptr) {
                         mqttClient->subscribe(current->getCtrlTopic().c_str());
+                    }
                     current = current->next;
                 }
+            }
+
+            String getTopicStrings(uint8_t index) {
+                Node* current = head;
+                uint8_t counter = 0;
+                while (current != nullptr) {
+                    if (counter++ == index) {
+                        return current->getDataTopic() + ( (current->dataCallback == nullptr) ? "" : " | " + current->getCtrlTopic() ) ;
+                    }
+                    current = current->next;
+                }
+                return "";
             }
         };
 
@@ -178,10 +189,11 @@ class NetMqtt {
 <body> <h2>MVP3000 - Device ID %0%</h2>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
+    <li> <form action='/start' method='post'> <input name='toggleMqtt' type='hidden'> <input type='submit' value='%50%' > </form> </li>
     <li>Status: %51% </li>
     <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%53%'> <input type='submit' value='Save'> </form> </li>
     <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%54%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Topic: <br> <form action='/save' method='post'> %55% <input name='mqttTopicSuffix' value='%56%' minlength='5'> <input type='submit' value='Save'> </form> </li> </ul>
+    <li>Topics: <ul> %100% </ul> </li> </ul>
 <p>&nbsp;</body></html>
 )===";
 };

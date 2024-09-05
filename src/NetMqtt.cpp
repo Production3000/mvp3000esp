@@ -38,9 +38,6 @@ void NetMqtt::setup() {
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetMqtt);
 
-    if (!cfgNetMqtt.mqttEnabled)
-        return;
-
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
 
@@ -48,6 +45,11 @@ void NetMqtt::setup() {
     mvp.net.netWeb.registerPage("/netmqtt", webPage ,  std::bind(&NetMqtt::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetMqtt);
+
+    // mvp.net.netWeb.registerAction("toggleMqtt", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    //     mvp.config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
+    //     return true;
+    // }, "MQTT enabled/disabled.");
 
     // For some reason the mqttClient.onMessage() method does not work when the function is in a class ...
     // mqttClient.onMessage(handleMessage); // argument of type "void (NetMqtt::*)(int messageSize)" is incompatible with parameter of type "void (*)(int)"
@@ -57,7 +59,11 @@ void NetMqtt::setup() {
 };
 
 void NetMqtt::loop() {
-    // Called from net.loop() only if wifi is up and in client mode
+    // Called from net.loop() only if wifi is up and in client mode, check again
+
+    // Check if there is actually something to do
+    if (!cfgNetMqtt.mqttEnabled || !mqttTopicList.hasTopics() || !mvp.net.connectedAsClient())
+        return;
 
     // int messageSize = 0;
     switch (mqttState) {
@@ -65,12 +71,8 @@ void NetMqtt::loop() {
             // Check state change
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
-                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
-                mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connected to MQTT broker: %s", localBrokerIp.toString().c_str());
-
-                // mqttClient.rawIPAddress
-
                 mqttTopicList.subscribeAll();
+                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics.");
                 break;
             }
 
@@ -168,22 +170,30 @@ String NetMqtt::webPageProcessor(const String& var) {
         return var;
     }
 
+    String str;
     switch (var.toInt()) {
         case 0:
             return String(ESPX.getChipId());
 
+        case 50:
+            return (cfgNetMqtt.mqttEnabled == true) ? "Disable" : "Enable";
         case 51:
-            return (mqttState == MQTT_STATE::CONNECTED) ? "connected" : "disconnected" ;
+            return (mqttState == MQTT_STATE::CONNECTED) ? "connected" : (connectTimer.running()) ? "connecting" : "disconnected" ;
         case 53:
             return cfgNetMqtt.mqttForcedBroker.c_str();
         case 54:
-            return String(cfgNetMqtt.mqttPort);
-        case 55:
-            return String("MVP3000_") + String(ESPX.getChipId()) + "_";                                                                  // TODO not correct                                  
+            return String(cfgNetMqtt.mqttPort);                            
         case 56:
             return cfgNetMqtt.mqttTopicSuffix.c_str();
 
+        case 100: // Capture 100 andd above, limit to 255/uint8
         default:
+            if (var.toInt() > 255)
+                return "";
+            str = mqttTopicList.getTopicStrings(var.toInt() - 100);
+            if (str.length() > 0)
+                str = "<li>" + str + "</li> %" + String(var.toInt() + 1) + "%";
+            return str;
             break;
     }
     mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
