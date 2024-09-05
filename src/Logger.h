@@ -22,6 +22,7 @@ limitations under the License.
 
 
 struct CfgLogger {
+    // Not loaded from SPIFFS, as this is not loaded yet.
     
     enum Level: uint8_t {
         USER = 0,
@@ -32,8 +33,6 @@ struct CfgLogger {
         INFO = 5,
     };
 
-    Level level = Level::INFO;
-
     enum Target: uint8_t {
         NONE = 0,
         CONSOLE = 1,
@@ -41,23 +40,15 @@ struct CfgLogger {
         BOTH = 3,
     };
 
-    Target target = Target::CONSOLE;
+    Level level = Level::INFO;
+
+    Target target = Target::BOTH;
 
     boolean ansiColor = true;
-
-    CfgLogger() { };
-    CfgLogger(Target _target) : target(_target) { };
-    CfgLogger(Target _target, Level _level) : target(_target), level(_level) { };
 };
 
 
 class Logger {
-    private:
-        CfgLogger cfgLogger;
-
-        bool checkTargetLevel(CfgLogger::Level targetLevel);
-
-        void serialWrite(CfgLogger::Level targetLevel, const char *message);
 
     public:
 
@@ -71,6 +62,18 @@ class Logger {
         void writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount);
         // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hellow World", 42);
         void writeFormatted(CfgLogger::Level targetLevel, const char* formatString, ...);
+
+        void colorOutput(boolean enable) { cfgLogger.ansiColor = enable; }
+
+
+    private:
+        CfgLogger cfgLogger;
+
+        bool checkTargetLevel(CfgLogger::Level targetLevel);
+
+        void serialPrint(CfgLogger::Level targetLevel, const char *message);
+
+        std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
 
 };
 

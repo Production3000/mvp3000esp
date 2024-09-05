@@ -21,18 +21,21 @@ extern MVP3000 mvp;
 
 
 void Logger::setup() {
-
     // Do nothing if turned off
     if (cfgLogger.target == CfgLogger::Target::NONE)
         return;
 
-    Serial.begin(115200);
-    while (!Serial)
-        yield();
-    Serial.println();
+    if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+        Serial.begin(115200);
+        while (!Serial)
+            yield();
+        Serial.println("");
+        Serial.println("");
+    }
 
-    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))
-        write(CfgLogger::Level::WARNING, "Logging to network not implemented.");
+    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+        webSocketPrint = mvp.net.netWeb.registerWebSocket("/wslog"); // Not sure why this works here, before the netWeb.setup() call ...
+    }
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
 }
@@ -45,11 +48,13 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {         
         return;
 
     // Serial output
-    if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH))
-        serialWrite(targetLevel, message);
-    // Network output
-    // if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH))                   // TODO implement logging to network, ex DATA/CONTROLL ?
-    //     true;
+    if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+        serialPrint(targetLevel, message);
+    }
+    // Network output, omit DATA level
+    if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
+        webSocketPrint(mvp.helper.upTime() + " " + message);
+    }
 }
 
 void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount) {
@@ -94,7 +99,7 @@ bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
     return true;
 }
 
-void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
+void Logger::serialPrint(CfgLogger::Level targetLevel, const char *message) {
     // Prefix with timestamp
     Serial.print(mvp.helper.upTime());
 
@@ -117,7 +122,7 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
     //  magenta 95
     //  bold    1
     // To reset: \033[0m
-    if (cfgLogger.ansiColor)
+    if (cfgLogger.ansiColor) {
         switch (targetLevel) {
             case CfgLogger::Level::CONTROL: Serial.print("\033[32m"); break; // green
             case CfgLogger::Level::DATA: Serial.print("\033[34m"); break; // blue
@@ -126,12 +131,14 @@ void Logger::serialWrite(CfgLogger::Level targetLevel, const char *message) {
             case CfgLogger::Level::USER: Serial.print("\033[95;1m"); break; // magenta, bold
             case CfgLogger::Level::WARNING: Serial.print("\033[33m"); break; // yellow
         }
+    }
 
     // Print actual message
     Serial.print(message);
 
     // Reset ansi text formatting and end line
-    if (cfgLogger.ansiColor)
+    if (cfgLogger.ansiColor) {
         Serial.print("\033[0m");
+    }
     Serial.println("");
 }
