@@ -27,7 +27,6 @@ limitations under the License.
 #endif
 #include <WiFiUdp.h>
 #include <ArduinoMqttClient.h>
-#include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
 
 #include "Config.h"
 #include "ESPX.h"
@@ -36,6 +35,8 @@ limitations under the License.
 #else
     extern EspClassX ESPX;
 #endif
+
+#include "_HelNEWper.h"
 
 
 struct CfgNetMqtt : public CfgJsonInterface {
@@ -161,9 +162,10 @@ class NetMqtt {
         IPAddress localBrokerIp = INADDR_NONE; // compare with == operator, there is
 
         uint16_t connectInterval = 5000;
-        millisDelay connectDelay;
-        void mqttConnect();
+        uint8_t connectTries = 3;
+        LimitTimer connectTimer = LimitTimer(connectInterval, connectTries);
 
+        void mqttConnect();
         void handleMessage(int messageSize);
 
 

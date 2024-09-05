@@ -61,36 +61,34 @@ void NetCom::loop() {
     if (udp.parsePacket())
         udpReceiveMessage();
 
-    // First time in the loop, send out a discovery request
-    if (lastDiscovery == 0)
-        sendDiscovery();
+    // Discover server and regularly update
+    
+    sendDiscovery();
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 IPAddress NetCom::checkSkill(String requestedSkill) {
-    // Check if the server IP is known at all
-    if (serverIp == INADDR_NONE) {
-        sendDiscovery();
-        return INADDR_NONE;
-    }
     // Check if the requested skill is in the string of skills
-    if (serverSkills.indexOf(requestedSkill) == -1) {
-        sendDiscovery();
-        return INADDR_NONE;
-    }
-    return serverIp;
+    if (serverSkills.indexOf(requestedSkill) >= 0)
+        return serverIp;
+    return INADDR_NONE;
 }
 
 void NetCom::sendDiscovery() {
     // Do not hammer the network, everything should be discovered on the first try anyway and there will not be much change afterwards
-    if (millis() < lastDiscovery + discoveryInterval)
+    if (!discoveryTimer.justFinished())
         return;
-    lastDiscovery = millis();
+
+    // Clear previous discovery if it is to old
+    if (millis() > lastDiscovery + 3 * discoveryInterval) {
+        serverIp = INADDR_NONE;
+        serverSkills = "";
+    }
 
     udpSendMessage("MVP3000", WiFi.broadcastIP());
-    mvp.logger.write(CfgLogger::Level::INFO, "Discovery request sent.");
+    mvp.logger.write(CfgLogger::Level::CONTROL, "Discovery request sent.");
 }
 
 void NetCom::udpReceiveMessage() {
@@ -115,6 +113,7 @@ void NetCom::udpReceiveMessage() {
     if (strncmp(packetBuffer, "SERVER", 6) == 0) {
         serverIp = udp.remoteIP();
         serverSkills = packetBuffer + 7;
+        lastDiscovery = millis();
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Server response: %s from %s", serverSkills.c_str(), serverIp.toString().c_str());
         return;
     }

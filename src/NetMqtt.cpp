@@ -66,6 +66,9 @@ void NetMqtt::loop() {
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
                 mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker.");
+                mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connected to MQTT broker: %s", localBrokerIp.toString().c_str());
+
+                // mqttClient.rawIPAddress
 
                 mqttTopicList.subscribeAll();
                 break;
@@ -80,6 +83,9 @@ void NetMqtt::loop() {
             if (!mqttClient.connected()) {
                 mqttState = MQTT_STATE::DISCONNECTED;
                 mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
+                // Reset local IP and restart timer to ensure reconnect
+                localBrokerIp = INADDR_NONE;
+                connectTimer.reset();
                 break;
             }
 
@@ -103,24 +109,36 @@ std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, s
 }
 
 void NetMqtt::mqttConnect() {
-    // Only work to do if interval not yet started or just finished
-    if (connectDelay.isRunning() && !connectDelay.justFinished())                                                                               // TODO there should be a upper limit of iterations/connect tries
+    // No MQTT external or local broker known, query auto-discovery
+    if ((cfgNetMqtt.mqttForcedBroker.length() == 0) && (localBrokerIp == INADDR_NONE)) {
+        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
+        // No local server discovered, try again later
+        if (localBrokerIp == INADDR_NONE)
+            return;
+        // Local server added, restart timer to ensure another shot at connecting
+        connectTimer.reset();
+    }
+
+    // Reconnect tries are gone, remove local broker as it did not work
+    if (connectTimer.plusOne()) {
+        localBrokerIp = INADDR_NONE;
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker failed, giving up.");
         return;
-    // (Re)start interval
-    connectDelay.start(connectInterval);
+    }
+
+    // Only work to do if interval not yet started or just finished
+    if (!connectTimer.justFinished())
+        return;
 
     if (cfgNetMqtt.mqttForcedBroker.length() > 0) {
         // Connect to forced broker
         mqttClient.connect(cfgNetMqtt.mqttForcedBroker.c_str(), cfgNetMqtt.mqttPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to remote MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
     } else if (localBrokerIp != INADDR_NONE) {
         // Connect to discovered broker
         // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
         mqttClient.connect(localBrokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker: %s", localBrokerIp.toString().c_str());                    // TODO count tries, remove / give up after 3 tries
-    } else {
-        // Auto-discover local broker IP only if no forced broker
-        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to local MQTT broker: %s", localBrokerIp.toString().c_str());
     }
 }
 

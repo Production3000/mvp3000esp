@@ -35,6 +35,8 @@ limitations under the License.
     extern EspClassX ESPX;
 #endif
 
+#include "_HelNEWper.h"
+
 
 struct CfgNetCom : public CfgJsonInterface {
 
@@ -70,10 +72,11 @@ class NetCom {
         IPAddress serverIp = INADDR_NONE; // compare with == operator, there is
         String serverSkills = "";
 
+        uint16_t discoveryInterval = 10000; // 10 seconds
         uint64_t lastDiscovery = 0;
-        uint16_t discoveryInterval = 5000; // 5 seconds
-        void sendDiscovery();
+        LimitTimer discoveryTimer = LimitTimer(discoveryInterval);
 
+        void sendDiscovery();
         void udpReceiveMessage();
         void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
 
