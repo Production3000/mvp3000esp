@@ -77,7 +77,10 @@ class NetMqtt {
 
         enum class MQTT_STATE: uint8_t {
             CONNECTED = 0,
-            DISCONNECTED = 1
+            CONNECTING = 1,
+            DISCONNECTED = 2,
+            NOBROKER = 3,
+            DISABLEDX = 4
         };
 
         struct MqttTopicList {
@@ -167,7 +170,8 @@ class NetMqtt {
 
         MqttClient mqttClient = NULL;
 
-        MQTT_STATE mqttState = MQTT_STATE::DISCONNECTED;
+        MQTT_STATE mqttState;
+
         MqttTopicList mqttTopicList = MqttTopicList(&mqttClient);
 
         IPAddress localBrokerIp = INADDR_NONE; // compare with == operator, there is
@@ -176,7 +180,11 @@ class NetMqtt {
         uint8_t connectTries = 3;
         LimitTimer connectTimer = LimitTimer(connectInterval, connectTries);
 
-        void mqttConnect();
+        void saveCfgCallback();
+        void setMqttState();
+
+        void connectMqtt();
+
         void handleMessage(int messageSize);
 
 
@@ -189,8 +197,9 @@ class NetMqtt {
 <body> <h2>MVP3000 - Device ID %0%</h2>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
-    <li> <form action='/start' method='post'> <input name='toggleMqtt' type='hidden'> <input type='submit' value='%50%' > </form> </li>
+    <li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %50% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
     <li>Status: %51% </li>
+    <li>Local broker: %52% </li>
     <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%53%'> <input type='submit' value='Save'> </form> </li>
     <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%54%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
     <li>Topics: <ul> %100% </ul> </li> </ul>

@@ -53,7 +53,7 @@ class NetWeb {
          * 
          * @param Cfg The configuration to add.
          */
-        void registerCfg(CfgJsonInterface* Cfg);
+        void registerCfg(CfgJsonInterface* Cfg, std::function<void()> callback = nullptr);
 
         /**
          * @brief Register an action to be executed using a form on the web interface.
@@ -129,6 +129,7 @@ class NetWeb {
         struct WebCfgList {
             struct Node {
                 CfgJsonInterface* Cfg;
+                std::function<void()> callback;
                 Node* next;
             };
             Node* head = nullptr;
@@ -140,10 +141,11 @@ class NetWeb {
                 this->saveCfgFkt = saveCfgFkt;
             }
 
-            void add(CfgJsonInterface* Cfg) {
+            void add(CfgJsonInterface* Cfg, std::function<void()> callback) {
                 Node* newNode = new Node;
                 newNode->Cfg = Cfg;
                 newNode->next = head;
+                newNode->callback = callback;
                 head = newNode;
             }
 
@@ -155,6 +157,9 @@ class NetWeb {
                     // Try to update value, if successful save Cfg and return
                     if (current->Cfg->updateSingleValue(key, value)) {
                         saveCfgFkt(*current->Cfg);
+                        if (current->callback != nullptr) {
+                            current->callback();
+                        }
                         return true;
                     }
                     current = current->next;

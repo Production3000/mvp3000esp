@@ -37,19 +37,15 @@ extern MVP3000 mvp;
 void NetMqtt::setup() {
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetMqtt);
+    setMqttState();
 
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
 
     // Define web page
-    mvp.net.netWeb.registerPage("/netmqtt", webPage ,  std::bind(&NetMqtt::webPageProcessor, this, std::placeholders::_1)); 
+    mvp.net.netWeb.registerPage("/netmqtt", webPage, std::bind(&NetMqtt::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
-    mvp.net.netWeb.registerCfg(&cfgNetMqtt);
-
-    // mvp.net.netWeb.registerAction("toggleMqtt", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
-    //     mvp.config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
-    //     return true;
-    // }, "MQTT enabled/disabled.");
+    mvp.net.netWeb.registerCfg(&cfgNetMqtt, std::bind(&NetMqtt::saveCfgCallback, this));
 
     // For some reason the mqttClient.onMessage() method does not work when the function is in a class ...
     // mqttClient.onMessage(handleMessage); // argument of type "void (NetMqtt::*)(int messageSize)" is incompatible with parameter of type "void (*)(int)"
@@ -62,43 +58,52 @@ void NetMqtt::loop() {
     // Called from net.loop() only if wifi is up and in client mode, check again
 
     // Check if there is actually something to do
-    if (!cfgNetMqtt.mqttEnabled || !mqttTopicList.hasTopics() || !mvp.net.connectedAsClient())
+    if ((mqttState == MQTT_STATE::DISABLEDX) || !mqttTopicList.hasTopics() || !mvp.net.connectedAsClient())
         return;
 
-    // int messageSize = 0;
+    int messageSize;
     switch (mqttState) {
-        case MQTT_STATE::DISCONNECTED:
+
+        case MQTT_STATE::NOBROKER:
+            // No MQTT external or local broker known, query auto-discovery
+            localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
+            setMqttState();
+            break;
+
+        case MQTT_STATE::CONNECTING:
             // Check state change
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
-                mqttTopicList.subscribeAll();
                 mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics.");
+                mqttTopicList.subscribeAll();
                 break;
             }
 
             // Try to connect to broker
-            mqttConnect();
+            connectMqtt();
             break;
 
         case MQTT_STATE::CONNECTED:
             // Check state change
             if (!mqttClient.connected()) {
-                mqttState = MQTT_STATE::DISCONNECTED;
+                setMqttState();
                 mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
-                // Reset local IP and restart timer to ensure reconnect
-                localBrokerIp = INADDR_NONE;
-                connectTimer.reset();
                 break;
             }
 
             // When mqttClient.onMessage() would work we could just call mqttClient.poll(); here
             // Check if a MQTT message was received, parseMessage calls poll() itself
-            int messageSize = mqttClient.parseMessage(); 
+            messageSize = mqttClient.parseMessage(); 
             if (messageSize > 0) {
                 handleMessage(messageSize);
             }
             break;
 
+        case MQTT_STATE::DISCONNECTED: // We have given up, do we want this ??? sometimes yes, external server is down maybe? but then again, if we want MQTT we should never give up?
+            break;
+
+        case MQTT_STATE::DISABLEDX:
+            break;
     }
 }
 
@@ -110,20 +115,21 @@ std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, s
     return mqttTopicList.add(topic, dataCallback);
 }
 
-void NetMqtt::mqttConnect() {
-    // No MQTT external or local broker known, query auto-discovery
-    if ((cfgNetMqtt.mqttForcedBroker.length() == 0) && (localBrokerIp == INADDR_NONE)) {
-        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
-        // No local server discovered, try again later
-        if (localBrokerIp == INADDR_NONE)
-            return;
-        // Local server added, restart timer to ensure another shot at connecting
-        connectTimer.reset();
+void NetMqtt::setMqttState() {
+    if (!cfgNetMqtt.mqttEnabled) {
+        mqttState = MQTT_STATE::DISABLEDX;
+    } else if ((cfgNetMqtt.mqttForcedBroker.length() > 0) || (localBrokerIp != INADDR_NONE)) {
+        mqttState = MQTT_STATE::CONNECTING;
+    } else {
+        mqttState = MQTT_STATE::NOBROKER;
     }
+    connectTimer.reset();
+}
 
+void NetMqtt::connectMqtt() {
     // Reconnect tries are gone, remove local broker as it did not work
     if (connectTimer.plusOne()) {
-        localBrokerIp = INADDR_NONE;
+        mqttState = MQTT_STATE::DISCONNECTED;
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker failed, giving up.");
         return;
     }
@@ -136,8 +142,13 @@ void NetMqtt::mqttConnect() {
         // Connect to forced broker
         mqttClient.connect(cfgNetMqtt.mqttForcedBroker.c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to remote MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
-    } else if (localBrokerIp != INADDR_NONE) {
-        // Connect to discovered broker
+    } else {
+        // Update local broker, it could have changed since it was originally queried
+        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
+        if (localBrokerIp == INADDR_NONE) {
+            setMqttState();
+            return;
+        }
         // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
         mqttClient.connect(localBrokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to local MQTT broker: %s", localBrokerIp.toString().c_str());
@@ -164,6 +175,12 @@ void NetMqtt::handleMessage(int messageSize) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetMqtt::saveCfgCallback() {
+    mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting MQTT client.");
+    setMqttState();
+    mqttClient.stop();
+}
+
 String NetMqtt::webPageProcessor(const String& var) { 
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
@@ -176,9 +193,21 @@ String NetMqtt::webPageProcessor(const String& var) {
             return String(ESPX.getChipId());
 
         case 50:
-            return (cfgNetMqtt.mqttEnabled == true) ? "Disable" : "Enable";
+            return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
         case 51:
-            return (mqttState == MQTT_STATE::CONNECTED) ? "connected" : (connectTimer.running()) ? "connecting" : "disconnected" ;
+            switch (mqttState) {
+                case MQTT_STATE::CONNECTED:
+                    return "connected";
+                case MQTT_STATE::DISCONNECTED:
+                case MQTT_STATE::DISABLEDX:
+                    return "disconnected";
+                case MQTT_STATE::CONNECTING:
+                    return "connecting";
+                case MQTT_STATE::NOBROKER:
+                    return "no broker";
+            }
+        case 52:
+            return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString().c_str() : "-";
         case 53:
             return cfgNetMqtt.mqttForcedBroker.c_str();
         case 54:

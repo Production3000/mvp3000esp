@@ -67,8 +67,8 @@ void NetWeb::registerAction(String action, std::function<bool(int, std::function
     webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
 };
 
-void NetWeb::registerCfg(CfgJsonInterface *Cfg) {
-    webCfgList.add(Cfg);
+void NetWeb::registerCfg(CfgJsonInterface *Cfg, std::function<void()> callback) {
+    webCfgList.add(Cfg, callback);
 }
 
 void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
