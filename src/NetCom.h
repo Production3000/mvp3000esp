@@ -42,13 +42,15 @@ struct CfgNetCom : public CfgJsonInterface {
 
     // Fixed settings
 
-    boolean udpEnabled = true;
+    boolean hardDisabled = false;
 
     // Modifiable settings saved to SPIFF
 
-    uint16_t discoveryPort = 4211; // Search local network for MQTT broker
+    boolean udpEnabled = true;
+    uint16_t discoveryPort = 4211;
 
     CfgNetCom() : CfgJsonInterface("cfgNetCom") {
+        addSetting<boolean>("udpEnabled", &udpEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("discoveryPort", &discoveryPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
     }
 };
@@ -63,13 +65,23 @@ class NetCom {
 
         IPAddress checkSkill(String requestedSkill);
 
+        boolean hardDisabled() { return cfgNetCom.hardDisabled; }
+
     private:
 
+        enum class UDP_STATE: uint8_t {
+            ENABLED = 0,
+            DISABLEDX = 1,
+            HARDDISABLED = 1
+        };
+        UDP_STATE udpState;
+
         CfgNetCom cfgNetCom;
+        void saveCfgCallback();
 
         WiFiUDP udp;
 
-        IPAddress serverIp = INADDR_NONE; // compare with == operator, there is
+        IPAddress serverIp = INADDR_NONE;
         String serverSkills = "";
 
         uint16_t discoveryInterval = 10000; // 10 seconds
@@ -77,6 +89,7 @@ class NetCom {
         LimitTimer discoveryTimer = LimitTimer(discoveryInterval);
 
         void sendDiscovery();
+
         void udpReceiveMessage();
         void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
 
@@ -90,8 +103,9 @@ class NetCom {
 <body> <h2>MVP3000 - Device ID %0%</h2>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
-    <li>Status: XXX </li>
-    <li>Auto-discovery port local broker: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
+    <li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %50% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
+    <li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
+    <li>Discovery: %51% </li> </ul>
 <p>&nbsp;</body></html>
 )===";
 };

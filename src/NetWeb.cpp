@@ -227,6 +227,11 @@ String NetWeb::webPageProcessor(const String& var) {
             return String(ESP.getCpuFreqMHz());
         case 8:
             return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
+        case 9:
+            return mvp.net.myIp.toString();
+
+        case 11:
+            return (mvp.net.netCom.hardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
 
         case 21:
             if (mvp.moduleCount == 0)

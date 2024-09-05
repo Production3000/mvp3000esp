@@ -37,23 +37,24 @@ void NetCom::setup() {
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetCom);
 
-    // This can be complately disabled to allow external UDP uses, in a Xmodule or other.
-    if (!cfgNetCom.udpEnabled)
+    // This can be completely disabled to allow external UDP uses, in a Xmodule or other.
+    if (cfgNetCom.hardDisabled)
         return;
 
-    // Start UDP even if external forcedBroker is set, to allow reverse-discovery of this ESP device
-    udp.begin(cfgNetCom.discoveryPort);
+    // Start UDP for discovery and reverse-discovery of this ESP device
+    if (cfgNetCom.udpEnabled)
+        udp.begin(cfgNetCom.discoveryPort);
 
     // Define web page
     mvp.net.netWeb.registerPage("/netcom", webPage ,  std::bind(&NetCom::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
-    mvp.net.netWeb.registerCfg(&cfgNetCom);
+    mvp.net.netWeb.registerCfg(&cfgNetCom, std::bind(&NetCom::saveCfgCallback, this));
 
 };
 
 void NetCom::loop() {
     // Called from net.loop() only if wifi is up and in client mode, check again
-    if (!cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
+    if (cfgNetCom.hardDisabled || !cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
         return;
 
     // Check for UDP packet, in that case handle it
@@ -61,7 +62,6 @@ void NetCom::loop() {
         udpReceiveMessage();
 
     // Discover server and regularly update
-    
     sendDiscovery();
 }
 
@@ -81,7 +81,7 @@ void NetCom::sendDiscovery() {
         return;
 
     // Clear previous discovery if it is to old
-    if (millis() > lastDiscovery + 3 * discoveryInterval) {
+    if (millis() > lastDiscovery + 1.2 * discoveryInterval) {
         serverIp = INADDR_NONE;
         serverSkills = "";
     }
@@ -101,7 +101,8 @@ void NetCom::udpReceiveMessage() {
     // Terminate char string
     packetBuffer[len] = '\0';
 
-    // Do nothing if a DEVICE message is received.
+    // Do nothing if a DEVICE message is received, generally we could collect those other devices on the network
+    // if (strncmp(packetBuffer, "DEVICE", 6) == 0) { return; }
     // Check for MVP3000, respond with DEVICE[ID]
     if (strncmp(packetBuffer, "MVP3000", 7) == 0) {
         udpSendMessage((String("DEVICE") + String(ESPX.getChipId())).c_str() , udp.remoteIP());
@@ -124,7 +125,7 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
     if (!cfgNetCom.udpEnabled) {
         mvp.logger.write(CfgLogger::Level::WARNING, "UDP disabled.");
         return;
-}
+    }
     // Send UDP packet
     if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort)) {
         mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");
@@ -141,6 +142,14 @@ void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetCom::saveCfgCallback() {
+    udp.stop();
+    if (cfgNetCom.udpEnabled) {
+        udp.begin(cfgNetCom.discoveryPort);
+    }
+}
+
+
 String NetCom::webPageProcessor(const String& var) { 
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
@@ -151,6 +160,10 @@ String NetCom::webPageProcessor(const String& var) {
         case 0:
             return String(ESPX.getChipId());
 
+        case 50:
+            return (cfgNetCom.udpEnabled) ? "checked" : "";
+        case 51:
+            return (serverIp != INADDR_NONE) ? serverIp.toString() + ": " + serverSkills : "none";
         case 52:
             return String(cfgNetCom.discoveryPort);
 

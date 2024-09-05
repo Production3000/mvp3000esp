@@ -329,9 +329,10 @@ class NetWeb {
         <li>CPU frequency: %7% MHz</li>
         <li>Main loop duration: %8% ms (mean/min/max)</li> </ul>
     <h3>Components</h3> <ul>
+        <li>Log websocket: ws://%9%/wslog </li>
         <li><a href='/net'>Network</a></li>
-        <li><a href='/netmqtt'>MQTT</a></li>
-        <li><a href='/netcom'>UDP communication</a></li></ul>
+        <li> %11% </li>
+        <li><a href='/netmqtt'>MQTT</a></li> </ul>
     <h3>Modules</h3> <ul>
         %21% </ul>
     <h3>Maintenance</h3> <ul>
