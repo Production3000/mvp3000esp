@@ -176,6 +176,7 @@ void XmoduleSensor::measureOffsetScalingFinish() {
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Offset/Scaling measurement done in %d ms.", millis() - dataCollection.avgStartTime );
 
     // Restart data collection with new averaging
+    clearTare();
     dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.sampleAveraging);
 
     // Restart interval, if set
@@ -186,11 +187,13 @@ void XmoduleSensor::measureOffsetScalingFinish() {
 void XmoduleSensor::resetOffset() {
     dataCollection.processing.offset.resetValues();
     mvp.config.writeCfg(dataCollection.processing);
+    clearTare();
 }
 
 void XmoduleSensor::resetScaling() {
     dataCollection.processing.scaling.resetValues();
     mvp.config.writeCfg(dataCollection.processing);
+    clearTare();
 }
 
 void XmoduleSensor::clearTare() {
