@@ -32,13 +32,8 @@ limitations under the License.
 
 class MVP3000 {
 
-    private:
-        void checkStatus();
-
-        uint32_t loopLast_ms = 0;
-        void updateLoopDuration();
-
     public:
+
         enum class STATE_TYPE: uint8_t {
             GOOD = 0, // Everything is fine
             INIT = 1, // Standard state when booting up until wifi up
@@ -72,6 +67,13 @@ class MVP3000 {
 
         uint32_t delayedRestart_ms = 0;
         void delayedRestart(uint32_t delay_ms = 25) { delayedRestart_ms = millis() + delay_ms; };
+
+    private:
+        void checkStatus();
+
+        uint32_t loopLast_ms = 0;
+        void updateLoopDuration();
+
 };
 
 #endif

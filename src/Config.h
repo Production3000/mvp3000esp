@@ -35,6 +35,19 @@ limitations under the License.
 
 
 class Config {
+
+    public:
+        void setup();
+        void loop();
+
+        void readCfg(JsonInterface &cfg);
+        void writeCfg(JsonInterface &cfg);
+
+        void factoryResetDevice(boolean keepWifi = false);
+        uint32_t delayedFactoryReset_ms = 0;
+        boolean delayedFactoryResetKeepWifi = true;
+        void asyncFactoryResetDevice(boolean keepWifi = false);
+
     private:
         JsonDocument jsonDoc;
 
@@ -48,17 +61,6 @@ class Config {
         bool writeFile(const char *filename, std::function<bool(File& file)> writerFunc);
         void removeFile(const char *fileName);
 
-    public:
-        void setup();
-        void loop();
-
-        void readCfg(JsonInterface &cfg);
-        void writeCfg(JsonInterface &cfg);
-
-        void factoryResetDevice(boolean keepWifi = false);
-        uint32_t delayedFactoryReset_ms = 0;
-        boolean delayedFactoryResetKeepWifi = true;
-        void asyncFactoryResetDevice(boolean keepWifi = false);
 };
 
 #endif

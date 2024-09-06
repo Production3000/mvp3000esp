@@ -29,7 +29,7 @@ struct CfgLogger {
         ERROR = 1,
         WARNING = 2,
         CONTROL = 3,
-        DATA = 4,                       
+        DATA = 4,
         INFO = 5,
     };
 

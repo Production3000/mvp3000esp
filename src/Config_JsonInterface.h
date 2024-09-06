@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-#ifndef MVP3000_CONFIG_INTERFACE
-#define MVP3000_CONFIG_INTERFACE
+#ifndef MVP3000_CONFIG_JSONINTERFACE
+#define MVP3000_CONFIG_JSONINTERFACE
 
 #include <Arduino.h>
 #include <ArduinoJson.h>

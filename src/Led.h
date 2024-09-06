@@ -34,6 +34,11 @@ struct CfgLed {
 
 
 class Led {
+
+    public:
+        void setup();
+        void loop();
+
     private:
         enum class LED_TIMING_TYPE: int16_t {
             OFF = -1, // Power on: NULL --> off
@@ -62,10 +67,6 @@ class Led {
         void on();
         void off();
         void toggle();
-
-    public:
-        void setup();
-        void loop();
 };
 
 #endif

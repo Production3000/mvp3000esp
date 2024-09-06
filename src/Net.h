@@ -64,28 +64,6 @@ struct CfgNet : public CfgJsonInterface  {
 
 
 class Net {
-    private:                                        // TODO clean up
-        DNSServer dnsServer;
-
-        // Counter for client connect fails
-        uint8_t clientConnectFails = 0;
-        boolean clientConnectSuccess = false;
-    
-        void connectClient();
-        void WiFiGotIP();
-        void WiFiStationDisconnected();
-
-        void startWifi();
-        void startAp();
-        void startClient();
-
-        uint32_t delayedRestartWifi_ms = 0;
-        void delayedRestartWifi(uint32_t delay_ms = 50) { delayedRestartWifi_ms = millis() + delay_ms; };
-
-// ESP8266 needs definition of Wifi events
-#ifdef ESP8266
-        WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
-#endif
 
     public:
         enum class NET_STATE_TYPE: uint8_t {
@@ -115,7 +93,29 @@ class Net {
 
         boolean connectedAsClient() { return (netState == NET_STATE_TYPE::CLIENT); }
 
-    private:
+    private:                                        // TODO clean up
+        DNSServer dnsServer;
+
+        // Counter for client connect fails
+        uint8_t clientConnectFails = 0;
+        boolean clientConnectSuccess = false;
+    
+        void connectClient();
+        void WiFiGotIP();
+        void WiFiStationDisconnected();
+
+        void startWifi();
+        void startAp();
+        void startClient();
+
+        uint32_t delayedRestartWifi_ms = 0;
+        void delayedRestartWifi(uint32_t delay_ms = 50) { delayedRestartWifi_ms = millis() + delay_ms; };
+
+// ESP8266 needs definition of Wifi events
+#ifdef ESP8266
+        WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
+#endif
+
 
         String webPageProcessor(const String& var);
         char* webPage = R"===(

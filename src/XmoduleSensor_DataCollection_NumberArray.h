@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-#ifndef MVP3000__NUMBERARRAY
-#define MVP3000__NUMBERARRAY
+#ifndef MVP3000_XMODULESENSOR_DATACOLLECTION_NUMBERARRAY
+#define MVP3000_XMODULESENSOR_DATACOLLECTION_NUMBERARRAY
 
 #include <Arduino.h>
 
