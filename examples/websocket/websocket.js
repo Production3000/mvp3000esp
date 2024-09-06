@@ -16,13 +16,11 @@ limitations under the License.
 
 var websocket;
 
-window.addEventListener('load', initWebSocket);
+var keepData = true;
 
-function initWebSocket() {
+window.addEventListener('load', () => {
     document.getElementById('connect').addEventListener('click', connect);
-    document.getElementById('tare').addEventListener('click', () => { websocket.send('TARE'); } );
-    document.getElementById('clear').addEventListener('click', () => { websocket.send('CLEAR'); } );
-}
+} );
 
 function connect() {
     document.getElementById('coninfo').innerHTML = "Connecting ...";
@@ -30,11 +28,10 @@ function connect() {
     if (websocket)
         websocket.close();
 
-    var websocketurl = document.getElementById('websocketurl').value;
-    // Check if there already is a ws:// or wss:// prefix
-    if (!websocketurl.startsWith('ws://') && !websocketurl.startsWith('wss://')) {
-        websocketurl = 'ws://' + websocketurl;
-    }
+    let deviceIp = document.getElementById('deviceip').value;
+    let wsfolder = document.getElementById('wsfolder').value;
+
+    let websocketurl = "ws://" + deviceIp.trim() + wsfolder;
 
     websocket = new WebSocket(websocketurl);
     
@@ -47,7 +44,10 @@ function connect() {
         console.log('Connection closed');
     }
     websocket.onmessage = function(e) {
-        document.getElementById('data').innerHTML = e.data;
+        if (keepData)
+            document.getElementById('data').innerHTML = e.data + "\n" + document.getElementById('data').innerHTML;
+        else
+            document.getElementById('data').innerHTML = e.data;
     }
     websocket.onerror = function() {
         document.getElementById('coninfo').innerHTML = "Error";

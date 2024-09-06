@@ -17,17 +17,16 @@ limitations under the License.
 <!DOCTYPE html>
 <html lang='en'>
 <head>
-    <title>MVP3000 - Xmodule Sensor - WebSocket Example</title>
-    <script src="sensor_display.js"></script>
+    <title>MVP3000 - WebSocket Example - Log</title>
+    <script src="websocket.js"></script>
 </head>
-<body onload="initWebSocket">
-    <h2>MVP3000 - Xmodule Sensor - WebSocket Example</h2>
+<body>
+    <h2>MVP3000 - WebSocket Example - Log</h2>
     <h3>Device</h3>
     <p>Use with any of the sensor examples.</p>
-    <p><input type="text" id="websocketurl" placeholder="192.168.1.1/wssensor"> <button id="connect">Connect</button></p>
-    <h3>Data</h3>
+    <p>ws:// <input type="text" id="deviceip" placeholder="DEVICEIP"> /wslog <input type="hidden" id="wsfolder" value="/wslog"> <button id="connect">Connect</button></p>
     <p><span id="coninfo">Not connected</span></p>
-    <p><span id="data">No data</span></p>
-    <p><button id="tare">Tare</button> <button id="clear">Clear tare</button></p>
+    <h3>Data</h3>
+    <p><textarea id="data" cols="120" rows="10"></textarea></p>
 </body>
 </html>

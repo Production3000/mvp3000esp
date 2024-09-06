@@ -1,0 +1,41 @@
+<!-- 
+Copyright Production 3000
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>MVP3000 - WebSocket Example - XModule Sensor</title>
+    <script src="websocket.js"></script>
+    <script> // Action buttons
+        window.addEventListener('load', () => {
+            keepData = false;
+            document.getElementById('tare').addEventListener('click', () => { websocket.send('TARE'); } );
+            document.getElementById('clear').addEventListener('click', () => { websocket.send('CLEAR'); } );
+        });
+    </script>
+</head>
+<body>
+    <h2>MVP3000 - WebSocket Example - XModule Sensor</h2>
+    <h3>Device</h3>
+    <p>Use with any of the sensor examples.</p>
+    <p>ws:// <input type="text" id="deviceip" placeholder="DEVICEIP"> /wssensor <input type="hidden" id="wsfolder" value="/wssensor"> <button id="connect">Connect</button></p>
+    <h3>Data</h3>
+    <p><span id="coninfo">Not connected</span></p>
+    <p><span id="data">No data</span></p>
+    <p><button id="tare">Tare</button> <button id="clear">Clear tare</button></p>
+</body>
+</html>
+
