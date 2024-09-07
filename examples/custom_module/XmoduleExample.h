@@ -88,15 +88,8 @@ class XmoduleExample : public Xmodule {
 
 String webPageProcessor(const String& var) {
 
-                    if (!mvp.helper.isValidInteger(var)) {
-                        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
-                        return var;
-                    }
-
                     String str;
                     switch (var.toInt()) {
-                        case 0:
-                            return String(ESPX.getChipId());
 
                         case 1:
                             return description.c_str();
@@ -122,10 +115,10 @@ String webPageProcessor(const String& var) {
 
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
+<head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2>
     <p><a href='/'>Home</a></p>
     <h3>%1%</h3>
     <h3>Settings</h3> <ul>

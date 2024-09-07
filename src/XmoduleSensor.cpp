@@ -221,39 +221,28 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
 }
 
 String XmoduleSensor::webPageProcessor(const String& var) {
-    // IMPORTANT: Make sure there is no additional % symbol in the html template
-    if (!mvp.helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Non-integer placeholder in template: %s (check for any unencoded percent symbol)", var.c_str());
-        return var;
-    }
 
     String str;
     switch (var.toInt()) {
-        case 0:
-            return String(ESPX.getChipId());
-
-        case 1:
+        case 101:
             return description.c_str();
-        case 2:
+        case 102:
             return cfgXmoduleSensor.infoName.c_str();
-        case 3:
+        case 103:
             return cfgXmoduleSensor.infoDescription.c_str();
 
-        case 11:
+        case 111:
             return String(cfgXmoduleSensor.sampleAveraging);
-        case 12:
+        case 112:
             return String(cfgXmoduleSensor.averagingOffsetScaling);
-        case 13:
+        case 113:
             return String(cfgXmoduleSensor.reportingInterval);
-        case 14:
+        case 114:
             return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
-        case 15:
+        case 115:
             return mvp.net.myIp.toString();
 
-        case 21:
-            return String(cfgXmoduleSensor.dataValueCount);
-
-        case 30: // Sensor details: type, unit, offset, scaling, float to int exponent
+        case 121: // Sensor details: type, unit, offset, scaling, float to int exponent
             char message[128];
             for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
                 snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
@@ -261,12 +250,12 @@ String XmoduleSensor::webPageProcessor(const String& var) {
                 str += message;
             }
             return str;
+        case 122:
+            return String(cfgXmoduleSensor.dataValueCount);
 
         default:
-            break;
+            return "";
     }
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-    return var;
 }
 
 size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc) {

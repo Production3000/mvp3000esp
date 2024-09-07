@@ -189,15 +189,7 @@ void Net::WiFiStationDisconnected() {
 }
 
 String Net::webPageProcessor(const String& var) {
-    if (!mvp.helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
-    }
-
     switch (var.toInt()) {
-        case 0:
-            return String(ESPX.getChipId());
-        
         case 31:
             return apSsid.c_str();
         case 32:
@@ -208,11 +200,7 @@ String Net::webPageProcessor(const String& var) {
             return String(cfgNet.clientConnectRetries);
         case 35:
             return (cfgNet.forceClientMode == true) ? "checked" : "";
-
         default:
-            break;
-    }
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-    return var;
-    
+            return "";
+    }    
  }

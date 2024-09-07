@@ -124,9 +124,13 @@ struct WebPageColl {
         String contentType;
         AwsResponseFiller responseFiller;
         AwsTemplateProcessor processor;
+        
+        std::function<String (const String &, AwsTemplateProcessor)> processorMain;
+        AwsTemplateProcessor processorCustom;
 
         Node () { }
-        Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessor _processor, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processor(_processor) { 
+        Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessor _processor, std::function<String (const String &, AwsTemplateProcessor)> _processorMain, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processorCustom(_processor), processorMain(_processorMain) { 
+            processor = std::bind(&Node::htmlTemplateProcessor, this, std::placeholders::_1);
             responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
             attach(server);
         }
@@ -138,6 +142,10 @@ struct WebPageColl {
             server->on(uri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
                 request->sendChunked(contentType, responseFiller, processor);
             });
+        }
+
+        String htmlTemplateProcessor(const String& var) {
+            return processorMain(var, processorCustom);
         }
 
         size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
@@ -158,15 +166,18 @@ struct WebPageColl {
 
     AsyncWebServer *server;
 
+    std::function<String (const String &, AwsTemplateProcessor)> processorMain;
+
 
     WebPageColl(AsyncWebServer *_server) : server(_server) { }
+    WebPageColl(AsyncWebServer *_server, std::function<String (const String &, AwsTemplateProcessor)> _processorMain) : server(_server), processorMain(_processorMain) { }
 
 
     bool add(String uri, const char* _html, AwsTemplateProcessor processor, String contentType) {
         if (nodeCount >= nodesSize) {
             return false;
         }
-        nodes[nodeCount++] = new Node(uri, _html, contentType, processor, server);
+        nodes[nodeCount++] = new Node(uri, _html, contentType, processor, processorMain, server);
         return true;
     }
     bool add(String uri, AwsResponseFiller responseFiller, String contentType) {

@@ -47,13 +47,11 @@ struct CfgNetMqtt : public CfgJsonInterface {
     boolean mqttEnabled = true;
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
     String mqttForcedBroker = ""; // test.mosquitto.org
-    String mqttTopicSuffix = "myesp";
 
     CfgNetMqtt() : CfgJsonInterface("cfgNetMqtt") {
         addSetting<boolean>("mqttEnabled", &mqttEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
         addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](String x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
-        addSetting<String>("mqttTopicSuffix", &mqttTopicSuffix, [](String x) { return (x.length() < 5) ? false : true; }); // min 5 chars
     }
 };
 
@@ -110,18 +108,18 @@ class NetMqtt {
         String webPageProcessor(const String& var);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
+<head> <title>MVP3000 - Device ID %1%</title>
 <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
 <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
-    <li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %50% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
-    <li>Status: %51% </li>
-    <li>Local broker: %52% </li>
-    <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%53%'> <input type='submit' value='Save'> </form> </li>
-    <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%54%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Topics: <ul> %100% </ul> </li> </ul>
+    <li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %51% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
+    <li>Status: %52% </li>
+    <li>Local broker: %53% </li>
+    <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%54%'> <input type='submit' value='Save'> </form> </li>
+    <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%55%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
+    <li>Topics: <ul> %60% </ul> </li> </ul>
 <p>&nbsp;</body></html>
 )===";
 };

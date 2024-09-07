@@ -148,29 +148,29 @@ class XmoduleSensor : public Xmodule {
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
+<head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2>
     <p><a href='/'>Home</a></p>
-<h3>%1%</h3> <ul>
-    <li>Product: %2% </li>
-    <li>Description: %3% </li> </ul>
+<h3>%101%</h3> <ul>
+    <li>Product: %102% </li>
+    <li>Description: %103% </li> </ul>
 <h3>Data Handling</h3> <ul>
-    <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%11%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%12%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%13%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
+    <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%111%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%112%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Reporting minimum interval for fast sensors, 0 to ignore:<br> <form action='/save' method='post'> <input name='reportingInterval' value='%113%' type='number' min='0' max='65535'> [ms] <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Data Interface</h3> <ul>
-    <li>Data storage: %14%</li>
+    <li>Data storage: %114%</li>
     <li>Current data: <a href='/sensordata'>/sensordata</a> </li>
-    <li>Live websocket: ws://%15%/wssensor </li>
+    <li>Live websocket: ws://%115%/wssensor </li>
     <li>CSV data: <a href='/sensordatasscaled'>/sensordatasscaled</a>, <a href='/sensordatasraw'>/sensordatasraw</a> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>
-    %30%
+    %121%
     <tr> <td colspan='3'></td>
         <td valign='bottom'> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%21%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
+        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%122%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
         <td></td> </tr>
     <tr> <td colspan='3'></td>
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>

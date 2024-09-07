@@ -97,15 +97,15 @@ class NetCom {
         String webPageProcessor(const String& var);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %0%</title>
+<head> <title>MVP3000 - Device ID %1%</title>
 <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
 <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %0%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
-    <li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %50% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
-    <li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Discovery: %51% </li> </ul>
+    <li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %41% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
+    <li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%42%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
+    <li>Discovery: %43% </li> </ul>
 <p>&nbsp;</body></html>
 )===";
 };

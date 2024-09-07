@@ -25,7 +25,11 @@ void MVP3000::setup() {
     // Prepare flash to allow loading of saved configs
     config.setup();
     led.setup();
+
     net.setup();
+    // Register home page
+    net.netWeb.registerPage("/", webPage, std::bind(&MVP3000::webPageProcessor, this, std::placeholders::_1));
+
     // Modules
     for (uint8_t i = 0; i < moduleCount; i++) {
         xmodules[i]->setup();
@@ -70,12 +74,12 @@ void MVP3000::checkStatus() {
         return;
 
     // Error was logged
-    if (mvp.logger.errorReported) {
+    if (logger.errorReported) {
         state = STATE_TYPE::ERROR;
         return;
     }
 
-    if ((mvp.net.netState == Net::NET_STATE_TYPE::CLIENT) || (mvp.net.netState == Net::NET_STATE_TYPE::AP))
+    if ((net.netState == Net::NET_STATE_TYPE::CLIENT) || (net.netState == Net::NET_STATE_TYPE::AP))
         state = STATE_TYPE::GOOD;
     else
         state = STATE_TYPE::INIT;
@@ -106,4 +110,45 @@ void MVP3000::updateLoopDuration() {
 
     // Remember this loop time
     loopLast_ms = millis();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
+String MVP3000::webPageProcessor(const String& var) {
+    String str = ""; // Needs to be defined outside of switch
+    switch (var.toInt()) {
+        case 11:
+            return String(__DATE__) + " " + String(__TIME__);
+        case 12:
+            return String(ESP.getFreeHeap()) + " / " + String(ESPX.getHeapFragmentation());
+        case 13:
+            return String(helper.upTime());
+        case 14:
+            return String(ESPX.getResetReason().c_str());
+        case 15:
+            return String(ESP.getCpuFreqMHz());
+        case 16:
+            return String(loopDurationMean_ms) + " / " + String(loopDurationMin_ms) + " / " + String(loopDurationMax_ms);
+        case 17:
+            return net.myIp.toString();
+        case 18:
+            return (net.netCom.hardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
+        case 20:
+            if (moduleCount == 0)
+                return "<li>None</li>";
+            for (uint8_t i = 0; i < moduleCount; i++) {
+                char message[128];
+                if ((xmodules[i]->uri).length() > 0) {
+                    snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
+                } else {
+                    snprintf(message, sizeof(message), "<li>%s</li>", xmodules[i]->description.c_str());
+                }
+                str += message;
+            }
+            return str;
+
+        default:
+            return str;
+    }
 }

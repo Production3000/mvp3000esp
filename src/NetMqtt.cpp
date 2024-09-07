@@ -182,19 +182,11 @@ void NetMqtt::saveCfgCallback() {
 }
 
 String NetMqtt::webPageProcessor(const String& var) { 
-    if (!mvp.helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
-    }
-
     String str;
     switch (var.toInt()) {
-        case 0:
-            return String(ESPX.getChipId());
-
-        case 50:
-            return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
         case 51:
+            return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
+        case 52:
             switch (mqttState) {
                 case MQTT_STATE::CONNECTED:
                     return "connected";
@@ -206,25 +198,21 @@ String NetMqtt::webPageProcessor(const String& var) {
                 case MQTT_STATE::NOBROKER:
                     return "no broker";
             }
-        case 52:
-            return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString().c_str() : "-";
         case 53:
-            return cfgNetMqtt.mqttForcedBroker.c_str();
+            return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString().c_str() : "-";
         case 54:
-            return String(cfgNetMqtt.mqttPort);                            
-        case 56:
-            return cfgNetMqtt.mqttTopicSuffix.c_str();
+            return cfgNetMqtt.mqttForcedBroker.c_str();
+        case 55:
+            return String(cfgNetMqtt.mqttPort);
 
-        case 100: // Capture 100 andd above, limit to 255/uint8
+        case 60: // Capture 60 andd above, limit to 255/uint8
         default:
             if (var.toInt() > 255)
                 return "";
-            str = mqttTopicList.getTopicStrings(var.toInt() - 100);
+            str = mqttTopicList.getTopicStrings(var.toInt() - 60);                                                  // TODO hs extra line with [61] not sure why ???
             if (str.length() > 0)
                 str = "<li>" + str + "</li> %" + String(var.toInt() + 1) + "%";
             return str;
             break;
     }
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-    return var;
 }

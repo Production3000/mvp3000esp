@@ -35,8 +35,6 @@ void NetWeb::setup() {
     // Initialize cfgList
     webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-    // Register home page
-    registerPage("/", webPage, std::bind(&NetWeb::webPageProcessor, this, std::placeholders::_1));
 
     // Register actions
     registerAction("restart", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
@@ -198,58 +196,31 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String NetWeb::webPageProcessor(const String& var) {
+String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessor processorCustom) {
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
+        return "[" + var + "]";
     }
 
     String str; // Needs to be defined outside of switch
     switch (var.toInt()) {
+        // Main placeholders
         case 0:
-            return String(ESPX.getChipId());
-
-        case 1:
             str = postMessage;
             postMessage = ""; // Clear message for next load
             return str;
-        case 2:
-            return String(__DATE__) + " " + String(__TIME__);
-        case 3:
-            return String(ESP.getFreeHeap());
-        case 4:
-            return String(ESPX.getHeapFragmentation());
-        case 5:
-            return String(mvp.helper.upTime());
-        case 6:
-            return String(ESPX.getResetReason().c_str());
-        case 7:
-            return String(ESP.getCpuFreqMHz());
-        case 8:
-            return String(mvp.loopDurationMean_ms) + " / " + String(mvp.loopDurationMin_ms) + " / " + String(mvp.loopDurationMax_ms);
-        case 9:
-            return mvp.net.myIp.toString();
+        case 1:
+            return String(ESPX.getChipId());
 
-        case 11:
-            return (mvp.net.netCom.hardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
-
-        case 21:
-            if (mvp.moduleCount == 0)
-                return "<li>None</li>";
-            for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-                char message[128];
-                if ((mvp.xmodules[i]->uri).length() > 0) {
-                    snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", mvp.xmodules[i]->uri.c_str(), mvp.xmodules[i]->description.c_str());
-                } else {
-                    snprintf(message, sizeof(message), "<li>%s</li>", mvp.xmodules[i]->description.c_str());
-                }
-                str += message;
-            }
-            return str;
-
+        // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
         default:
-            break;
+            str = processorCustom(var);
+            if (str.length() > 0) {
+                return str;
+            } else {
+                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
+                return "[" + var + "]";
+            }
     }
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-    return var;
 }
+

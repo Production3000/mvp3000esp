@@ -151,25 +151,15 @@ void NetCom::saveCfgCallback() {
 
 
 String NetCom::webPageProcessor(const String& var) { 
-    if (!mvp.helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return var;
-    }
-
     switch (var.toInt()) {
-        case 0:
-            return String(ESPX.getChipId());
-
-        case 50:
+        case 41:
             return (cfgNetCom.udpEnabled) ? "checked" : "";
-        case 51:
-            return (serverIp != INADDR_NONE) ? serverIp.toString() + ": " + serverSkills : "none";
-        case 52:
+        case 42:
             return String(cfgNetCom.discoveryPort);
+        case 43:
+            return (serverIp != INADDR_NONE) ? serverIp.toString() + ": " + serverSkills : "none";
 
         default:
-            break;
+            return "";
     }
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-    return var;
 }

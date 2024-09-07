@@ -74,6 +74,35 @@ class MVP3000 {
         uint32_t loopLast_ms = 0;
         void updateLoopDuration();
 
+
+        String webPageProcessor(const String& var);
+        char* webPage = R"===(
+<!DOCTYPE html> <html lang='en'>
+<head> <title>MVP3000 - Device ID %1%</title>
+    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+    <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
+<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
+    <h3>System</h3> <ul>
+        <li>ID: %1%</li>
+        <li>Build: %11%</li>
+        <li>Memory: %12%&percnt; fragmented</li>
+        <li>Uptime: %13%</li>
+        <li>Last restart reason: %14%</li>
+        <li>CPU frequency: %15% MHz</li>
+        <li>Main loop duration: %15% ms (mean/min/max)</li> </ul>
+    <h3>Components</h3> <ul>
+        <li>Log websocket: ws://%17%/wslog </li>
+        <li><a href='/net'>Network</a></li>
+        <li> %18% </li>
+        <li><a href='/netmqtt'>MQTT</a></li> </ul>
+    <h3>Modules</h3> <ul>
+        %20% </ul>
+    <h3>Maintenance</h3> <ul>
+        <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
+        <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
+<p>&nbsp;</body></html>
+)===";
+
 };
 
 #endif

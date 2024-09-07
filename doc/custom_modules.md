@@ -58,10 +58,10 @@ The most important part for integration of the module in the MVP3000 framwork is
                 // Define the module's web interface
                 mvp.net.netWeb.registerPage(uri,  R"===(
     <!DOCTYPE html> <html lang='en'>
-    <head> <title>MVP3000 - Device ID %0%</title>
+    <head> <title>MVP3000 - Device ID %1%</title>
         <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
         <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-    <body> <h2>MVP3000 - Device ID %0%</h2>
+    <body> <h2>MVP3000 - Device ID %1%</h2>
         <p><a href='/'>Home</a></p>
         <h3>%1%</h3>
         <h3>Settings</h3> <ul>
