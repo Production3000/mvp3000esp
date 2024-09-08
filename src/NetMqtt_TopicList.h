@@ -20,13 +20,18 @@ limitations under the License.
 #include <Arduino.h>
 
 #include <ArduinoMqttClient.h>
+#ifdef ESP8266
+    extern EspClass ESPX;
+#else
+    extern EspClassX ESPX;
+#endif
 
 
 typedef std::function<void(char*)> MqttDataCallback;
 
 struct MqttTopicList {
     struct Node {
-        String topic;
+        String subtopic;
         MqttDataCallback dataCallback;
 
         Node* next;
@@ -34,10 +39,10 @@ struct MqttTopicList {
     MqttClient* mqttClient;
 
         Node() { }
-        Node(String topic, MqttDataCallback dataCallback, MqttClient* mqttClient) : topic(topic), dataCallback(dataCallback), mqttClient(mqttClient) { }
+        Node(String subtopic, MqttDataCallback dataCallback, MqttClient* mqttClient) : subtopic(subtopic), dataCallback(dataCallback), mqttClient(mqttClient) { }
 
-        String getCtrlTopic() { return topic + "_ctrl"; }
-        String getDataTopic() { return topic + "_data"; }
+        String getCtrlTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_ctrl"; }
+        String getDataTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_data"; }
 
         std::function<void(const String &message)> getMqttPrint() { return std::bind(&Node::mqttPrint, this, std::placeholders::_1); }
         void mqttPrint(const String &message) {
@@ -58,18 +63,18 @@ struct MqttTopicList {
     MqttTopicList(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
 
-    std::function<void(const String &message)> add(String topic, MqttDataCallback dataCallback = nullptr) {
-        Node* newNode = new Node(topic , dataCallback, mqttClient);
+    std::function<void(const String &message)> add(String subtopic, MqttDataCallback dataCallback = nullptr) {
+        Node* newNode = new Node(subtopic , dataCallback, mqttClient);
         newNode->next = head;
         head = newNode;
 
         return newNode->getMqttPrint();
     }
 
-    boolean findAndExecute(String topic, char* data) {
+    boolean findAndExecute(String subtopic, char* data) {
         Node* current = head;
         while (current != nullptr) {
-            if (current->topic.compareTo(topic)) {
+            if (current->subtopic == subtopic) {
                 current->dataCallback(data);
                 return true;
             }

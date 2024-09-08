@@ -110,9 +110,9 @@ void NetMqtt::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, MqttDataCallback dataCallback) {
+std::function<void(const String &message)> NetMqtt::registerMqtt(String subtopic, MqttDataCallback dataCallback) {
     // Store topic and callback for registering with MQTT, return the function to write to this topic
-    return mqttTopicList.add(topic, dataCallback);
+    return mqttTopicList.add(subtopic, dataCallback);
 }
 
 void NetMqtt::setMqttState() {
@@ -161,6 +161,8 @@ void NetMqtt::handleMessage(int messageSize) {
         return; // Handling of duplicates not implemented
 
     String topic = mqttClient.messageTopic();
+    // Topic is prefixed with the device ID and suffixed with _data and _ctrl, we only need the subtopic
+    topic = topic.substring(topic.indexOf('_') + 1, topic.lastIndexOf('_'));                           
     
     // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
     uint8_t buf[messageSize + 1];

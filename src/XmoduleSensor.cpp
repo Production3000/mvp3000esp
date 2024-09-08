@@ -49,6 +49,7 @@ void XmoduleSensor::setup() {
         measureOffset();
         return true;
     }, "Measuring offset, this may take a few seconds ...");
+
     mvp.net.netWeb.registerAction("measureScaling", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         if ( (args == 3) &&  (argKey(1) == "valueNumber") && (argKey(2) == "targetValue") ) {
             if (measureScaling(argValue(1).toInt(), argValue(2).toInt())) {
@@ -57,10 +58,12 @@ void XmoduleSensor::setup() {
         }
         return false;
     }, "Measuring scaling, this may take a few seconds ...");
+
     mvp.net.netWeb.registerAction("resetOffset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         resetOffset();
         return true;
     }, "Offset reset.");
+    
     mvp.net.netWeb.registerAction("resetScaling", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         resetScaling();
         return true;
@@ -88,11 +91,9 @@ void XmoduleSensor::setup() {
     }, "application/octet-stream");
 
 
-    // Register websocket
+    // Register websocket and MQTT
     webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
-
-    // Register MQTT
-    mqttPrint = mvp.net.netMqtt.registerMqtt("10381640_sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));     // TODO device ID not hardcoded topic please!!!
+    mqttPrint = mvp.net.netMqtt.registerMqtt("sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
 }
 
 void XmoduleSensor::loop() {
