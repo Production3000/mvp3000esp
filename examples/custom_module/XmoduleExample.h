@@ -86,39 +86,38 @@ class XmoduleExample : public Xmodule {
             mvp.logger.write(CfgLogger::INFO, "Some action performed.");
         }
 
-String webPageProcessor(const String& var) {
+        String webPageProcessor(uint8_t var) {
 
-                    String str;
-                    switch (var.toInt()) {
+            String str;
+            switch (var) {
+                case 100:
+                    return description.c_str();
 
-                        case 1:
-                            return description.c_str();
+                case 101:
+                    return String(cfgXmoduleExample.fixedNumber);
+                case 102:
+                    return String(cfgXmoduleExample.editableNumber);
 
-                        case 11:
-                            return String(cfgXmoduleExample.fixedNumber);
-                        case 12:
-                            return String(cfgXmoduleExample.editableNumber);
-
-                        default: // Capture all
-                            // The placeholder string can hold a secondary placeholder which then is also filled, and so on.
-                            // if (var.toInt() < 50) {
-                            //     return "added a placeholder ( %" + String(var.toInt() + 1) + "% )";
-                            // } else {
-                            //     return "stop this madness!!!";
-                            // }
-                            break;
-                    }
-                    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-                    return var;
-    
-}
+                default:
+                    //  Capture all
+                    // The placeholder string can hold a secondary placeholder which then is also filled, and so on.
+                    // if (var.toInt() < 50) {
+                    //     return "added a placeholder ( %" + String(var.toInt() + 1) + "% )";
+                    // } else {
+                    //     return "stop this madness!!!";
+                    // }
+                    //  Or log an unknown placeholder value
+                    // mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
+                    return str;
+            }
+        }
 
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %1%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
     <p><a href='/'>Home</a></p>
     <h3>%1%</h3>
     <h3>Settings</h3> <ul>

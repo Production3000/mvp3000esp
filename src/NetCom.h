@@ -100,7 +100,7 @@ class NetCom {
 <head> <title>MVP3000 - Device ID %1%</title>
 <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
 <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %1%</h2>
+<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
     <li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %41% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>

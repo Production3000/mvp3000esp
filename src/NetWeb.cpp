@@ -180,12 +180,12 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
-    // Message to serve on next page load                              // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  
+    // Message to serve on next page load                                               // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  
     postMessage = message;
 
     // Redirect to avoid post reload, 303 temporary
-                                                                        // For modules this does not redirect to the module but to home
-    request->redirect("/");                                            // TODO redirect for modules after save/action
+    // Points to the referer [sic] to stay on the page the form was on 
+    request->redirect(request->header("Referer"));
 }
 
 void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
