@@ -115,9 +115,9 @@ void MVP3000::updateLoopDuration() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String MVP3000::webPageProcessor(const String& var) {
+String MVP3000::webPageProcessor(uint8_t var) {
     String str = ""; // Needs to be defined outside of switch
-    switch (var.toInt()) {
+    switch (var) {
         case 11:
             return String(__DATE__) + " " + String(__TIME__);
         case 12:

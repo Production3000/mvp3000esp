@@ -57,11 +57,11 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt) {
+void NetWeb::registerAction(String action, WebActionFunction actionFkt) {
     webActionList.add(action, WebActionList::ResponseType::RESTART, actionFkt, "");
 }
 
-void NetWeb::registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+void NetWeb::registerAction(String action, WebActionFunction actionFkt, String successMessage) {
     webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
 };
 
@@ -69,7 +69,7 @@ void NetWeb::registerCfg(CfgJsonInterface *Cfg, std::function<void()> callback) 
     webCfgList.add(Cfg, callback);
 }
 
-void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessor processor, String type) {
+void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessorInt processor, String type) {
     if (!webPageColl.add(uri, html, processor, type))
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
 }
@@ -196,7 +196,7 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessor processorCustom) {
+String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom) {
     if (!mvp.helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return "[" + var + "]";
@@ -214,13 +214,10 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessor proc
 
         // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
         default:
-            str = processorCustom(var);
-            if (str.length() > 0) {
-                return str;
-            } else {
-                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-                return "[" + var + "]";
-            }
+            return processorCustom(var.toInt());
+            // Sadly there is no way to know if no placeholder was matched or if the string is just empty
+            // We could encode it, but this would just make ist more complex to implement in new templates
+            // mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
     }
 }
 

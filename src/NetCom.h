@@ -94,7 +94,7 @@ class NetCom {
         void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
 
 
-        String webPageProcessor(const String& var);
+        String webPageProcessor(uint8_t var);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>

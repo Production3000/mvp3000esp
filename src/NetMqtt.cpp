@@ -181,9 +181,9 @@ void NetMqtt::saveCfgCallback() {
     mqttClient.stop();
 }
 
-String NetMqtt::webPageProcessor(const String& var) { 
+String NetMqtt::webPageProcessor(uint8_t var) { 
     String str;
-    switch (var.toInt()) {
+    switch (var) {
         case 51:
             return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
         case 52:
@@ -205,14 +205,13 @@ String NetMqtt::webPageProcessor(const String& var) {
         case 55:
             return String(cfgNetMqtt.mqttPort);
 
-        case 60: // Capture 60 andd above, limit to 255/uint8
+        case 60: // Capture 60 and above, limit to 99 (100+ are supposed to be reserved for xmodules)
         default:
-            if (var.toInt() > 255)
-                return "";
-            str = mqttTopicList.getTopicStrings(var.toInt() - 60);                                                  // TODO hs extra line with [61] not sure why ???
+            if (var > 99)
+                return str;
+            str = mqttTopicList.getTopicStrings(var - 60);
             if (str.length() > 0)
-                str = "<li>" + str + "</li> %" + String(var.toInt() + 1) + "%";
+                str = "<li>" + str + "</li> %" + String(var + 1) + "%";
             return str;
-            break;
     }
 }

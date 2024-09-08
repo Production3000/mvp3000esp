@@ -151,9 +151,10 @@ void Config::factoryResetDevice(boolean keepWifi) {
     if (!isReadyFS())
         return;
 
-    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Starting factory reset ...");             // TODO trigers watchdog
+    mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Starting factory reset ...");
 
     // Clear any saved data, factory config will be restored to defaults on reboot
+    // Triggers watchdog _a_lot_, but does not cause reboot
     SPIFFS.format();
 
     // Re-save wifi client settings if requested

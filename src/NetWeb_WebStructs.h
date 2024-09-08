@@ -24,6 +24,7 @@ limitations under the License.
 
 
 
+typedef std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> WebActionFunction;
 
 // Linked list for action callbacks
 struct WebActionList {
@@ -37,18 +38,18 @@ struct WebActionList {
         String action;
         ResponseType successResponse;
         String successMessage;
-        std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt;
+        WebActionFunction actionFkt;
         
         Node* next;
 
         Node() { }
-        Node(String _action, ResponseType _successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> _actionFkt, String _successMessage) : action(_action), successResponse(_successResponse), actionFkt(_actionFkt), successMessage(_successMessage) { }
+        Node(String _action, ResponseType _successResponse, WebActionFunction _actionFkt, String _successMessage) : action(_action), successResponse(_successResponse), actionFkt(_actionFkt), successMessage(_successMessage) { }
     };
 
     Node* head = nullptr;
 
 
-    void add(String action, ResponseType successResponse, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage) {
+    void add(String action, ResponseType successResponse, WebActionFunction actionFkt, String successMessage) {
         Node* newNode = new Node(action, successResponse, actionFkt, successMessage);
         newNode->next = head;
         head = newNode;
@@ -72,6 +73,9 @@ struct WebActionList {
         return nullptr;
     }
 };
+
+
+///////////////////////////////////////////////////////////////////////////////////
 
 // Linked list for configuration objects
 struct WebCfgList {
@@ -116,6 +120,12 @@ struct WebCfgList {
     }
 };
 
+
+///////////////////////////////////////////////////////////////////////////////////
+
+typedef std::function<String (uint8_t)> AwsTemplateProcessorInt;
+typedef std::function<String (const String &, AwsTemplateProcessorInt)> AwsTemplateProcessorWrapper;
+
 // Collection of web pages
 struct WebPageColl {
     struct Node {
@@ -123,13 +133,13 @@ struct WebPageColl {
         const char* html;
         String contentType;
         AwsResponseFiller responseFiller;
+
         AwsTemplateProcessor processor;
-        
-        std::function<String (const String &, AwsTemplateProcessor)> processorMain;
-        AwsTemplateProcessor processorCustom;
+        AwsTemplateProcessorWrapper processorMain;
+        AwsTemplateProcessorInt processorCustom;
 
         Node () { }
-        Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessor _processor, std::function<String (const String &, AwsTemplateProcessor)> _processorMain, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processorCustom(_processor), processorMain(_processorMain) { 
+        Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessorInt _processorCustom, AwsTemplateProcessorWrapper _processorMain, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processorCustom(_processorCustom), processorMain(_processorMain) { 
             processor = std::bind(&Node::htmlTemplateProcessor, this, std::placeholders::_1);
             responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
             attach(server);
@@ -166,14 +176,14 @@ struct WebPageColl {
 
     AsyncWebServer *server;
 
-    std::function<String (const String &, AwsTemplateProcessor)> processorMain;
+    AwsTemplateProcessorWrapper processorMain;
 
 
     WebPageColl(AsyncWebServer *_server) : server(_server) { }
-    WebPageColl(AsyncWebServer *_server, std::function<String (const String &, AwsTemplateProcessor)> _processorMain) : server(_server), processorMain(_processorMain) { }
+    WebPageColl(AsyncWebServer *_server, AwsTemplateProcessorWrapper _processorMain) : server(_server), processorMain(_processorMain) { }
 
 
-    bool add(String uri, const char* _html, AwsTemplateProcessor processor, String contentType) {
+    bool add(String uri, const char* _html, AwsTemplateProcessorInt processor, String contentType) {
         if (nodeCount >= nodesSize) {
             return false;
         }
@@ -189,16 +199,21 @@ struct WebPageColl {
     }
 };
 
+
+///////////////////////////////////////////////////////////////////////////////////
+
+typedef std::function<void(AsyncWebSocketClient *, AwsEventType)> WebSocketEventLog;
+
 // Collection of websockets
 struct WebSocketColl {
     struct Node {
         AsyncWebSocket* websocket;
 
         std::function<void(char*)> dataCallback;
-        std::function<void(AsyncWebSocketClient *, AwsEventType)> webSocketEventLog;
+        WebSocketEventLog webSocketEventLog;
 
         Node() { }
-        Node(String uri, std::function<void(char*)> _dataCallback, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
+        Node(String uri, std::function<void(char*)> _dataCallback, WebSocketEventLog _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
             websocket = new AsyncWebSocket(uri);
             // Event log and custom handerl
             websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -230,10 +245,10 @@ struct WebSocketColl {
     Node* nodes[nodesSize];
 
     AsyncWebServer *server;
-    std::function<void(AsyncWebSocketClient *, AwsEventType)> webSocketEventLog;
+    WebSocketEventLog webSocketEventLog;
 
 
-    WebSocketColl(AsyncWebServer *_server, std::function<void(AsyncWebSocketClient *, AwsEventType)> _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
+    WebSocketColl(AsyncWebServer *_server, WebSocketEventLog _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
 
 
     bool add(String uri, std::function<void(char*)> dataCallback) {

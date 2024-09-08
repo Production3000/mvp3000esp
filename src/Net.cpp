@@ -188,8 +188,8 @@ void Net::WiFiStationDisconnected() {
     }
 }
 
-String Net::webPageProcessor(const String& var) {
-    switch (var.toInt()) {
+String Net::webPageProcessor(uint8_t var) {
+    switch (var) {
         case 31:
             return apSsid.c_str();
         case 32:

@@ -144,7 +144,7 @@ class XmoduleSensor : public Xmodule {
         std::function<void(const String &message)> mqttPrint; // Function to print to the MQTT topic
         std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
 
-        String webPageProcessor(const String& var);
+        String webPageProcessor(uint8_t var);
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
         char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>

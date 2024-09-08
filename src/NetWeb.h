@@ -46,7 +46,7 @@ class NetWeb {
          * @param responseFiller The response filler function for the page, typically used for large pages or datasets.
          * @param contentType The content type of the page, optional, Default is "text/html".
          */
-        void registerPage(String uri, const char* html, AwsTemplateProcessor processor, String contentType = "text/html");
+        void registerPage(String uri, const char* html, AwsTemplateProcessorInt processor, String contentType = "text/html");
         void registerPage(String uri, AwsResponseFiller responseFiller, String contentType = "text/html");
 
         /**
@@ -63,8 +63,8 @@ class NetWeb {
          * @param actionFkt The function to execute.
          * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will display a 'restarting'-page, but not restart itself automatically.
          */
-        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt); // One cannot overload bool with String
-        void registerAction(String action, std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> actionFkt, String successMessage);
+        void registerAction(String action, WebActionFunction actionFkt); // One cannot overload bool with String
+        void registerAction(String action, WebActionFunction actionFkt, String successMessage);
 
         /**
          * @brief Register a websocket to be used with the web interface.
@@ -74,7 +74,7 @@ class NetWeb {
          * @return Returns the function to write data to the websocket.
          */
         std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
-        std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);        // should return a function to write data to the websocket
+        std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);
 
     private:
 
@@ -87,7 +87,7 @@ class NetWeb {
 
         WebCfgList webCfgList;
 
-        String webPageProcessorMain(const String& var, AwsTemplateProcessor processorCustom);
+        String webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom);
         WebPageColl webPageColl = WebPageColl(&server, std::bind(&NetWeb::webPageProcessorMain, this, std::placeholders::_1, std::placeholders::_2));
 
         void webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type);

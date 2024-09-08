@@ -150,8 +150,8 @@ void NetCom::saveCfgCallback() {
 }
 
 
-String NetCom::webPageProcessor(const String& var) { 
-    switch (var.toInt()) {
+String NetCom::webPageProcessor(uint8_t var) { 
+    switch (var) {
         case 41:
             return (cfgNetCom.udpEnabled) ? "checked" : "";
         case 42:

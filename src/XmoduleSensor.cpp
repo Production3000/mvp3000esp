@@ -220,10 +220,10 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
     }
 }
 
-String XmoduleSensor::webPageProcessor(const String& var) {
+String XmoduleSensor::webPageProcessor(uint8_t var) {
 
     String str;
-    switch (var.toInt()) {
+    switch (var) {
         case 101:
             return description.c_str();
         case 102:
