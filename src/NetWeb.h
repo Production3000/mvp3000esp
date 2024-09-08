@@ -82,6 +82,8 @@ class NetWeb {
 
         // Message to serve on next page load after form save
         const char *postMessage = "";
+        uint64_t postMessageTime = 0;
+        uint16_t postMessageLifetime = 15000; // 15 seconds
 
         WebActionList webActionList;
 

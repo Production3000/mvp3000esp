@@ -182,6 +182,7 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
     // Message to serve on next page load                                               // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  
     postMessage = message;
+    postMessageTime = millis();
 
     // Redirect to avoid post reload, 303 temporary
     // Points to the referer [sic] to stay on the page the form was on 
@@ -206,7 +207,9 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt p
     switch (var.toInt()) {
         // Main placeholders
         case 0:
-            str = postMessage;
+            if (millis() < postMessageTime + postMessageLifetime) {
+                str = postMessage;
+            }
             postMessage = ""; // Clear message for next load
             return str;
         case 1:
