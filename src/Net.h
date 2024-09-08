@@ -108,7 +108,7 @@ class Net {
         void startAp();
         void startClient();
 
-        uint32_t delayedRestartWifi_ms = 0;
+        uint32_t delayedRestartWifi_ms = 0; // TODO replace with LimitTimer
         void delayedRestartWifi(uint32_t delay_ms = 50) { delayedRestartWifi_ms = millis() + delay_ms; };
 
 // ESP8266 needs definition of Wifi events

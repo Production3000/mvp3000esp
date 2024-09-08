@@ -180,7 +180,7 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
-    // Message to serve on next page load                                               // TODO there should be a timeout to get rid of this message, like quarter a second max as webload ist fast                  
+    // Message to serve on next page load and timestamp to discard if it is too old       
     postMessage = message;
     postMessageTime = millis();
 
@@ -206,20 +206,22 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt p
     String str; // Needs to be defined outside of switch
     switch (var.toInt()) {
         // Main placeholders
-        case 0:
+
+        case 0: // Post message
+            // Discard if it is too old, clear message for next load
             if (millis() < postMessageTime + postMessageLifetime) {
                 str = postMessage;
             }
-            postMessage = ""; // Clear message for next load
+            postMessage = "";
             return str;
-        case 1:
+        case 1: // Device ID
             return String(ESPX.getChipId());
 
         // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
         default:
             return processorCustom(var.toInt());
             // Sadly there is no way to know if no placeholder was matched or if the string is just empty
-            // We could encode it, but this would just make ist more complex to implement in new templates
+            // We could encode it, but this would just make it more complex to implement in new templates
             // mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
     }
 }
