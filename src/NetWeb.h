@@ -74,7 +74,7 @@ class NetWeb {
          * @return Returns the function to write data to the websocket.
          */
         std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
-        std::function<void(const String &message)> registerWebSocket(String uri, std::function<void(char*)> dataCallback);
+        std::function<void(const String &message)> registerWebSocket(String uri, WebSocketDataCallback dataCallback);
 
     private:
 

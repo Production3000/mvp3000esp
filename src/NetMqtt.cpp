@@ -110,7 +110,7 @@ void NetMqtt::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, std::function<void(char*)> dataCallback) {
+std::function<void(const String &message)> NetMqtt::registerMqtt(String topic, MqttDataCallback dataCallback) {
     // Store topic and callback for registering with MQTT, return the function to write to this topic
     return mqttTopicList.add(topic, dataCallback);
 }

@@ -23,8 +23,8 @@ limitations under the License.
 #include "Config_JsonInterface.h"
 
 
-
-typedef std::function<bool(int, std::function<String(int)>, std::function<String(int)>)> WebActionFunction;
+typedef std::function<String(int)> WebArgKeyValue;
+typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionFunction;
 
 // Linked list for action callbacks
 struct WebActionList {
@@ -56,7 +56,7 @@ struct WebActionList {
     }
 
     // Loops through all cfgs and updates the value if found
-    Node* loopActions(int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    Node* loopActions(int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         Node* current = head;
         // Loop through all nodes
         while (current != nullptr) {
@@ -203,17 +203,18 @@ struct WebPageColl {
 ///////////////////////////////////////////////////////////////////////////////////
 
 typedef std::function<void(AsyncWebSocketClient *, AwsEventType)> WebSocketEventLog;
+typedef std::function<void(char*)> WebSocketDataCallback;
 
 // Collection of websockets
 struct WebSocketColl {
     struct Node {
         AsyncWebSocket* websocket;
 
-        std::function<void(char*)> dataCallback;
+        WebSocketDataCallback dataCallback;
         WebSocketEventLog webSocketEventLog;
 
         Node() { }
-        Node(String uri, std::function<void(char*)> _dataCallback, WebSocketEventLog _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
+        Node(String uri, WebSocketDataCallback _dataCallback, WebSocketEventLog _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
             websocket = new AsyncWebSocket(uri);
             // Event log and custom handerl
             websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -251,7 +252,7 @@ struct WebSocketColl {
     WebSocketColl(AsyncWebServer *_server, WebSocketEventLog _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
 
 
-    bool add(String uri, std::function<void(char*)> dataCallback) {
+    bool add(String uri, WebSocketDataCallback dataCallback) {
         if (nodeCount >= nodesSize) {
             return false;
         }

@@ -107,7 +107,7 @@ The most important part for integration of the module in the MVP3000 framwork is
                 mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
 
                 // Register action
-                mvp.net.netWeb.registerAction("someAction", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+                mvp.net.netWeb.registerAction("someAction", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
                     // argValue(0) is the action name
                     someAction();
                     return true;

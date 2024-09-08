@@ -22,17 +22,19 @@ limitations under the License.
 #include <ArduinoMqttClient.h>
 
 
+typedef std::function<void(char*)> MqttDataCallback;
+
 struct MqttTopicList {
     struct Node {
         String topic;
-        std::function<void(char*)> dataCallback;
+        MqttDataCallback dataCallback;
 
         Node* next;
 
     MqttClient* mqttClient;
 
         Node() { }
-        Node(String topic, std::function<void(char*)> dataCallback, MqttClient* mqttClient) : topic(topic), dataCallback(dataCallback), mqttClient(mqttClient) { }
+        Node(String topic, MqttDataCallback dataCallback, MqttClient* mqttClient) : topic(topic), dataCallback(dataCallback), mqttClient(mqttClient) { }
 
         String getCtrlTopic() { return topic + "_ctrl"; }
         String getDataTopic() { return topic + "_data"; }
@@ -56,7 +58,7 @@ struct MqttTopicList {
     MqttTopicList(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
 
-    std::function<void(const String &message)> add(String topic, std::function<void(char*)> dataCallback = nullptr) {
+    std::function<void(const String &message)> add(String topic, MqttDataCallback dataCallback = nullptr) {
         Node* newNode = new Node(topic , dataCallback, mqttClient);
         newNode->next = head;
         head = newNode;

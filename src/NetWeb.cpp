@@ -37,11 +37,11 @@ void NetWeb::setup() {
 
 
     // Register actions
-    registerAction("restart", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    registerAction("restart", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         mvp.delayedRestart(25); // Restarts after 25 ms
         return true;
     });
-    registerAction("reset", [&](int args, std::function<String(int)> argKey, std::function<String(int)> argValue) {
+    registerAction("reset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         mvp.config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
         return true;
     }, "Factory reset initiated, this takes some 10 s ...");
@@ -79,7 +79,7 @@ void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String t
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
 }
 
-std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, std::function<void(char*)> dataCallback) {
+std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, WebSocketDataCallback dataCallback) {
     if (!webSocketColl.add(uri, dataCallback)) {
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many websockets registered, max %d", WebSocketColl::nodesSize);
         return nullptr;

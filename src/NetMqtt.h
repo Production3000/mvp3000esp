@@ -70,7 +70,7 @@ class NetMqtt {
          * @param dataCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.
          */
-        std::function<void(const String &message)> registerMqtt(String topic, std::function<void(char*)> dataCallback = nullptr);
+        std::function<void(const String &message)> registerMqtt(String topic, MqttDataCallback dataCallback = nullptr);
 
     private:
 
