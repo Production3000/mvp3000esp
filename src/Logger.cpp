@@ -47,6 +47,18 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {         
     if (!checkTargetLevel(targetLevel))
         return;
 
+    if ((targetLevel == CfgLogger::Level::ERROR) || (targetLevel == CfgLogger::Level::WARNING)) {
+        linkedListLog.append(targetLevel, message);
+        linkedListLog.loopNodes([&](DataStructLog *node , uint8_t index) {
+            Serial.print("Log: ");
+            Serial.print(node->level);
+            Serial.print(" ");
+            Serial.println(node->message);
+            Serial.print(" ");
+            Serial.println(node->time);
+        }, true);
+    }
+
     // Serial output
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
         serialPrint(targetLevel, message);

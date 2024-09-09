@@ -20,6 +20,8 @@ limitations under the License.
 #include <Arduino.h>
 #include <stdarg.h>
 
+#include "_LinkedList.h"
+
 
 struct CfgLogger {
     // Not loaded from SPIFFS, as this is not loaded yet.
@@ -67,6 +69,30 @@ class Logger {
 
 
     private:
+
+        struct DataStructLog {
+            uint64_t time;
+            String message;
+            uint8_t level;
+
+            DataStructLog(uint64_t _time, String _message, uint8_t _level) : time(_time), message(_message), level(_level) { }
+        };
+
+        struct LinkedListLog : LinkedList3000<DataStructLog> {
+            // LinkedListLog(uint16_t _max_size) : LinkedList3000<DataStructLog>(_max_size, false) { }
+            LinkedListLog(uint16_t _max_size, boolean _allow_growing) : LinkedList3000<DataStructLog>(_max_size, _allow_growing) { }
+            // : LinkedList3000<DataStructSensor>(_max_size, _allow_growing) { }
+
+            void append(uint8_t level, String message) {
+                // Create data structure and add node to linked list
+                // Using this-> as base class/function is templated
+                this->appendNode(new DataStructLog{millis(), message, level});
+            }
+        };
+
+        LinkedListLog linkedListLog = LinkedListLog(3, false);
+
+
         CfgLogger cfgLogger;
 
         bool checkTargetLevel(CfgLogger::Level targetLevel);

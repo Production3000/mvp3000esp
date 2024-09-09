@@ -19,6 +19,13 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include "ESPX.h"
+#ifdef ESP8266
+    extern EspClass ESPX;
+#else
+    extern EspClassX ESPX;
+#endif
+
 /**
  * A templated linked list implementation for the MVP3000 framework.
  * 
