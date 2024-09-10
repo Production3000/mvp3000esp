@@ -113,13 +113,14 @@ class MVP3000 {
         <li>Last restart reason: %14%</li>
         <li>CPU frequency: %15% MHz</li>
         <li>Main loop duration: %16% ms (mean/min/max)</li>
+        <br>
         <li>Log websocket: ws://%2%/wslog </br>
             <textarea readonly rows='3' cols='80'>%17%</textarea> </li> </ul>
-    <h3>Components</h3> <ul>
+    <h3>Framework settings</h3> <ul>
         <li><a href='/net'>Network</a></li>
         <li> %18% </li>
         <li><a href='/netmqtt'>MQTT</a></li> </ul>
-    <h3>Modules</h3> <ul>
+    <h3>Loaded Modules</h3> <ul>
         %20% </ul>
     <h3>Maintenance</h3> <ul>
         <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>

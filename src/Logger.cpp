@@ -45,7 +45,7 @@ void Logger::setup() {
 
 void Logger::write(CfgLogger::Level targetLevel, const char *message) {
     // Store errors, warrnings, usermsg for web display
-    if (targetLevel <= CfgLogger::Level::USER) {
+    if (targetLevel <= CfgLogger::Level::CONTROL) {
         linkedListLog.append(targetLevel, message);
     }
 

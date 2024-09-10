@@ -41,9 +41,6 @@ void setup() {
     // Optional: Set the sensor descriptions
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
 
-    // Optional: Enable adaptive data collection, to grow storage automatically depending on memory usage
-    // xmoduleSensor.setDataCollectionAdaptive();
-
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);
 

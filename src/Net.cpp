@@ -141,7 +141,7 @@ void Net::startAp() {
 
     netState = NET_STATE_TYPE::AP;
     myIp = WiFi.softAPIP();
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started, %s, %s", apSsid.c_str(), WiFi.softAPIP().toString().c_str());
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "AP started: %s, %s", apSsid.c_str(), WiFi.softAPIP().toString().c_str());
 }
 
 

@@ -207,7 +207,7 @@ String NetMqtt::webPageProcessor(uint8_t var) {
         case 55:
             return String(cfgNetMqtt.mqttPort);
 
-        case 60: // Capture 60 and above, limit to 99 (100+ are supposed to be reserved for xmodules)
+        case 60: // Capture 60 and above, limit to 99 (100+ are supposed to be reserved for xmodules)     
         default:
             if (var > 99)
                 return str;
