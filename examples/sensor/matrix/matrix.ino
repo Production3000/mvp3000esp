@@ -35,10 +35,8 @@ String infoDescription = "The MATRIX is a great dummy sensor for testing. It gen
 int32_t data[valueCount];
 
 void setup() {
-    // Set the sensor descriptions
-    xmoduleSensor.cfgXmoduleSensor.setSensorInfo(infoName, infoDescription);
-    // Matrix column count is used for CSV output only: a1,a2,a3,a4;b1,b2,b3,b4;c1 ...
-    xmoduleSensor.cfgXmoduleSensor.dataMatrixColumnCount = columns;
+    // Set the sensor descriptions, matrix column count is used for CSV output: a1,a2,a3,a4;b1,b2,b3,b4;c1 ...
+    xmoduleSensor.setSensorInfo(infoName, infoDescription, "dummy", "a.u.", columns);
 
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);

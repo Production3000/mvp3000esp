@@ -66,7 +66,7 @@ struct LinkedList3000 {
 
     uint16_t getSize() const { return size; }
     uint16_t getMaxSize() const { return max_size; }
-    boolean getAdaptiveSize() const { return allow_growing; }
+    boolean isAdaptive() const { return allow_growing; }
 
 
     /**
@@ -75,7 +75,8 @@ struct LinkedList3000 {
      * @param _max_size The maximum size of the linked list.
      * @param _allow_growing If true, the list can grow beyond the maximum size limit depending on available memory. Default is false.
      */
-    LinkedList3000(uint16_t _max_size, boolean _allow_growing = false) : max_size(_max_size), allow_growing(_allow_growing) { }
+    LinkedList3000(uint16_t size) : max_size(size), allow_growing(false) { }
+    LinkedList3000(uint16_t size, boolean allow_growing) : max_size(size), allow_growing(allow_growing) { }
 
     ~LinkedList3000() {
         clear(); // IMPORTANT: Make sure to also free memory within the dataStruct
@@ -309,7 +310,8 @@ struct DataStructValue {
 
 template <typename T>
 struct LinkedListValue : LinkedList3000<DataStructValue<T>> {
-    LinkedListValue(uint16_t _max_size, boolean _allow_growing = false) : LinkedList3000<DataStructValue<T>>(_max_size, _allow_growing) { }
+    LinkedListValue(uint16_t size) : LinkedList3000<DataStructValue<T>>(size) { }
+    LinkedListValue(uint16_t size, boolean allow_growing) : LinkedList3000<DataStructValue<T>>(size, allow_growing) { }
 
     /**
      * @brief Appends a single value to the linked list.
@@ -400,7 +402,8 @@ struct DataStructArray {
 
 template <typename T>
 struct LinkedListArray : LinkedList3000<DataStructArray<T>> {
-    LinkedListArray(uint16_t _max_size, boolean _allow_growing = false) : LinkedList3000<DataStructArray<T>>(_max_size, _allow_growing) { }
+    LinkedListArray(uint16_t size) : LinkedList3000<DataStructArray<T>>(size) { }
+    LinkedListArray(uint16_t size, boolean allow_growing) : LinkedList3000<DataStructArray<T>>(size, allow_growing) { }
 
     /**
      * @brief Appends an array of values to the linked list.

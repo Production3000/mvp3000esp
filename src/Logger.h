@@ -81,9 +81,7 @@ class Logger {
         };
 
         struct LinkedListLog : LinkedList3000<DataStructLog> {
-            // LinkedListLog(uint16_t _max_size) : LinkedList3000<DataStructLog>(_max_size, false) { }
-            LinkedListLog(uint16_t _max_size, boolean _allow_growing) : LinkedList3000<DataStructLog>(_max_size, _allow_growing) { }
-            // : LinkedList3000<DataStructSensor>(_max_size, _allow_growing) { }
+            LinkedListLog(uint16_t size) : LinkedList3000<DataStructLog>(size) { }
 
             void append(uint8_t level, String message) {
                 // Create data structure and add node to linked list
@@ -96,7 +94,7 @@ class Logger {
         CfgLogger cfgLogger;
 
         uint8_t logStoreLength = 10;
-        LinkedListLog linkedListLog = LinkedListLog(logStoreLength, false);
+        LinkedListLog linkedListLog = LinkedListLog(logStoreLength);
 
         bool checkTargetLevel(CfgLogger::Level targetLevel);
 

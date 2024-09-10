@@ -41,10 +41,19 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         addSetting<uint16_t>("reportingInterval", &reportingInterval, [](uint16_t _) { return true; });
     };
 
-    // Settings that are not known during creating of this config but need init before anything works
+    // Settings that are not known during creation of this config within the framework but need init before anything works
+    // Fixed settings, restored with reboot to value set at compile
 
     // Number of values recorded per measurement, for example one each for temperature, humidity, pressure -> 3
     uint8_t dataValueCount = 0;
+
+    String infoName;
+    String infoDescription;
+    String *sensorTypes;
+    String *sensorUnits;
+
+    // Used for output only, matrix data with a row length, if dataMatrixColumnCount >= dataValueCount it is obviously a single row
+    uint8_t dataMatrixColumnCount = 255;
 
     void initValueCount(uint8_t _dataValueCount) {
         dataValueCount = _dataValueCount;
@@ -53,31 +62,24 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         sensorTypes = new String[dataValueCount];
         delete [] sensorUnits;
         sensorUnits = new String[dataValueCount];
-        for (u_int8_t i = 0; i < dataValueCount; i++) {
-            sensorTypes[i] = "n/a";
-            sensorUnits[i] = "n/a";
-        }
     }
 
-    // Fixed settings, restored with reboot to value set at compile
-
-    String infoName = "n/a";
-    String infoDescription = "n/a";
-    String *sensorTypes;
-    String *sensorUnits;
-    void setSensorInfo(String _infoName,String _infoDescription, String *_sensorTypes, String *_sensorUnits) {
-        setSensorInfo(_infoName, _infoDescription);
+    void setSensorInfo(String _infoName, String _infoDescription, String *_sensorTypes, String *_sensorUnits) {
+        infoName = _infoName;
+        infoDescription = _infoDescription;
         sensorTypes = _sensorTypes;
         sensorUnits = _sensorUnits;
     }
-    void setSensorInfo(String _infoName,String _infoDescription) {
+    void setSensorInfo(String _infoName, String _infoDescription, String _sensorType, String _sensorUnit, uint8_t _dataMatrixColumnCount) {
         infoName = _infoName;
         infoDescription = _infoDescription;
+        for (u_int8_t i = 0; i < dataValueCount; i++) {
+            sensorTypes[i] = _sensorType;
+            sensorUnits[i] = _sensorUnit;
+        }
+        dataMatrixColumnCount = _dataMatrixColumnCount;
     }
 
-    // Data is a matrix with a row length, if dataMatrixColumnCount == dataValueCount it is obviously a single row
-    // Used for output only
-    uint8_t dataMatrixColumnCount = 255;
 };
 
 
@@ -86,17 +88,6 @@ struct CfgXmoduleSensor : CfgJsonInterface {
 class XmoduleSensor : public Xmodule {
 
     public:
-        CfgXmoduleSensor cfgXmoduleSensor;
-
-        // Constructor to re-init arrays for changed value count
-        XmoduleSensor(uint8_t valueCount) {
-            cfgXmoduleSensor.initValueCount(valueCount);
-            dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
-        };
-
-
-        void setup() override;
-        void loop() override;
 
         /**
          * @brief Add a new sample array to the sensor module.
@@ -118,6 +109,41 @@ class XmoduleSensor : public Xmodule {
         void setSampleToIntExponent(int8_t *sampleToIntExponent) {
             dataCollection.processing.setSampleToIntExponent(sampleToIntExponent);
         };
+
+        /**
+         * @brief Set the sensor information.
+         * 
+         * @param infoName The name of the sensor.
+         * @param infoDescription The description of the sensor.
+         * @param sensorTypes The types of the sensor values.
+         * @param sensorUnits The units of the sensor values.
+         * @param dataMatrixColumnCount The number of columns in the data matrix.
+         */
+        void setSensorInfo(String infoName, String infoDescription, String *sensorTypes, String *sensorUnits) {
+            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
+        };
+        void setSensorInfo(String infoName, String infoDescription, String sensorTypes, String sensorUnits, uint8_t dataMatrixColumnCount) {
+            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits, dataMatrixColumnCount);
+        };
+
+        void setDataCollectionAdaptive() {
+            dataCollection.linkedListSensor.allow_growing = true;
+        };
+        
+
+    public:
+        CfgXmoduleSensor cfgXmoduleSensor;
+
+
+        // Constructor to re-init arrays with value count (known only in script, not in framework)
+        XmoduleSensor(uint8_t valueCount) {
+            cfgXmoduleSensor.initValueCount(valueCount);
+            dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
+        };
+
+
+        void setup() override;
+        void loop() override;
 
         void measureOffset();
         bool measureScaling(uint8_t valueNumber, int32_t targetValue);

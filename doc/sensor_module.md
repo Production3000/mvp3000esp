@@ -120,7 +120,7 @@ A brief description of the sensor, its values and their units.
     String sensorUnits[valueCount] = {"&deg;C", "&percnt;"};
 
     // Optional: Set the sensor descriptions
-    xmoduleSensor.cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
+    xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
 
 #### Data is of Matrix-Type
 

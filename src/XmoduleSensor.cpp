@@ -239,7 +239,7 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
         case 113:
             return String(cfgXmoduleSensor.reportingInterval);
         case 114:
-            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
+            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.isAdaptive() ? "adaptive" : "fixed") + ")";
 
         case 121: // Sensor details: type, unit, offset, scaling, float to int exponent
             char message[128];

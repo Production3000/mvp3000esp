@@ -44,7 +44,7 @@ struct DataCollection {
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
     struct LinkedListSensor : LinkedList3000<DataStructSensor> {
-        LinkedListSensor(uint16_t _max_size, boolean _allow_growing) : LinkedList3000<DataStructSensor>(_max_size, _allow_growing) { }
+        LinkedListSensor(uint16_t size) : LinkedList3000<DataStructSensor>(size) { }
 
         void append(uint64_t time, NumberArrayLateInit<int32_t> *data) {
             // Create data structure and add node to linked list
@@ -76,7 +76,7 @@ struct DataCollection {
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
     uint16_t dataStoreLength = 100;
-    LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength, true);
+    LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
     NumberArrayLateInit<int32_t> avgDataSum; // Temporary data storage for averaging

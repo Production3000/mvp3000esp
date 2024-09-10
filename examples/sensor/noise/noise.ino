@@ -50,7 +50,7 @@ uint8_t data4 = 0;
 
 void setup() {
     // Set the sensor descriptions
-    xmoduleSensor.cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
+    xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
 
     // Turn off averaging on the ESP to not mess with the generated noise
     // Any value set via the web interface overrides this, make sure to factory reset the device before working with noise
