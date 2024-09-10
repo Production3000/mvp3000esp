@@ -42,7 +42,7 @@ struct CfgNetCom : public CfgJsonInterface {
 
     // Fixed settings
 
-    boolean hardDisabled = false;
+    boolean isHardDisabled = false;
 
     // Modifiable settings saved to SPIFF
 
@@ -65,7 +65,8 @@ class NetCom {
 
         IPAddress checkSkill(String requestedSkill);
 
-        boolean hardDisabled() { return cfgNetCom.hardDisabled; }
+        void hardDisable() { cfgNetCom.isHardDisabled = true; }
+        boolean isHardDisabled() { return cfgNetCom.isHardDisabled; }
 
     private:
 

@@ -55,6 +55,11 @@ class MVP3000 {
          */
         void logAnsiColor(boolean enable) { logger.ansiColor(enable); };
 
+        /**
+         * @brief Completely disable the UDP discovery service.
+         */
+        void udpHardDisable() { net.netCom.hardDisable(); };
+
     public:
 
         enum class STATE_TYPE: uint8_t {

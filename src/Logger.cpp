@@ -62,15 +62,15 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {
     }
 }
 
-void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount) {
+void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount) {
     String message = "";
     for (uint8_t i = 0; i < dataLength; i++) {
         // Outputs:
         //  1,2,3,4,5,6; for rowLength is max uint8/255
         //  1,2,3;4,5,6; for rowLength is 3
-        // dataMatrixColumnCount defaults to 255, which is the maximum length of a single row
+        // matrixColumnCount defaults to 255, which is the maximum length of a single row
         message += String(dataArray[i]);
-        message += ((i == dataLength - 1) || ((i + 1) % (dataMatrixColumnCount) == 0) ) ? ";" : "," ;
+        message += ((i == dataLength - 1) || ((i + 1) % (matrixColumnCount) == 0) ) ? ";" : "," ;
     }
     write(targetLevel, message.c_str());
 }

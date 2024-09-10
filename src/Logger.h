@@ -66,7 +66,7 @@ class Logger {
         // Plain test output
         void write(CfgLogger::Level targetLevel, const char *message);
         // Output data in CSV format
-        void writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t dataMatrixColumnCount);
+        void writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount);
         // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hellow World", 42);
         void writeFormatted(CfgLogger::Level targetLevel, const char* formatString, ...);
 

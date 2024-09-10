@@ -130,7 +130,7 @@ Matrix column count is used for CSV output only. Together with the number of row
     const uint8_t columns = 4;
     const uint8_t valueCount = rows * columns;
 
-    xmoduleSensor.cfgXmoduleSensor.dataMatrixColumnCount = columns;
+    xmoduleSensor.cfgXmoduleSensor.matrixColumnCount = columns;
 
     -> a1,a2,a3,a4; b1,b2,b3,b4; c1,c2,c3,c4;
     -> a1,a2,a3,a4; b1,b2,b3,b4; c1,c2,c3,c4;

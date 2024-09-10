@@ -38,7 +38,7 @@ void NetCom::setup() {
     mvp.config.readCfg(cfgNetCom);
 
     // This can be completely disabled to allow external UDP uses, in a Xmodule or other.
-    if (cfgNetCom.hardDisabled)
+    if (cfgNetCom.isHardDisabled)
         return;
 
     // Start UDP for discovery and reverse-discovery of this ESP device
@@ -54,7 +54,7 @@ void NetCom::setup() {
 
 void NetCom::loop() {
     // Called from net.loop() only if wifi is up and in client mode, check again
-    if (cfgNetCom.hardDisabled || !cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
+    if (cfgNetCom.isHardDisabled || !cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
         return;
 
     // Check for UDP packet, in that case handle it

@@ -52,8 +52,8 @@ struct CfgXmoduleSensor : CfgJsonInterface {
     String *sensorTypes;
     String *sensorUnits;
 
-    // Used for output only, matrix data with a row length, if dataMatrixColumnCount >= dataValueCount it is obviously a single row
-    uint8_t dataMatrixColumnCount = 255;
+    // Used for output only, matrix data with a row length, if matrixColumnCount >= dataValueCount it is obviously a single row
+    uint8_t matrixColumnCount = 255;
 
     void initValueCount(uint8_t _dataValueCount) {
         dataValueCount = _dataValueCount;
@@ -70,14 +70,14 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         sensorTypes = _sensorTypes;
         sensorUnits = _sensorUnits;
     }
-    void setSensorInfo(String _infoName, String _infoDescription, String _sensorType, String _sensorUnit, uint8_t _dataMatrixColumnCount) {
+    void setSensorInfo(String _infoName, String _infoDescription, String _sensorType, String _sensorUnit, uint8_t _matrixColumnCount) {
         infoName = _infoName;
         infoDescription = _infoDescription;
         for (u_int8_t i = 0; i < dataValueCount; i++) {
             sensorTypes[i] = _sensorType;
             sensorUnits[i] = _sensorUnit;
         }
-        dataMatrixColumnCount = _dataMatrixColumnCount;
+        matrixColumnCount = _matrixColumnCount;
     }
 
 };
@@ -88,6 +88,16 @@ struct CfgXmoduleSensor : CfgJsonInterface {
 class XmoduleSensor : public Xmodule {
 
     public:
+
+        /**
+         * @brief Construct a new Sensor Module object.
+         * 
+         * @param valueCount The number of values simultaneously coming from the sensor(s).
+         */
+        XmoduleSensor(uint8_t valueCount) : Xmodule("Sensor Module", "/sensor") {
+            cfgXmoduleSensor.initValueCount(valueCount);
+            dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
+        };
 
         /**
          * @brief Add a new sample array to the sensor module.
@@ -115,32 +125,37 @@ class XmoduleSensor : public Xmodule {
          * 
          * @param infoName The name of the sensor.
          * @param infoDescription The description of the sensor.
-         * @param sensorTypes The types of the sensor values.
-         * @param sensorUnits The units of the sensor values.
-         * @param dataMatrixColumnCount The number of columns in the data matrix.
+         * @param sensorTypes The types of the sensor values as array.
+         * @param sensorUnits The units of the sensor values as array.
          */
         void setSensorInfo(String infoName, String infoDescription, String *sensorTypes, String *sensorUnits) {
             cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
         };
-        void setSensorInfo(String infoName, String infoDescription, String sensorTypes, String sensorUnits, uint8_t dataMatrixColumnCount) {
-            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits, dataMatrixColumnCount);
+
+        /**
+         * @brief Set the sensor information for a matrix sensor.
+         * 
+         * @param infoName The name of the sensor.
+         * @param infoDescription The description of the sensor.
+         * @param sensorTypes The type of the sensor values.
+         * @param sensorUnits The unit of the sensor values.
+         * @param matrixColumnCount The number of columns in the data matrix.
+         */
+        void setSensorInfo(String infoName, String infoDescription, String sensorTypes, String sensorUnits, uint8_t matrixColumnCount) {
+            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits, matrixColumnCount);
         };
 
+        /**
+         * @brief Set the data collection to adaptive mode, growing depending on available memory.
+         */
         void setDataCollectionAdaptive() {
             dataCollection.linkedListSensor.allow_growing = true;
         };
         
 
     public:
+
         CfgXmoduleSensor cfgXmoduleSensor;
-
-
-        // Constructor to re-init arrays with value count (known only in script, not in framework)
-        XmoduleSensor(uint8_t valueCount) {
-            cfgXmoduleSensor.initValueCount(valueCount);
-            dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
-        };
-
 
         void setup() override;
         void loop() override;

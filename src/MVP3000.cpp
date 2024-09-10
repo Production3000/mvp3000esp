@@ -137,7 +137,7 @@ String MVP3000::webPageProcessor(uint8_t var) {
         case 17:
             return logger.getRecentLog();
         case 18:
-            return (net.netCom.hardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
+            return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
         case 20:
             if (moduleCount == 0)
                 return "<li>None</li>";

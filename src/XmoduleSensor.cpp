@@ -20,11 +20,7 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-
 void XmoduleSensor::setup() {
-    description = "Sensor Module";
-    uri = "/sensor";
-
     if (cfgXmoduleSensor.dataValueCount == 0) {
         mvp.logger.write(CfgLogger::Level::ERROR, "Data value count is zero.");
         return;
@@ -36,7 +32,6 @@ void XmoduleSensor::setup() {
 
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorDelay.start(cfgXmoduleSensor.reportingInterval);
-
 
     // Register sensor module web page
     mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleSensor::webPageProcessor, this, std::placeholders::_1));
@@ -72,21 +67,21 @@ void XmoduleSensor::setup() {
     // Data interface for latest data
     mvp.net.netWeb.registerPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
         return webPageCsvResponseFiller(buffer, maxLen, index, true, [&]() -> String {
-            return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
+            return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
         });
     });
 
     // Data interface for raw CSV data
     mvp.net.netWeb.registerPage(uri + "datasraw", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
         return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
-            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, nullptr);
+            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, nullptr);
         });
     }, "application/octet-stream");
 
     // Data interface for scaled CSV data
     mvp.net.netWeb.registerPage(uri + "datasscaled", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
         return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
-            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing);
+            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
         });
     }, "application/octet-stream");
 
@@ -113,9 +108,9 @@ void XmoduleSensor::loop() {
             sensorDelay.repeat();
 
         // Output data to serial, websocket, MQTT
-        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing).c_str() );
-        webSocketPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing));
-        mqttPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.dataMatrixColumnCount, &dataCollection.processing));
+        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
+        webSocketPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        mqttPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
    }
 }
 

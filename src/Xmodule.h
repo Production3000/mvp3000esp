@@ -19,43 +19,24 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include "NetWeb.h"
-
 
 /**
  * @class Xmodule
  * @brief Base class for modules.
  * 
  * This class provides a base implementation for modules in the MVP3000 system.
- * It defines common methods to ease integration of custom code into the MVP3000 framework, 
- * particularly for interaction and configuration via a web interface.
  */
 class Xmodule {
 
-    /**
-     * @public
-     * @brief Description of the module.
-     */
     public:
-        String description = "MVP3000 module base class";
-        String uri = "/xmodule"; // Leave blank to only list module in web interface but not link it
 
-        /**
-         * @brief Virtual method for module setup.
-         * 
-         * This method needs be implemented in the derived classes to perform module-specific setup tasks.
-         * It is called once from the MVP3000 setup method.
-         */
+        Xmodule(String description) : description(description), uri("") {};
+        Xmodule(String description, String uri) : description(description), uri(uri) {};
+
+        String description;
+        String uri; // Leave blank to only list module in web interface but not link it
+
         virtual void setup() = 0;
-
-        /** 
-         * @brief Virtual method for module loop.
-         * 
-         * This method needs be implemented in the derived classes to perform module-specific loop tasks.
-         * It is called repeatedly from the MVP3000 loop method.
-         * 
-         * @note This method should not have blocking delays AT ALL, as this interferes with the overall performance of the MVP3000 system.
-         */
         virtual void loop() = 0;
 
 };
