@@ -34,6 +34,29 @@ class MVP3000 {
 
     public:
 
+        /**
+         * @brief Add a Xmodule to the MVP3000 system.
+         * 
+         * @param XmoduleSensor Pointer to the module to add.
+         */
+        void addXmodule(Xmodule *XmoduleSensor);
+
+        /**
+         * @brief Log a message at 'user' level.
+         * 
+         * @param message The message to log.
+         */
+        void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };
+
+        /**
+         * @brief Enable or disable ANSI encoding of serial output.
+         * 
+         * @param enable True to enable, false to disable.
+         */
+        void logAnsiColor(boolean enable) { logger.ansiColor(enable); };
+
+    public:
+
         enum class STATE_TYPE: uint8_t {
             GOOD = 0, // Everything is fine
             INIT = 1, // Standard state when booting up until wifi up
@@ -50,28 +73,23 @@ class MVP3000 {
         void setup();
         void loop();
 
+        void delayedRestart(uint32_t delay_ms = 25) { delayedRestart_ms = millis() + delay_ms; };
+
+    private:
+
         // Modules
         static const uint8_t MAX_MODULES = 5;  // Maximum number of modules allowed
         uint8_t moduleCount = 0;
         Xmodule *xmodules[MAX_MODULES];
 
-        void addXmodule(Xmodule *XmoduleSensor);
-
-        // Loop duration statistics
-        uint16_t loopDurationMean_ms = 0;
-        uint16_t loopDurationMax_ms = 0;
-        uint16_t loopDurationMin_ms = std::numeric_limits<uint16_t>::max();
-
-        // Forward internal functions for simplicity
-        void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };
-
-        uint32_t delayedRestart_ms = 0;
-        void delayedRestart(uint32_t delay_ms = 25) { delayedRestart_ms = millis() + delay_ms; };
-
-    private:
         void checkStatus();
 
+        uint32_t delayedRestart_ms = 0;
+
         uint32_t loopLast_ms = 0;
+        uint16_t loopDurationMean_ms = 0;
+        uint16_t loopDurationMax_ms = std::numeric_limits<uint16_t>::min();
+        uint16_t loopDurationMin_ms = std::numeric_limits<uint16_t>::max();
         void updateLoopDuration();
 
 
@@ -89,9 +107,10 @@ class MVP3000 {
         <li>Uptime: %13%</li>
         <li>Last restart reason: %14%</li>
         <li>CPU frequency: %15% MHz</li>
-        <li>Main loop duration: %15% ms (mean/min/max)</li> </ul>
+        <li>Main loop duration: %16% ms (mean/min/max)</li>
+        <li>Log websocket: ws://%2%/wslog </br>
+            <textarea readonly rows='3' cols='80'>%17%</textarea> </li> </ul>
     <h3>Components</h3> <ul>
-        <li>Log websocket: ws://%17%/wslog </li>
         <li><a href='/net'>Network</a></li>
         <li> %18% </li>
         <li><a href='/netmqtt'>MQTT</a></li> </ul>

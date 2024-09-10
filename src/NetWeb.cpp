@@ -216,6 +216,8 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt p
             return str;
         case 1: // Device ID
             return String(ESPX.getChipId());
+        case 2: // Device IP
+            return mvp.net.myIp.toString();
 
         // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
         default:

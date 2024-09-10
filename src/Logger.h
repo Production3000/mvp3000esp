@@ -23,13 +23,14 @@ limitations under the License.
 #include "_LinkedList.h"
 
 
+
 struct CfgLogger {
-    // Not loaded from SPIFFS, as this is not loaded yet.
+    // Not loaded from SPIFFS, as thatis not started yet.
     
     enum Level: uint8_t {
-        USER = 0,
-        ERROR = 1,
-        WARNING = 2,
+        ERROR = 0,
+        WARNING = 1,
+        USER = 2,
         CONTROL = 3,
         DATA = 4,
         INFO = 5,
@@ -57,6 +58,10 @@ class Logger {
         boolean errorReported = false;
 
         void setup();
+
+        void ansiColor(boolean enable) { cfgLogger.ansiColor = enable; }
+
+        String getRecentLog();
        
         // Plain test output
         void write(CfgLogger::Level targetLevel, const char *message);
@@ -65,15 +70,12 @@ class Logger {
         // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hellow World", 42);
         void writeFormatted(CfgLogger::Level targetLevel, const char* formatString, ...);
 
-        void colorOutput(boolean enable) { cfgLogger.ansiColor = enable; }
-
-
     private:
 
         struct DataStructLog {
             uint64_t time;
-            String message;
             uint8_t level;
+            String message;
 
             DataStructLog(uint64_t _time, String _message, uint8_t _level) : time(_time), message(_message), level(_level) { }
         };
@@ -90,10 +92,11 @@ class Logger {
             }
         };
 
-        LinkedListLog linkedListLog = LinkedListLog(3, false);
-
 
         CfgLogger cfgLogger;
+
+        uint8_t logStoreLength = 10;
+        LinkedListLog linkedListLog = LinkedListLog(logStoreLength, false);
 
         bool checkTargetLevel(CfgLogger::Level targetLevel);
 

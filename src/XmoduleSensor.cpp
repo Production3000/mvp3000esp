@@ -240,8 +240,6 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
             return String(cfgXmoduleSensor.reportingInterval);
         case 114:
             return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.getAdaptiveSize() ? "adaptive" : "fixed") + ")";
-        case 115:
-            return mvp.net.myIp.toString();
 
         case 121: // Sensor details: type, unit, offset, scaling, float to int exponent
             char message[128];

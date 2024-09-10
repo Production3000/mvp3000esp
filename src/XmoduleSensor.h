@@ -163,7 +163,7 @@ class XmoduleSensor : public Xmodule {
 <h3>Data Interface</h3> <ul>
     <li>Data storage: %114%</li>
     <li>Current data: <a href='/sensordata'>/sensordata</a> </li>
-    <li>Live websocket: ws://%115%/wssensor </li>
+    <li>Live websocket: ws://%2%/wssensor </li>
     <li>CSV data: <a href='/sensordatasscaled'>/sensordatasscaled</a>, <a href='/sensordatasraw'>/sensordatasraw</a> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>

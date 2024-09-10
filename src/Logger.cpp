@@ -43,21 +43,14 @@ void Logger::setup() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void Logger::write(CfgLogger::Level targetLevel, const char *message) {                                 // TODO feature: store last error messages and warnings and serve via web
+void Logger::write(CfgLogger::Level targetLevel, const char *message) {
+    // Store errors, warrnings, usermsg for web display
+    if (targetLevel <= CfgLogger::Level::USER) {
+        linkedListLog.append(targetLevel, message);
+    }
+
     if (!checkTargetLevel(targetLevel))
         return;
-
-    if ((targetLevel == CfgLogger::Level::ERROR) || (targetLevel == CfgLogger::Level::WARNING)) {
-        linkedListLog.append(targetLevel, message);
-        linkedListLog.loopNodes([&](DataStructLog *node , uint8_t index) {
-            Serial.print("Log: ");
-            Serial.print(node->level);
-            Serial.print(" ");
-            Serial.println(node->message);
-            Serial.print(" ");
-            Serial.println(node->time);
-        }, true);
-    }
 
     // Serial output
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
@@ -92,6 +85,13 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatStri
     write(targetLevel, message);
 }
 
+String Logger::getRecentLog() {
+    String str = "";
+    linkedListLog.loopNodes([&](DataStructLog *node , uint8_t index) {
+        str += mvp.helper.millisToTime(node->time) + " " + node->message + "\n";
+    }, true);
+    return str;
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 

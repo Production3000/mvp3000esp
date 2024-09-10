@@ -97,7 +97,7 @@ void MVP3000::updateLoopDuration() {
 
         // Update min and max loop duration
         loopDurationMax_ms = max(loopDurationMax_ms, loopDuration);
-        loopDurationMin_ms = min(loopDurationMin_ms, loopDuration);
+        loopDurationMin_ms = min(loopDurationMin_ms, loopDuration); // Is often 0, there are lots of loops where nothing happens
 
         // Calculate mean loop duration
         if (loopDurationMean_ms == 0)
@@ -117,6 +117,10 @@ void MVP3000::updateLoopDuration() {
 
 String MVP3000::webPageProcessor(uint8_t var) {
     String str = ""; // Needs to be defined outside of switch
+
+
+
+
     switch (var) {
         case 11:
             return String(__DATE__) + " " + String(__TIME__);
@@ -131,7 +135,7 @@ String MVP3000::webPageProcessor(uint8_t var) {
         case 16:
             return String(loopDurationMean_ms) + " / " + String(loopDurationMin_ms) + " / " + String(loopDurationMax_ms);
         case 17:
-            return net.myIp.toString();
+            return logger.getRecentLog();
         case 18:
             return (net.netCom.hardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
         case 20:
