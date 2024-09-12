@@ -99,7 +99,7 @@ class MVP3000 {
 
 
         String webPageProcessor(uint8_t var);
-        char* webPage = R"===(
+        char const* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>

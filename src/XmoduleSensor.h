@@ -70,12 +70,12 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         sensorTypes = _sensorTypes;
         sensorUnits = _sensorUnits;
     }
-    void setSensorInfo(String _infoName, String _infoDescription, String _sensorType, String _sensorUnit, uint8_t _matrixColumnCount) {
+    void setSensorInfo(String _infoName, String _infoDescription, String _pixelType, String _pixelUnit, uint8_t _matrixColumnCount) {
         infoName = _infoName;
         infoDescription = _infoDescription;
         for (u_int8_t i = 0; i < dataValueCount; i++) {
-            sensorTypes[i] = _sensorType;
-            sensorUnits[i] = _sensorUnit;
+            sensorTypes[i] = _pixelType;
+            sensorUnits[i] = _pixelUnit;
         }
         matrixColumnCount = _matrixColumnCount;
     }
@@ -137,12 +137,12 @@ class XmoduleSensor : public Xmodule {
          * 
          * @param infoName The name of the sensor.
          * @param infoDescription The description of the sensor.
-         * @param sensorTypes The type of the sensor values.
-         * @param sensorUnits The unit of the sensor values.
+         * @param pixelType The type of the pixel value.
+         * @param pixelUnit The unit of the pixel value.
          * @param matrixColumnCount The number of columns in the data matrix.
          */
-        void setSensorInfo(String infoName, String infoDescription, String sensorTypes, String sensorUnits, uint8_t matrixColumnCount) {
-            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits, matrixColumnCount);
+        void setSensorInfo(String infoName, String infoDescription, String pixelType, String pixelUnit, uint8_t matrixColumnCount) {
+            cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, matrixColumnCount);
         };
 
         /**
@@ -187,7 +187,7 @@ class XmoduleSensor : public Xmodule {
 
         String webPageProcessor(uint8_t var);
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
-        char* webPage = R"===(
+        char const* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -195,8 +195,8 @@ class XmoduleSensor : public Xmodule {
 <body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
     <p><a href='/'>Home</a></p>
 <h3>%101%</h3> <ul>
-    <li>Product: %102% </li>
-    <li>Description: %103% </li> </ul>
+    <li>%102% </li>
+    <li>%103% </li> </ul>
 <h3>Data Handling</h3> <ul>
     <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%111%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%112%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>

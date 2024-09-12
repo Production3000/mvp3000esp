@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-// Example of matrix-type data in the Sensor Module
 
 #include <MVP3000.h>
 extern MVP3000 mvp;
@@ -24,19 +23,21 @@ const uint8_t rows = 3;
 const uint8_t columns = 4;
 const uint8_t valueCount = rows * columns;
 
-// Init sensor module
-XmoduleSensor xmoduleSensor(valueCount);
-
 // Add a description of the sensor for the web interface, types and units are omitted
 String infoName = "MATRIX";
-String infoDescription = "The MATRIX is a great dummy sensor for testing. It generates 'data' of a typical matrix-sensor with somewhat similar values for all dots.";
+String infoDescription = "The MATRIX is a dummy sensor for testing. It generates 'data' of a typical matrix-sensor with somewhat similar values for all pixels.";
+String pixelType = "pixel";
+String pixelUnit = "counts";
 
 // Local data variable
 int32_t data[valueCount];
 
+// Init sensor module
+XmoduleSensor xmoduleSensor(valueCount);
+
 void setup() {
     // Set the sensor descriptions, matrix column count is used for CSV output: a1,a2,a3,a4;b1,b2,b3,b4;c1 ...
-    xmoduleSensor.setSensorInfo(infoName, infoDescription, "dummy", "a.u.", columns);
+    xmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, columns);
 
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);

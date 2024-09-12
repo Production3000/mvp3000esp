@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-// Basic example for the Sensor Module
 
 #include <MVP3000.h>
 extern MVP3000 mvp;
@@ -22,20 +21,20 @@ extern MVP3000 mvp;
 // Adjust value count for the used sensor (e.g. temperature, rH)
 const uint8_t valueCount = 2;
 
-// Init sensor module
-XmoduleSensor xmoduleSensor(valueCount);
-
-// Optional: Add a description of the sensor for the web interface
-// ATTENTION with the sensor units:
-//  Degree is non-ASCII, use &deg; or its code \xB0 
-//  Percent symbol (or its code \x25) messes up the string parser, use &percnt; instead
-String infoName = "BASIC";
-String infoDescription = "The BASIC is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
-String sensorTypes[valueCount] = {"T", "rH"};
-String sensorUnits[valueCount] = {"&deg;C", "&percnt;"};
+// Add a description of the sensor for the web interface
+String infoName = "MAGNITUDE";
+String infoDescription = "The MAGNITUDE is a dummy sensor for testing. It generates 'data' with values of vastly different orders of magnitude.";
+String sensorTypes[valueCount] = {"rnd 10/20", "rnd -100/200"};
+String sensorUnits[valueCount] = {"au", "au"};
 
 // Local data variable
 int32_t data[valueCount];
+
+// Init sensor module
+XmoduleSensor xmoduleSensor(valueCount);
+
+// IMPORTANT: Do not ever use blocking delay() in the loop as it will impair web performance of the ESP and thus the framework.
+LimitTimer timer(50);
 
 void setup() {
     // Optional: Set the sensor descriptions
@@ -55,15 +54,15 @@ void loop() {
     // Do the work
     mvp.loop();
 
-    // Create random data: +10..20, -100..200, +1000..2000, -10..20, ...
-    for (uint8_t i = 0; i < valueCount; i++) {
-        int32_t mag = 10 * pow(10, i % 3);
-        data[i] = (i % 2 == 0) ? random(mag, mag * 2) : random(-mag * 2, -mag);
+    // Simulate a real-world sensor delay of 50 ms
+    if (timer.justFinished()) {
+        // Create random data: 10..20, -100..-200, 1000..2000, -10..-20, 100..200, -1000..-2000
+        for (uint8_t i = 0; i < valueCount; i++) {
+            int32_t mag = 10 * pow(10, i % 3);
+            data[i] = (i % 2 == 0) ? random(mag, mag * 2) : random(-mag * 2, -mag);
+        }
+
+        // Add new data. The values are averaged by default, expected output is close to 15, -150, 1500, -15, ... 
+        xmoduleSensor.addSample(data);
     }
-
-    // Add new data. The values are averaged by default, expected output is close to 15, -150, 1500, -15, ... 
-    xmoduleSensor.addSample(data);
-
-    // Do not ever use blocking delay in actual code
-    delay(50);
 }

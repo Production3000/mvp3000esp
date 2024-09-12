@@ -14,26 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-// Generates 'sensor' data with more or less deterministic noise patterns
 
 #include <random>
+
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
 // Value count given by noise types
 const uint8_t valueCount = 5;
 
-// Init sensor module
-XmoduleSensor xmoduleSensor(valueCount);
-
 // Add a description of the sensor for the web interface
 String infoName = "Noise Generator";
-String infoDescription = "A variety of common and more or less deterministic noise patterns are simulated. This sensor is a good starting point to explore the MVP3000 Evaluation scripts.";
+String infoDescription = "Dummy sensor for testing. A variety of common and more or less deterministic noise patterns are simulated.";
 String sensorTypes[valueCount] = {"Alternating", "Sawtooth", "Zick-zack", "Random walk", "Gauss dist."};
 String sensorUnits[valueCount] = {"au", "au", "au", "au", "au"};
 
 // Local data variable
 int32_t data[valueCount];
+
+// Init sensor module
+XmoduleSensor xmoduleSensor(valueCount);
 
 // See https://cplusplus.com/reference/random/normal_distribution/
 // Despite IntelliSense not liking it, the following is correct

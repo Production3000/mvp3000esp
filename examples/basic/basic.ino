@@ -17,6 +17,8 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
+// IMPORTANT: Do not ever use blocking delay() in the loop as it will impair web performance of the ESP and thus the framework.
+LimitTimer timer(2000);
 
 void setup() {
     // Arduino IDE: Disable color-coded output to serial console
@@ -26,15 +28,12 @@ void setup() {
     mvp.setup();
 }
 
-uint64_t lastMillis = 0;
-
 void loop() {
     // Do the work
     mvp.loop();
 
-    // IMPORTANT: Do not ever use blocking delay in actual code as it will impair performance of the framework, web interface and other modules
-    if (millis() - lastMillis > 2000) {
-        lastMillis = millis();
-        mvp.log("This text will be printed in purple to Serial and the log-websocket.");
+    // Do not flood the log output
+    if (timer.justFinished()) {
+        mvp.log("Every 2 s this text will be printed to serial in purple and to the log-websocket.");
     }
 }

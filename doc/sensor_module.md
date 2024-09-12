@@ -7,12 +7,15 @@ The sensor module receives sensor data from the user script and processes it. It
 <!-- vscode-markdown-toc -->
 * [Contents](#Contents)
 * [Getting Started](#GettingStarted)
-	* [Example Scripts](#ExampleScripts)
 	* [First steps](#Firststeps)
 	* [Web Interface](#WebInterface)
-	* [WebSocket and MQTT](#WebSocketandMQTT)
-	* [Code and Options](#CodeandOptions)
-* [Sensor Data Handling Details](#SensorDataHandlingDetails)
+* [Example Scripts](#ExampleScripts)
+	* [Dummy Sensors for Testing](#DummySensorsforTesting)
+	* [Real Sensor Breakouts](#RealSensorBreakouts)
+* [Custom Implementation](#CustomImplementation)
+	* [General Functionality](#GeneralFunctionality)
+	* [Options](#Options)
+* [Data Handling Details](#DataHandlingDetails)
 	* [Sample-to-Int Exponent](#Sample-to-IntExponent)
 	* [Offset, Scaling, Tare](#OffsetScalingTare)
 * [Troubleshooting](#Troubleshooting)
@@ -26,70 +29,83 @@ The sensor module receives sensor data from the user script and processes it. It
 
 ## <a name='GettingStarted'></a>Getting Started
 
-### <a name='ExampleScripts'></a>Example Scripts
 
-The example sensor scripts generate random 'data' of common sensor types. They can be used for testing evaluation scripts and developing display options.
-
- *  [basic.ino](/examples/sensor/basic/basic.ino): A general implementation of the sensor module to show its functionality. It sets basic options and feeds generated 'data' into the MVP3000 framework.
- *  [matrix.ino](/examples/sensor/matrix/matrix.ino): Typical matrix-type sensor 'data'.
- *  [noise.ino](/examples/sensor/noise/noise.ino): The generated 'data' has more or less deterministic noise patterns. It can be used to better understand the noisy output from a real sensor. 
 
 ### <a name='Firststeps'></a>First steps
 
-The [basic.ino](/examples/sensor/basic/basic.ino) example is a good choice to get started.
+The [magnitude.ino](/examples/sensor/magnitude/magnitude.ino) example is a good choice to get started. It is not a real sensor so you do not need any hardware. Compile a copy of the sketch and listen to the serial port using your IDE (baud rate: 115200).
 
-The sensor module is initialized with the number of values the sensor measures simultaneously/within one cycle and passed to the MVP framework during setup. In the main loop the sensor data is passed to the framework, as an array of numeric types such as `int32_t *` as in the following example.
+Use the [WebSocket sensor example](/examples/websocket/websocket_sensor.html) or the [MQTT sensor example](/examples/mqtt/mqtt_sensor.html) to display the sensor data in a browser or store it in a remote database. Both allow to the end-user to set/clear [tare](#offset-scaling-tare) and thus 'zero' the current values.
 
-    #include <MVP3000.h>
-    extern MVP3000 mvp;
+To use WebSockets obviously the receiving device needs to be able to reach the ESP device over the network.
+
+To use MQTT obviously both the ESP device and the receiving device need to be able to access the MQTT broker. Make sure the correct URL/IP is set in the web interface of the ESP and in the browser. For testing purposes one can use the public *test.mosquitto.org* broker.
+
+### <a name='WebInterface'></a>Web Interface
+
+ *  Set how many individual measurements should be averaged before being reported.
+ *  Set the nomber of measurements to average for offset and scaling measurement
+ *  Set a minimum wait time to wait between accepting new measurement data.
+ *  Data interface and download.
+ *  Start offset and scaling measurements.
+ *  Reset offset and scaling.
+
+
+## <a name='ExampleScripts'></a>Example Scripts
+
+### <a name='DummySensorsforTesting'></a>Dummy Sensors for Testing
+
+The dummy sensor scripts generate 'data'. They can be used for testing evaluation scripts and developing display options.
+
+ *  [magnitude.ino](/examples/sensor/magnitude/magnitude.ino): Outputs sensor 'data' with values of vastly different orders of magnitude.
+ *  [matrix.ino](/examples/sensor/matrix/matrix.ino): Outputs sensor 'data' of a typical matrix-sensor with somewhat similar values for all pixels. 
+ *  [noise.ino](/examples/sensor/noise/noise.ino): The generated 'data' has more or less deterministic noise patterns. It can be used to better understand the noisy output of a real sensor. 
+
+### <a name='RealSensorBreakouts'></a>Real Sensor Breakouts
+
+ *  [BME680](/examples/sensor/bme680/bme680.ino): Environmental sensor measuring temperature, humidity, pressure, and air resistance.
+ *  HX711 load cell amplifier: weight. (planned)
+
+
+## <a name='CustomImplementation'></a>Custom Implementation
+
+Please also see the documentation of the framework regarding [custom implementation](/README.md#custom-implementation).
+
+### <a name='GeneralFunctionality'></a>General Functionality
+
+The sensor module is initialized with the number of values the sensor measures simultaneously/within one cycle. Also a local data array is created, of a numeric type such as `int32_t *` or `float_t *`.
 
     const uint8_t valueCount = 2;
     XmoduleSensor xmoduleSensor(valueCount);
 
     int32_t data[valueCount];
 
-    void setup() {
-        // Your custom code
-        mvp.addXmodule(&xmoduleSensor);
-        mvp.setup();
-    }
+The sensor object is passed to the framework during setup. This needs to be done before initializing the framework.
 
-    void loop() {
-        // Your custom code
-        xmoduleSensor.addSample(data);
-        mvp.loop();
-    }
+    mvp.addXmodule(&xmoduleSensor);
 
-### <a name='WebInterface'></a>Web Interface
+Read-out of the sensor needs to be done by the user in custom code. The data, if available, is passed to the framework as an array 
 
- *  ...
+    xmoduleSensor.addSample(data);
 
+### <a name='Options'></a>Options
 
-### <a name='WebSocketandMQTT'></a>WebSocket and MQTT
+A description of the sensor and its measurement units can be added for identification. Some special characters need to be encoded:
 
-Use the [WebSocket sensor example](/examples/websocket/websocket_sensor.html) or the [MQTT sensor example](/examples/mqtt/mqtt_sensor.html) to display the sensor data in a browser or store it in a remote database. Both allow to set/clear [Tare](#OffsetScalingTare).
+ *  Degree ° is non-ASCII, use `&deg;`
+ *  The percent symbol % is used as delimineter by the string parser, use `&percnt;`  
 
-To use WebSockets obviously the receiving device needs to be able to reach the ESP device over the network.
+For a typical sensor:
 
-To use MQTT obviously both the ESP device and the receiving device need to be able to access the MQTT broker. Make sure the correct URL/IP is set in the web interface of the ESP and in the browser. For testing purposes one can use the public *test.mosquitto.org* broker.
+    xmoduleSensor.setSensorInfo("EnvSensor", "Environmental data: temperature, rel. humitiy", {"T", "rH"}, {"&deg;C", "&percnt;"});
 
-### <a name='CodeandOptions'></a>Code and Options
-
-Add a description of the sensor and its measurement units for the web interface. Please note, some special characters need to be encoded: Degree ° is non-ASCII, use `&deg;` and the percent symbol % is used by the string parser, use `&percnt;`
-
-    String infoName = "BASIC";
-    String infoDescription = "The BASIC is a great dummy sensor for testing. It generates 'data' of a typical combi-sensor with vastly different ranges, for example temperature and relative humidity.";
-    String sensorTypes[valueCount] = {"T", "rH"};
-    String sensorUnits[valueCount] = {"&deg;C", "&percnt;"};
-
-    xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
-
-In case of a array like matrix sensor, the columncount allows formatted CSV output: -> a1,a2,a3,a4; b1,b2,b3,b4; c1,c2,c3,c4; -> a1, [...].
+For a matrix sensor the column count is set to allow formatted CSV output: -> a1,a2,a3,a4;b1,b2,b3,b4;c1,c2,c3,c4; -> a1, [...].
 
     const uint8_t columns = 4;
-    xmoduleSensor.setSensorInfo(infoName, infoDescription, "pixel", "a.u.", columns);
+    xmoduleSensor.setSensorInfo("Matrix", "A pixel array with the size 4x3.", "pixel", "counts", columns);
 
-Shift the decimal point of the sample values by the given exponent, see section [Sample-to-Int Exponent](#Sample-to-IntExponent) for more information.
+
+Shift the decimal point of the sample values by the given exponent, see section [Sample-to-Int Exponent](#sample-to-int-exponent) for more information. Also see the [BME680](/examples/sensor/bme680/bme680.ino) example for a use case.
 
     int8_t exponent[valueCount] = {-1, 2};
     xmoduleSensor.setSampleToIntExponent(exponent);
@@ -99,7 +115,7 @@ The number of measurements stored is limited by the available memory on the ESP.
     xmoduleSensor.setDataCollectionAdaptive();
 
 
-## <a name='SensorDataHandlingDetails'></a>Sensor Data Handling Details
+## <a name='DataHandlingDetails'></a>Data Handling Details
 
 ### <a name='Sample-to-IntExponent'></a>Sample-to-Int Exponent
 
@@ -132,20 +148,22 @@ Many sensors are already calibrated during fabrication. However, sensor response
 
 **Scaling** stretches the current measurement to a given value. Typically this is the upper end of the intended measurement range.
 
-**Tare** is a second offset, see [Wikipedia](https://en.wikipedia.org/wiki/Tare_weight). It offers a quick way to zero the current value, but without premanently changing the measured offset and scaling. It can be used to remove any small and slow drift of the sensor, for example caused by a change of environmental temperature.
+**Tare** is a second offset, see [Wikipedia](https://en.wikipedia.org/wiki/Tare_weight). It offers a quick way to zero the current value without premanently changing the measured offset and scaling. It can be used to remove any small and slow drift of the sensor, for example caused by a change of environmental temperature.
 
-[IMG]
+![Offset and scaling of raw data](offsetscalinginfo.png "Offset and scaling of raw data")
 
 NOTE (obvious): Scaling in the MVP3000 framework is done linearly. The data coming from the sensor needs to be of (more or less) linear nature. This is very often the case already. However sometimes a different slope is a better representation of the real world and used instead. One example are the *1/x* inverse conductance and resistivity. In this case the measurements need to be inverted/linearized before passing them to the framwork to use the scaling feature. 
 
 
 ## <a name='Troubleshooting'></a>Troubleshooting
 
-Q: The raw sensor values are fine, but the averaged values reported by the framework are zero/strange?  
-A: Check offset and scaling via the web interface. Possibly factory reset the device.
+See also [Troubleshooting](/README.md#troubleshooting) of the whole framework.
 
-Q: Some settings in the code are ignored?  
-A: The value set via the web interface supersede the value set during compile time. Possibly factory reset the device.
+Q: The raw sensor values are fine, but the averaged values reported by the framework are zero/strange?  
+A: Check offset and scaling via the web interface. Look for extremely large values and for scaling additionally for values close to zero. Make sure Tare is cleared (a restart would do this). Possibly factory reset the device.
+
+Q: The reported values are still strange?  
+A: Check if there is a conversion of data types that does not work as intended.
 
 
 ## <a name='License'></a>License
