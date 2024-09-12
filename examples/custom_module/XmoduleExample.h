@@ -25,19 +25,18 @@ extern MVP3000 mvp;
 
 struct CfgXmoduleExample : public CfgJsonInterface {
 
-    // Modifiable settings saved to SPIFF
-    uint16_t editableNumber = 22222;
-
     // Fixed settings, restored with reboot to value set at compile  
     uint16_t fixedNumber = 10101;
 
-    CfgXmoduleExample() : CfgJsonInterface("XmoduleExample") {
-        // Note above the config name, used as SPIFF file name
+    // Modifiable settings saved to SPIFFS
+    uint16_t editableNumber = 22222;
 
-        // Initialize settings for load/save to SPIFF:
-        //  var name string, to allow web-based form input (stored as int though)
-        //  pointer to actual variable
-        //  check function with optional range checks
+    // The config name is used as SPIFFS file name
+    CfgXmoduleExample() : CfgJsonInterface("XmoduleExample") {
+        // Initialize settings for load/save to SPIFFS:
+        //  name of the variable, to allow input from a web-form
+        //  reference pointer to actual variable
+        //  function for range checks
         addSetting<uint16_t>(
             "editableNumber",
             &editableNumber,
@@ -50,20 +49,22 @@ struct CfgXmoduleExample : public CfgJsonInterface {
 
 class XmoduleExample : public Xmodule {
     public:
+
+        // The module name and the uri for its web interface. Leave the uri blank to disable the web interface.
+        XmoduleExample() : Xmodule("Xmodule Example", "/example") { };
+
         CfgXmoduleExample cfgXmoduleExample;
 
         void setup() override {
-            description = "Xmodule Example";
-            uri = "/example";
 
-            // Read config from SPIFF
+            // Read config from SPIFFS
             mvp.config.readCfg(cfgXmoduleExample);
 
             // Define the module's web interface
-            mvp.net.netWeb.registerPage(uri, webPage, std::bind(&webPageProcessor, this, std::placeholders::_1));
+            mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleExample::webPageProcessor, this, std::placeholders::_1));
 
             // Register config
-            mvp.net.netWeb.registerCfg(&cfgXmoduleExample);
+            mvp.net.netWeb.registerCfg(&cfgXmoduleExample, std::bind(&XmoduleExample::saveCfgCallback, this));
 
             // Register action
             mvp.net.netWeb.registerAction("someAction", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
@@ -72,7 +73,6 @@ class XmoduleExample : public Xmodule {
                 return true;
             }, "Some action was performed.");
                 
-
             // Custom setup code here
         }
 
@@ -80,11 +80,16 @@ class XmoduleExample : public Xmodule {
             // Custom loop code here
         }
 
-        // Module custom methods
+        void saveCfgCallback() {
+            mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
+        }
 
+        // Module custom methods
         void someAction() {
             mvp.logger.write(CfgLogger::INFO, "Some action performed.");
         }
+
+        // Web interface
 
         String webPageProcessor(uint8_t var) {
 
@@ -119,10 +124,10 @@ class XmoduleExample : public Xmodule {
     <style>table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
 <body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
     <p><a href='/'>Home</a></p>
-    <h3>%1%</h3>
+    <h3>%100%</h3>
     <h3>Settings</h3> <ul>
-        <li>Some fixed number: %11% </li>
-        <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%12%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
+        <li>Some fixed number: %101% </li>
+        <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
     <h3>Action</h3> <ul>
         <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
 <p>&nbsp;</body></html>         

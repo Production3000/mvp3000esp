@@ -7,7 +7,7 @@ The sensor module receives sensor data from the user script and processes it. It
 <!-- vscode-markdown-toc -->
 * [Contents](#Contents)
 * [Getting Started](#GettingStarted)
-	* [First steps](#Firststeps)
+	* [First Steps](#FirstSteps)
 	* [Web Interface](#WebInterface)
 * [Example Scripts](#ExampleScripts)
 	* [Dummy Sensors for Testing](#DummySensorsforTesting)
@@ -31,7 +31,7 @@ The sensor module receives sensor data from the user script and processes it. It
 
 
 
-### <a name='Firststeps'></a>First steps
+### <a name='FirstSteps'></a>First Steps
 
 The [magnitude.ino](/examples/sensor/magnitude/magnitude.ino) example is a good choice to get started. It is not a real sensor so you do not need any hardware. Compile a copy of the sketch and listen to the serial port using your IDE (baud rate: 115200).
 
@@ -44,7 +44,7 @@ To use MQTT obviously both the ESP device and the receiving device need to be ab
 ### <a name='WebInterface'></a>Web Interface
 
  *  Set how many individual measurements should be averaged before being reported.
- *  Set the nomber of measurements to average for offset and scaling measurement
+ *  Set the number of measurements to average for offset and scaling measurement
  *  Set a minimum wait time to wait between accepting new measurement data.
  *  Data interface and download.
  *  Start offset and scaling measurements.
@@ -62,6 +62,8 @@ The dummy sensor scripts generate 'data'. They can be used for testing evaluatio
  *  [noise.ino](/examples/sensor/noise/noise.ino): The generated 'data' has more or less deterministic noise patterns. It can be used to better understand the noisy output of a real sensor. 
 
 ### <a name='RealSensorBreakouts'></a>Real Sensor Breakouts
+
+The real world examples are demonstrating implementations only. Please know what you do before using the data output.
 
  *  [BME680](/examples/sensor/bme680/bme680.ino): Environmental sensor measuring temperature, humidity, pressure, and air resistance.
  *  HX711 load cell amplifier: weight. (planned)
@@ -93,11 +95,11 @@ Read-out of the sensor needs to be done by the user in custom code. The data, if
 A description of the sensor and its measurement units can be added for identification. Some special characters need to be encoded:
 
  *  Degree ° is non-ASCII, use `&deg;`
- *  The percent symbol % is used as delimineter by the string parser, use `&percnt;`  
+ *  The percent symbol % is used as deliminator by the string parser, use `&percnt;`  
 
 For a typical sensor:
 
-    xmoduleSensor.setSensorInfo("EnvSensor", "Environmental data: temperature, rel. humitiy", {"T", "rH"}, {"&deg;C", "&percnt;"});
+    xmoduleSensor.setSensorInfo("EnvSensor", "Environmental data: temperature, rel. humidity", {"T", "rH"}, {"&deg;C", "&percnt;"});
 
 For a matrix sensor the column count is set to allow formatted CSV output: -> a1,a2,a3,a4;b1,b2,b3,b4;c1,c2,c3,c4; -> a1, [...].
 
@@ -119,7 +121,7 @@ The number of measurements stored is limited by the available memory on the ESP.
 
 ### <a name='Sample-to-IntExponent'></a>Sample-to-Int Exponent
 
-Data handling within the MVP3000 framework is done as integer. When working with floats/decimal raw data or when rounding after averaging it is important to maintain sufficient significent digits. This is done by shifting the decimal point of the raw value *x* using an exponent *n* multiplier to yield the decimal-shifted value *x' = x \* 10<sup>n</sup>*. This value *x'* is stored, averaged, and scaled by the sensor module, and reported. The following table shows the 'encoding' step on the ESP.
+Data handling within the MVP3000 framework is done as integer. When working with floats/decimal raw data or when rounding after averaging it is important to maintain sufficient significant digits. This is done by shifting the decimal point of the raw value *x* using an exponent *n* multiplier to yield the decimal-shifted value *x' = x \* 10<sup>n</sup>*. This value *x'* is stored, averaged, and scaled by the sensor module, and reported. The following table shows the 'encoding' step on the ESP.
 
 |           | Raw value | Exponent  | Multiplicator | Reported int              |
 | ---       | ---       | ---       | ---           | ---                       |
@@ -148,11 +150,11 @@ Many sensors are already calibrated during fabrication. However, sensor response
 
 **Scaling** stretches the current measurement to a given value. Typically this is the upper end of the intended measurement range.
 
-**Tare** is a second offset, see [Wikipedia](https://en.wikipedia.org/wiki/Tare_weight). It offers a quick way to zero the current value without premanently changing the measured offset and scaling. It can be used to remove any small and slow drift of the sensor, for example caused by a change of environmental temperature.
+**Tare** is a second offset, see [Wikipedia](https://en.wikipedia.org/wiki/Tare_weight). It offers a quick way to zero the current value without permanently changing the measured offset and scaling. It can be used to remove any small and slow drift of the sensor, for example caused by a change of environmental temperature.
 
 ![Offset and scaling of raw data](offsetscalinginfo.png "Offset and scaling of raw data")
 
-NOTE (obvious): Scaling in the MVP3000 framework is done linearly. The data coming from the sensor needs to be of (more or less) linear nature. This is very often the case already. However sometimes a different slope is a better representation of the real world and used instead. One example are the *1/x* inverse conductance and resistivity. In this case the measurements need to be inverted/linearized before passing them to the framwork to use the scaling feature. 
+NOTE (obvious): Scaling in the MVP3000 framework is done linearly. The data coming from the sensor needs to be of (more or less) linear nature. This is very often the case already. However sometimes a different slope is a better representation of the real world and used instead. One example are the *1/x* inverse conductance and resistivity. In this case the measurements need to be inverted/linearized before passing them to the framework to use the scaling feature. 
 
 
 ## <a name='Troubleshooting'></a>Troubleshooting

@@ -1,59 +1,66 @@
 # Developing Custom Modules for MVP3000
 
-[Custom Modules](/examples/custom_module/).
+Most users will not need to create a custom module, particularly if a similar one already exists. We are happy to help implementing a missing feature.
 
-## Create a Custom Module
+<!-- vscode-markdown-toc -->
+* [Example Custom Module](#ExampleCustomModule)
+	* [The Configuration Struct](#TheConfigurationStruct)
+	* [The Module](#TheModule)
+	* [In Setup()](#InSetup)
+	* [Contribute](#Contribute)
+* [License](#License)
 
-### The Configuration Struct
+<!-- vscode-markdown-toc-config
+	numbering=false
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+## <a name='ExampleCustomModule'></a>Example Custom Module
+
+Please refer to the simplified custom module example [class](/examples/custom_module/custom_module.h) when reading the following sections. Main parts of the code are explained there. Its [implementation](/examples/custom_module/custom_module.ino) is ready to compile.
+
+### <a name='TheConfigurationStruct'></a>The Configuration Struct
 
 The configuration struct includes two types of settings:
- *  Editable by the user, typically via the web interface. Those can easily be saved/loaded to/from SPIFF. Please note, the values set by the user override the initial values set in code.
+ *  Editable by the user, typically via the web interface. Those can easily be saved/loaded to/from SPIFFS.
  *  Fixed settings during compile time.
 
-Example configuration struct with comments:
+Please note, the values set by the user and saved to SPIFFS override the initial values set in code.
 
-    struct CfgXmoduleExample : public CfgJsonInterface {
+### <a name='TheModule'></a>The Module
 
-        // Modifiable settings saved to SPIFF
-        uint16_t editableNumber = 22222;
+The constructor defines the module name and the uri for its web interface. Leave the uri blank to disable the web interface.
 
-        // Fixed settings, restored with reboot to value set at compile  
-        uint16_t fixedNumber = 10101;
-
-        CfgXmoduleExample() : CfgJsonInterface("XmoduleExample") {
-            // Note above the config name, used as SPIFF file name
-
-            // Initialize settings for load/save to SPIFF:
-            //  var name string, to allow web-based form input (stored as int though)
-            //  pointer to actual variable
-            //  check function with optional range checks
-            addSetting<uint16_t>(
-                "editableNumber",
-                &editableNumber,
-                [](uint16_t _x) { return (_x < 11111) ? false : true; }
-            );
-        }
-
-    };
-
-### The Module
-
-The custom module needs to overwrite at least the setup() method:
- *  setup() ... called once during initialization, loads 
+The custom module needs to overwrite the setup and loop methods:
+ *  setup() ... called once during initialization
  *  loop() ... called repeatedly from the main loop of the program
 
-The most important part for integration of the module in the MVP3000 framwork is the definition of the modules web interface and available actions.
+In order to provide a web interface define:
+ *  webPage ... String containing the HTML template with placeholders.
+ *  webPageProcessor() ... Function to return the placeholder value.
 
-    class XmoduleExample : public Xmodule {
+### <a name='InSetup'></a>In Setup()
+
+    // Read config from SPIFFS
+    mvp.config.readCfg(...);
+
+    // Define the module's web interface
+    mvp.net.netWeb.registerPage(...);
+
+    // Register config
+    mvp.net.netWeb.registerCfg(...);
+
+    // Register action
+    mvp.net.netWeb.registerAction(...);
 
 
+### <a name='Contribute'></a>Contribute
 
-## Integration with the Main Script
+We are looking forward to your input on this project, be it bug reports, feature requests, or a successful implementation that does something cool. In the latter case we will gladly link you.
 
-The custom module can easily be integrated with the MVP3000 framework.
-
-    mvp.addXmodule(&xmoduleExample);
-
+Please follow the [GitHub guide](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project) on how to contribute code to this project.
 
 
 ## <a name='License'></a>License

@@ -24,7 +24,7 @@ More code will be shared in the future, mainly regarding data evaluation and set
 * [Contents](#Contents)
 * [Getting Started](#GettingStarted)
 	* [Installation](#Installation)
-	* [First steps](#Firststeps)
+	* [First Steps](#FirstSteps)
 	* [LED Status Indication](#LEDStatusIndication)
 	* [Web Interface](#WebInterface)
 		* [Network](#Network)
@@ -55,7 +55,7 @@ To install MVP3000 as Arduino library please clone or [download](https://github.
  
 A listing in the library managers of PlatformIO and Arduino is targeted for a future release.
 
-### <a name='Firststeps'></a>First steps
+### <a name='FirstSteps'></a>First Steps
 
 A good starting point is the [basic example](/examples/basic/basic.ino). It does not include any module, and thus is not very useful beyond testing.
 
@@ -83,7 +83,7 @@ As a next step proceed with using one of the [modules](#modules).
 The LED indicates the device status:
 
  *  On - Connected as client to WiFi network.
- *  Slow blinking - Openen an access point without password to connect to for setup.
+ *  Slow blinking - Opened an access point without password to connect to for setup.
  *  Blinking - Connecting to WiFi network using the given credentials.
  *  Fast blinking - Fatal error, MVP3000 not operational. This should never happen!
 
@@ -105,7 +105,7 @@ The main page prints basic system information and the most recent log entries. I
 
 #### <a name='MQTTCommunication'></a>MQTT Communication
 
-For more information on MQTT and developer ressources visit [Eclipse Paho](https://projects.eclipse.org/projects/iot.paho/developer).
+For more information on MQTT and developer resources visit [Eclipse Paho](https://projects.eclipse.org/projects/iot.paho/developer).
 
  *  Enable/disable.
  *  Connection status.
@@ -171,7 +171,7 @@ Please see also the available [Helper Functions and Classes](/doc/helper_func.md
 
 ### <a name='CustomModules'></a>Custom Modules
 
-Most users will not need to create a custom module. Also we are happy to help in case you are missing a feature.
+Most users will not need to create a custom module, particularly if a similar one already exists. We are happy to help implementing a missing feature.
 
 In order to develop and integrate a new module into the MVP 3000 framework please follow the documentation to [Custom Modules](/doc/custom_modules.md). 
 
