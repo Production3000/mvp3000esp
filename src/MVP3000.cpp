@@ -123,7 +123,7 @@ String MVP3000::webPageProcessor(uint8_t var) {
         case 12:
             return String(ESP.getFreeHeap()) + " / " + String(ESPX.getHeapFragmentation());
         case 13:
-            return String(helper.upTime());
+            return String(helper.millisToTime(millis()));
         case 14:
             return String(ESPX.getResetReason().c_str());
         case 15:

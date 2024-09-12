@@ -58,7 +58,7 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {
     }
     // Network output, omit DATA level
     if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
-        webSocketPrint(mvp.helper.upTime() + " " + message);
+        webSocketPrint(mvp.helper.millisToTime(millis()) + " " + message);
     }
 }
 
@@ -113,7 +113,7 @@ bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
 
 void Logger::serialPrint(CfgLogger::Level targetLevel, const char *message) {
     // Prefix with timestamp
-    Serial.print(mvp.helper.upTime());
+    Serial.print(mvp.helper.millisToTime(millis()));
 
     // Add type literal
     switch (targetLevel) {

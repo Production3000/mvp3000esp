@@ -70,8 +70,14 @@ void Config::readCfg(JsonInterface &cfg) {
     if (!readFileToJson(cfg.cfgName.c_str()))
         return;
     // Import settings from JSON
-    cfg.importFromJson(jsonDoc);
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config loaded: %s", cfg.cfgName.c_str());
+    if (!cfg.importFromJson(jsonDoc)) {
+        // JSON vs. content mismatch, remove file
+        removeFile(cfg.cfgName.c_str());
+        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Mismatch between loaded JSON and expected content, deleting: %s", cfg.cfgName.c_str());
+    } else {
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config loaded: %s", cfg.cfgName.c_str());
+    }
+    // Cleanup for next
     jsonDoc.clear(); 
 }
 

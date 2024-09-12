@@ -35,6 +35,7 @@ More code will be shared in the future, mainly regarding data evaluation and set
 	* [General Functionality](#GeneralFunctionality)
 	* [No Blocking delay() on ESP](#NoBlockingdelayonESP)
 	* [Options](#Options)
+	* [Helper Functions and Classes](#HelperFunctionsandClasses)
 	* [Custom Modules](#CustomModules)
 	* [Contribute](#Contribute)
 * [Troubleshooting](#Troubleshooting)
@@ -166,6 +167,8 @@ The serial output is color-coded using ANSI escape sequences. If your serial mon
 The framework uses UDP auto-discovery to find local servers. In case this interferes with your code it can be completely turned off.
 
     mvp.udpHardDisable();
+
+### <a name='HelperFunctionsandClasses'></a>Helper Functions and Classes
 
 Please see also the available [Helper Functions and Classes](/doc/helper_func.md).
 

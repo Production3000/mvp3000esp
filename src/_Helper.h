@@ -19,49 +19,26 @@ limitations under the License.
 
 #include <Arduino.h>
 
-// void NetWeb::sendFormatted(const char* messageFormatString, ...) {
-    // char message[WEB_CHUNK_LENGTH];
-    // va_list args;
-    // va_start(args, messageFormatString);
-    // vsnprintf(message, sizeof(message), messageFormatString, args);
-    // va_end(args);
-
-    // server.sendContent(message);
-// }
-
-// struct MyString : public String {
-//     int format(char const * const fmt, ...) {
-//         char buff[256];
-//         va_list argList;
-//         va_start(argList, fmt);
-//         int const len = vsnprintf(buff, sizeof(buff)/sizeof(*buff),
-//             fmt, argList);
-//         va_end(argList);
-
-//         *((String*) this) = buff;
-//         return len;
-//     }
-// };
-
 
 struct Helper {
+
+    /**
+     * @brief Check if a string is a valid decimal number
+     * 
+     * @param str String to check
+     */
+    bool isValidDecimal(const char *str) { return _checkNumberType(String(str), false); };
+    bool isValidDecimal(String str) { return _checkNumberType(str, false); };
 
     /**
      * @brief Check if a string is a valid integer
      * 
      * @param str String to check
      */
-    bool isValidInteger(String str) { return isValidDecimal(str, true); };
-    bool isValidInteger(const char *str) { return isValidDecimal(String(str), true); };
+    bool isValidInteger(const char *str) { return _checkNumberType(String(str), true); };
+    bool isValidInteger(String str) { return _checkNumberType(str, true); };
 
-    /**
-     * @brief Check if a string is a valid decimal number
-     * 
-     * @param str String to check
-     * @param limitToInteger If true, only integers are allowed (better use the overload isValidInteger)
-     */
-    bool isValidDecimal(const char *str, boolean limitToInteger) { return isValidDecimal(String(str), limitToInteger); };
-    bool isValidDecimal(String str, boolean limitToInteger = false)  {
+    bool _checkNumberType(String str, boolean limitToInteger)  {
         // Empty string is not an integer
         if (str.length() < 1)
             return false;
@@ -93,11 +70,14 @@ struct Helper {
     }
 
 
+///////////////////////////////////////////////////////////////////////////////////
 
     /**
      * @brief Convert milliseconds to a time string
      * 
      * @param total_ms Milliseconds to convert
+     * 
+     * @return Time string in the format "d hh:mm:ss"
      */
     String millisToTime(uint64_t total_ms)  {
         uint64_t total_s = total_ms / 1000;
@@ -112,12 +92,8 @@ struct Helper {
         return String(buffer);
     }
 
-    /**
-     * @brief Get the current uptime in a time string
-     */
-    String upTime() { return millisToTime(millis()); };
 
-
+///////////////////////////////////////////////////////////////////////////////////
 
     /**
      * @brief Convert a string to a (quasi) unique hash
