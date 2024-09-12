@@ -198,11 +198,13 @@ bool Config::readFile(const char *fileName, std::function<bool(File& file)> read
     // Remove leading '/', there should be none
     if (fileName[0] == '/')
         fileName = fileName + 1;
-    // Add leading '/', copy filename one character shifted, add .json
-    char pathFileName[strlen(fileName) + 1 + 5];
+    // Add leading '/', copy filename one character shifted, add .json, terminate string
+    uint8_t len = strlen(fileName);
+    char pathFileName[1 + len + 5 + 1];
     pathFileName[0] = '/';
     strcpy(pathFileName + 1, fileName);
-    strcpy(pathFileName + 1 + strlen(fileName), ".json");
+    strcpy(pathFileName + 1 + len, ".json");
+    pathFileName[1 + len + 5] = '\0';
 
     File file = SPIFFS.open(pathFileName, "r");
     // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
