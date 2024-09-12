@@ -24,7 +24,8 @@ limitations under the License.
 #define MVP3000_LED
 
 #include <Arduino.h>
-#include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
+
+#include "_Helper_LimitTimer.h"
 
 
 struct CfgLed {             
@@ -60,7 +61,7 @@ class Led {
 
         CfgLed cfgLed;
 
-        millisDelay ledDelay;
+        LimitTimer ledTimer = LimitTimer((uint8_t)LED_TIMING_TYPE::OFF);
 
         void checkChangeStatus();
 

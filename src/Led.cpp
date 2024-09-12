@@ -38,9 +38,8 @@ void Led::loop() {
     checkChangeStatus();
 
     // Delay finished
-    if (ledDelay.justFinished()) {
+    if (ledTimer.justFinished()) {
         toggle();
-        ledDelay.repeat();
     }
 }
 
@@ -73,22 +72,15 @@ void Led::checkChangeStatus() {
     switch (targetTiming) {
         case LED_TIMING_TYPE::OFF:
             off();
-            ledDelay.stop();
+            ledTimer.stop();
             break;
         case LED_TIMING_TYPE::ON:
             on();
-            ledDelay.stop();
+            ledTimer.stop();
             break;
         default:
-            // Best fit for transition, toggle LED if:
-            //  target delay is shorter than old delay and has already passed
-            //  target delay is longer than old delay and half has already passed
-            if ( (ledDelay.getStartTime() > (uint16_t)targetTiming) || ( (ledDelay.getStartTime() > (uint16_t)targetTiming / 2) && ((uint16_t)targetTiming < (uint16_t)ledTiming) ) )
-                toggle();
-
-            // Restart with new delay
-            ledDelay.stop();
-            ledDelay.start((uint32_t)targetTiming);
+            // Restart with new delay. The timing during this transition is of course weird.
+            ledTimer.restart((uint32_t)targetTiming);
             break;
     }
 

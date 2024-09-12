@@ -165,10 +165,13 @@ void Net::connectClient() {
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s/%s", cfgNet.clientSsid.c_str(), cfgNet.clientPass.c_str());
 }
 
-void Net::WiFiGotIP() {
+void Net::WiFiGotIP() { // 
+    // Filter double-call, maybe because of auto-reconnect within the ESP
+    if (netState == NET_STATE_TYPE::CLIENT)
+        return;
     netState = NET_STATE_TYPE::CLIENT;
     clientConnectFails = 0;
-    // Reconnect endlessly to a previously sucessfully connected network (until reboot)
+    // Reconnect endlessly to a previously successfully connected network (until reboot)
     clientConnectSuccess = true;
     myIp = WiFi.localIP();
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connection established: %s", WiFi.localIP().toString().c_str() );

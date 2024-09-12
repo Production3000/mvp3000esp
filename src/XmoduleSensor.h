@@ -18,11 +18,12 @@ limitations under the License.
 #define MVP3000_XMODULESENSOR
 
 #include <Arduino.h>
-#include <ArduinoJson.h>
-#include <millisDelay.h> // https://github.com/PowerBroker2/SafeString
 
-#include "Config.h"
+#include <ArduinoJson.h>
+
 #include "Xmodule.h"
+
+#include "_Helper_LimitTimer.h"
 
 #include "XmoduleSensor_DataCollection.h"
 
@@ -171,7 +172,7 @@ class XmoduleSensor : public Xmodule {
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
-        millisDelay sensorDelay;
+        LimitTimer sensorTimer = LimitTimer(0);
 
         // Offset and scaling
         boolean offsetRunning = false;
@@ -181,7 +182,7 @@ class XmoduleSensor : public Xmodule {
 
         void measureOffsetScalingFinish();
 
-        void networkCtrlCallback(char* data); // Callback for to receive controll commands from MQTT and websocket
+        void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
         std::function<void(const String &message)> mqttPrint; // Function to print to the MQTT topic
         std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
 

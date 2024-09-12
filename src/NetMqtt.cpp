@@ -123,7 +123,7 @@ void NetMqtt::setMqttState() {
     } else {
         mqttState = MQTT_STATE::NOBROKER;
     }
-    connectTimer.reset();
+    connectTimer.restart();
 }
 
 void NetMqtt::connectMqtt() {

@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include "Config.h"
 
 /**
  * @class Xmodule

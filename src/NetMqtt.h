@@ -36,8 +36,9 @@ limitations under the License.
     extern EspClassX ESPX;
 #endif
 
+#include "_Helper_LimitTimer.h"
+
 #include "NetMqtt_TopicList.h"
-#include "_HelNEWper.h"
 
 
 struct CfgNetMqtt : public CfgJsonInterface {

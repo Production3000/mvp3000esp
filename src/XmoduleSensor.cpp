@@ -31,7 +31,7 @@ void XmoduleSensor::setup() {
     mvp.config.readCfg(dataCollection.processing);
 
     if (cfgXmoduleSensor.reportingInterval > 0)
-        sensorDelay.start(cfgXmoduleSensor.reportingInterval);
+        sensorTimer.restart(cfgXmoduleSensor.reportingInterval);
 
     // Register sensor module web page
     mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleSensor::webPageProcessor, this, std::placeholders::_1));
@@ -103,9 +103,7 @@ void XmoduleSensor::loop() {
     }
 
     // Act only if remaining is 0: was never started or just finished
-    if (sensorDelay.remaining() == 0) {
-        if (sensorDelay.justFinished()) // || !sensorDelay.isRunning()
-            sensorDelay.repeat();
+    if (sensorTimer.justFinished()) {
 
         // Output data to serial, websocket, MQTT
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
@@ -122,7 +120,7 @@ void XmoduleSensor::measureOffset() {
         return;
 
     // Stop interval
-    sensorDelay.stop();
+    sensorTimer.stop();
 
     // Restart data collection with new averaging
     dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
@@ -144,7 +142,7 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
     dataCollection.processing.setScalingTarget(valueNumber - 1, targetValue);
 
     // Stop interval
-    sensorDelay.stop();
+    sensorTimer.stop();
 
     // Restart data collection with new averaging
     dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
@@ -175,9 +173,8 @@ void XmoduleSensor::measureOffsetScalingFinish() {
     clearTare();
     dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.sampleAveraging);
 
-    // Restart interval, if set
-    if (cfgXmoduleSensor.reportingInterval > 0)
-        sensorDelay.start(cfgXmoduleSensor.reportingInterval);
+    // Restart interval
+    sensorTimer.restart();
 }
 
 void XmoduleSensor::resetOffset() {
