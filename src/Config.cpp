@@ -178,33 +178,22 @@ void Config::removeFile(const char *fileName) {
     if (!fileSystemOK)
         return;
 
+    SPIFFS.remove(fileNameCompletor(fileName));
+}
+
+String Config::fileNameCompletor(const char *fileName) {
     // Remove leading '/', there should be none
     if (fileName[0] == '/')
         fileName = fileName + 1;
-    // Add leading '/', copy filename one character shifted, add .json
-    char pathFileName[strlen(fileName) + 1 + 5];
-    pathFileName[0] = '/';
-    strcpy(pathFileName + 1, fileName);
-    strcpy(pathFileName + 1 + strlen(fileName), ".json");
-
-    SPIFFS.remove(pathFileName);
+    // Add leading '/' and ending .json
+    return "/" + String(fileName) + ".json";
 }
-
 
 bool Config::readFile(const char *fileName, std::function<bool(File& file)> readerFunc) {
     if (!fileSystemOK)
         return false;
 
-    // Remove leading '/', there should be none
-    if (fileName[0] == '/')
-        fileName = fileName + 1;
-    // Add leading '/', copy filename one character shifted, add .json, terminate string
-    uint8_t len = strlen(fileName);
-    char pathFileName[1 + len + 5 + 1];
-    pathFileName[0] = '/';
-    strcpy(pathFileName + 1, fileName);
-    strcpy(pathFileName + 1 + len, ".json");
-    pathFileName[1 + len + 5] = '\0';
+    String pathFileName = fileNameCompletor(fileName);
 
     File file = SPIFFS.open(pathFileName, "r");
     // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
@@ -234,14 +223,7 @@ bool Config::writeFile(const char *fileName, std::function<bool(File& file)> wri
     if (!fileSystemOK)
         return false;
 
-    // Remove leading '/', there should be none
-    if (fileName[0] == '/')
-        fileName = fileName + 1;
-    // Add leading '/', copy filename one character shifted, add .json
-    char pathFileName[strlen(fileName) + 1 + 5];
-    pathFileName[0] = '/';
-    strcpy(pathFileName + 1, fileName);
-    strcpy(pathFileName + 1 + strlen(fileName), ".json");
+    String pathFileName = fileNameCompletor(fileName);
 
     // Open file, automatically created if not existing
     File file = SPIFFS.open(pathFileName, "w");
