@@ -75,21 +75,8 @@ struct CfgJsonInterface : public JsonInterface {
         T *value; // This is a pointer to the actual value
         std::function<bool(T)> checkValue;
 
-        /**
-         * @brief Default constructor
-         * 
-         * @param _value The value to check and set.
-         * @param _checkValue A function to check if the value is valid.
-         */
-        // SettingCore() {};
         SettingCore(T *_value, std::function<bool(T)> _checkValue) : value(_value), checkValue(_checkValue) { };
 
-        /**
-         * @brief Check if the value is valid and set it if so.
-         * 
-         * @param _value The value to check and set.
-         * @return True if the value is valid and was set, false otherwise.
-         */
         bool checkValueAndSet(T _value) {
             if (!checkValue(_value))
                 return false;
@@ -99,7 +86,7 @@ struct CfgJsonInterface : public JsonInterface {
     };
 
     // Main setting structure, minimalistic linked list
-    struct SettingMain {
+    struct SettingNode {
         uint32_t hash; // Hash of the key
 
         uint8_t type; // 0 = boolean, 1 = int, 2 = String
@@ -109,30 +96,30 @@ struct CfgJsonInterface : public JsonInterface {
             SettingCore<String>* s;
         } settingCore;
 
-        SettingMain* next;
+        SettingNode* next = nullptr;;
 
         /**
-         * @brief Default constructor
-         * Overloaded to select the type-specific settings core based on the value type.
+         * @brief Default constructor, overloaded to select the type-specific settings core based on the value type.
          * 
          * @param _hash The hash of the key-string.
          * @param _value The value of the setting.
          * @param checkValue A function to check if the value is valid.
          */
-        SettingMain() {}; // Default constructor
-        SettingMain(uint32_t _hash, boolean *_value, std::function<bool(boolean)> checkValue) : hash(_hash), type(0) {
+        SettingNode() {}; // Default constructor
+        SettingNode(uint32_t _hash, boolean *_value, std::function<bool(boolean)> checkValue) : hash(_hash), type(0) {
             settingCore.b = new SettingCore<boolean>(_value, checkValue);
         };
-        SettingMain(uint32_t _hash, uint16_t *_value, std::function<bool(uint16_t)> checkValue) : hash(_hash), type(1) {
+        SettingNode(uint32_t _hash, uint16_t *_value, std::function<bool(uint16_t)> checkValue) : hash(_hash), type(1) {
             settingCore.i = new SettingCore<uint16_t>(_value, checkValue);
         };
-        SettingMain(uint32_t _hash, String *_value, std::function<bool(String)> checkValue) : hash(_hash), type(2) {
+        SettingNode(uint32_t _hash, String *_value, std::function<bool(String)> checkValue) : hash(_hash), type(2) {
             settingCore.s = new SettingCore<String>(_value, checkValue);
         };
     };
 
     // Minimalistic linked list
-    SettingMain* head;
+    SettingNode* head = nullptr; // First added setting
+    SettingNode* tail = nullptr;
 
     /**
      * @brief Add a setting to the configuration.
@@ -144,9 +131,14 @@ struct CfgJsonInterface : public JsonInterface {
      */
     template <typename T>
     void addSetting(String key, T *value, std::function<bool(T)> checkValue) {
-        SettingMain* newSetting = new SettingMain(helper.hashStringDjb2(key.c_str()), value, checkValue);
-        newSetting->next = head;
-        head = newSetting;
+        SettingNode* newSetting = new SettingNode(helper.hashStringDjb2(key.c_str()), value, checkValue);
+        if (head == nullptr) {
+            head = newSetting;
+            tail = newSetting;
+        } else {
+            tail->next = newSetting;
+            tail = newSetting;
+        }
     }
 
     /**
@@ -155,8 +147,8 @@ struct CfgJsonInterface : public JsonInterface {
      * @param jsonDoc The JSON document to export the data to.
      */
     void exportToJson(JsonDocument &jsonDoc) {
-        SettingMain* current = head;
-        while (current != NULL) {
+        SettingNode* current = head;
+        while (current != nullptr) {
             switch (current->type) {
                 case 0:
                     jsonDoc[String(current->hash)] = *current->settingCore.b->value; // Dereference
@@ -180,8 +172,8 @@ struct CfgJsonInterface : public JsonInterface {
     bool importFromJson(JsonDocument &jsonDoc) {
         // Loop through all settings and compare with hashes in JSON document
         bool success = true;
-        SettingMain* current = head;
-        while (current != NULL) {
+        SettingNode* current = head;
+        while (current != nullptr) {
             String hashString = String(current->hash);
             if (jsonDoc.containsKey(hashString)) {
                 // Matching hash found, switch to type and check/set the value
@@ -195,6 +187,9 @@ struct CfgJsonInterface : public JsonInterface {
                     case 2: // String
                         success &= current->settingCore.s->checkValueAndSet(jsonDoc[hashString].as<String>());
                         break;
+                    default:
+                        Serial.println("NOT IMPLEMENTED TYPE!");
+                        success = false;
                 }
             }
             current = current->next;
@@ -210,8 +205,8 @@ struct CfgJsonInterface : public JsonInterface {
      */
     bool updateSingleValue(String key, String value) {    
         // Loop through all settings to find the correct one    
-        SettingMain* current = head;
-        while (current != NULL) {
+        SettingNode* current = head;
+        while (current != nullptr) {
             if (current->hash == helper.hashStringDjb2(key.c_str())) {
                 // Found the setting, switch to its type and check/set the value
                 switch (current->type) {
