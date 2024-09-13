@@ -35,16 +35,6 @@ void NetWeb::setup() {
     // Initialize cfgList
     webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-
-    // Register actions
-    registerAction("restart", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
-        mvp.delayedRestart(25); // Restarts after 25 ms
-        return true;
-    });
-    registerAction("reset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
-        mvp.config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
-        return true;
-    }, "Factory reset initiated, this takes some 10 s ...");
     
     // Start server, independent of wifi status
     server.begin();

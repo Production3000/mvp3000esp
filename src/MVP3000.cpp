@@ -27,8 +27,19 @@ void MVP3000::setup() {
     led.setup();
 
     net.setup();
+
     // Register home page
     net.netWeb.registerPage("/", webPage, std::bind(&MVP3000::webPageProcessor, this, std::placeholders::_1));
+
+    // Register actions
+    net.netWeb.registerAction("restart", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
+        delayedRestart(25); // Restarts after 25 ms
+        return true;
+    });
+    net.netWeb.registerAction("reset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
+        config.asyncFactoryResetDevice((args == 3) && (argKey(2) == "keepwifi")); // If keepwifi is checked it is present in the args, otherwise not
+        return true;
+    }, "Factory reset initiated, this takes some 10 s ...");
 
     // Modules
     for (uint8_t i = 0; i < moduleCount; i++) {
