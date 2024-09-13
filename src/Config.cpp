@@ -198,19 +198,19 @@ bool Config::readFile(const char *fileName, std::function<bool(File& file)> read
     File file = SPIFFS.open(pathFileName, "r");
     // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
     if (!file || file.isDirectory()) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File not found for reading: %s", pathFileName);
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File not found for reading: %s", pathFileName.c_str());
         return false;
     }
 
     // Empty file, remove. This should never happen I think.
     if (file.size() == 0) {
         SPIFFS.remove(pathFileName);
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File empty, removed: %s", pathFileName);
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File empty, removed: %s", pathFileName.c_str());
         return false;
     }
     
     // Load good
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Content read from file: %s", pathFileName);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Content read from file: %s", pathFileName.c_str());
 
     // Execute the read function, specific to content type: json or custom
     boolean result = readerFunc(file);
@@ -229,18 +229,18 @@ bool Config::writeFile(const char *fileName, std::function<bool(File& file)> wri
     File file = SPIFFS.open(pathFileName, "w");
     // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
     if (!file || file.isDirectory()) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Failed to open file for writing: %s", pathFileName);
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Failed to open file for writing: %s", pathFileName.c_str());
         return false;
     }
     
     // Execute the write function, specific to content type
     if (!writerFunc(file)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Failed to write to file: %s", pathFileName);
+        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Failed to write to file: %s", pathFileName.c_str());
         file.close();
         return false;
     }
 
-    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Content written to file: %s", pathFileName);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Content written to file: %s", pathFileName.c_str());
     file.close();
     return true;
 }
