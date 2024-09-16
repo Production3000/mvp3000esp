@@ -83,7 +83,7 @@ struct Helper {
         uint64_t total_s = total_ms / 1000;
         uint16_t days = total_s / 86400; // 24*60*60
         uint32_t remaining_s = total_s % 86400;
-        uint8_t hours = total_s / 3600; // 60*60
+        uint8_t hours = remaining_s / 3600; // 60*60
         remaining_s = total_s % 3600;
         uint8_t minutes = remaining_s / 60;
         uint8_t seconds = remaining_s % 60;

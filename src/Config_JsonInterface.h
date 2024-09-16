@@ -96,7 +96,7 @@ struct CfgJsonInterface : public JsonInterface {
             SettingCore<String>* s;
         } settingCore;
 
-        SettingNode* next = nullptr;;
+        SettingNode* next = nullptr;
 
         /**
          * @brief Default constructor, overloaded to select the type-specific settings core based on the value type.
