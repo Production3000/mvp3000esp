@@ -150,7 +150,7 @@ class XmoduleSensor : public Xmodule {
          * @brief Set the data collection to adaptive mode, growing depending on available memory.
          */
         void setDataCollectionAdaptive() {
-            dataCollection.linkedListSensor.allow_growing = true;
+            dataCollection.linkedListSensor.enableAdaptiveGrowing();
         };
         
 

@@ -305,7 +305,18 @@ struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
 
     boolean allow_growing = false;
 
+    /**
+     * @brief Get adaptive growing status.
+     * 
+     * @return true if the list is allowed to grow, false if the list is static.
+     */
     boolean isAdaptive() const { return allow_growing; }
+
+
+    /**
+     * @brief Enable adaptive growing of the linked list.
+     */
+    void enableAdaptiveGrowing() { allow_growing = true; }
 
     /**
      * @brief Grows the maximum size of the linked list if enough memory is available.
@@ -321,6 +332,11 @@ struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
         }
     }
 
+    /**
+     * @brief Appends a node to the linked list. Tries to adapt the list size limit if it is reached.
+     * 
+     * @param newDataStruct The data structure to be passed on to be stored in the linked list.
+     */
     void appendDataStruct(T* newDataStruct) {
         growMaxSize();
         LinkedListNEW3000<T>::appendDataStruct(newDataStruct);
