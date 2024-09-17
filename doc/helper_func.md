@@ -8,9 +8,11 @@
 	* [Constructor and Functions](#ConstructorandFunctions)
 	* [Usage Example](#UsageExample)
 * [Linked List](#LinkedList)
-	* [Concept](#Concept)
 	* [Predefined Lists](#PredefinedLists)
-	* [Custom Lists](#CustomLists)
+		* [LinkedList3000](#LinkedList3000)
+		* [LinkedList3001](#LinkedList3001)
+		* [LinkedList3010](#LinkedList3010)
+	* [Implementation Example](#ImplementationExample)
 * [License](#License)
 
 <!-- vscode-markdown-toc-config
@@ -42,12 +44,12 @@ The LimitTimer class provides a mechanism for creating non-blocking millisecond 
 
 ### <a name='ConstructorandFunctions'></a>Constructor and Functions
 
-Constructor:
+##### Constructor
 
  *  `LimitTimer(uint32_t interval_ms)`: Initializes the timer with the specified interval and no limit of iterations.
  *  `LimitTimer(uint32_t interval_ms, uint8_t limit_count)`: Initializes the timer with the specified interval and limits the number of iterations.
 
-Functions:
+##### Methods
 
  *  `bool justFinished()`: Checks if an interval has passed. Returns true on the first call and every time the interval elapses. If the limit is set and reached, the timer stops. Otherwise it is automatically restarted.
  *  `bool plusOne()`: Checks if an additional interval has passed since the iteration limit was reached.
@@ -81,11 +83,67 @@ Functions:
 
 ## <a name='LinkedList'></a>Linked List
 
-### <a name='Concept'></a>Concept
+A templated linked list implementation for the MVP3000 framework. The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
+
+ * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
+ * 3001 extends bare: appendUnique, findByContent, removeByContent - dataStruct needs equals() method
+ * 3010 extends bare: bookmarkByIndex, hasBookmark, moveBookmark - dataStruct has no requirements
+ * 3011 combines 3001 and 3010
+
 
 ### <a name='PredefinedLists'></a>Predefined Lists
 
-### <a name='CustomLists'></a>Custom Lists
+#### <a name='LinkedList3000'></a>LinkedList3000
+
+##### Constructor
+
+* `LinkedList3000(uint16_t size)`: Initializes the linked list with the specified maximum size.
+* `LinkedList3000()`: Default constructor with a maximum size of 1.
+
+##### Methods
+
+* `void append(T* newDataStruct)`: Appends a node to the linked list. Removes the oldest node if the list is full.
+* `void clear()`: Clears the linked list.
+* `void loop(std::function<void(T*&, uint16_t)> callback, boolean reverse = false)`: Loops through all elements in the linked list and calls the given callback function.
+* `T* getNewestData()`: Returns the newest data in the list.
+* `T* getOldestData()`: Returns the oldest data in the list.
+* `uint16_t getSize() const`: Returns the current size of the list.
+* `uint16_t getMaxSize() const`: Returns the maximum size of the list.
+
+#### <a name='LinkedList3001'></a>LinkedList3001
+
+Extends LinkedList3000 with additional functionalities: appendUnique, findByContent, and removeByContent. The data structure needs an `equals()` method.
+
+##### Constructor
+
+* `LinkedList3001(uint16_t size)`: Initializes the linked list with the specified maximum size.
+
+##### Methods
+
+* `void appendUnique(T* dataStruct, boolean moveToFront = true)`: Appends an element to the list or moves it to the tail of the list if it already exists.
+* `Node* findByContent(T* dataStruct)`: Finds a node by its content.
+* `void removeByContent(T* dataStruct)`: Removes a node by its content.
+
+#### <a name='LinkedList3010'></a>LinkedList3010
+
+Extends LinkedList3000 with additional functionalities: bookmarkByIndex, hasBookmark, moveBookmark, and getBookmarkData. The data structure has no additional requirements.
+
+##### Constructor
+
+* `LinkedList3010(uint16_t size)`: Initializes the linked list with the specified maximum size.
+
+##### Methods
+
+* `void bookmarkByIndex(uint16_t index, boolean reverse = false, boolean noNull = false)`: Finds the node at the given index and bookmarks it.
+* `boolean hasBookmark()`: Checks if the bookmark is set.
+* `boolean moveBookmark(boolean reverse = false)`: Moves the bookmark to the next node.
+* `T* getBookmarkData()`: Returns the data at the bookmarked node.
+
+### <a name='ImplementationExample'></a>Implementation Example
+
+Create dataStruct.
+
+Create list that inherits the required features. Add custom functions. to the class
 
 
 ## <a name='License'></a>License

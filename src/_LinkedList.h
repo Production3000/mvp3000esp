@@ -73,7 +73,7 @@ struct LinkedList3000 {
      * Constructor with a maximum list size limit.
      * 
      * @param _max_size The maximum size of the linked list.
-     * @param _allow_growing If true, the list can grow beyond the maximum size limit depending on available memory. Default is false.
+     * @param _allow_growing (optional) Grow the list size limit depending on available memory. Default is false.
      */
     LinkedList3000(uint16_t size) : max_size(size), allow_growing(false) { }
     LinkedList3000(uint16_t size, boolean allow_growing) : max_size(size), allow_growing(allow_growing) { }
