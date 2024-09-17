@@ -19,12 +19,8 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include "ESPX.h"
-#ifdef ESP8266
-    extern EspClass ESPX;
-#else
-    extern EspClassX ESPX;
-#endif
+#include "_Helper.h"
+extern _Helper _helper;
 
 
 /**
@@ -327,7 +323,7 @@ struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
         // Growing enabled, size limit reached, enough free memory, heap fragmentation below 40%
         // 16kB free memory seems reasonable for single core ESP8266, after allocation it will be around 12kB
         // However ESP32 has two cores, with seperate heaps ... difficult to quantify
-        if (allow_growing && (this->size >= this->max_size) && (ESP.getFreeHeap() > 16384) && (ESPX.getHeapFragmentation() < 40)){
+        if (allow_growing && (this->size >= this->max_size) && (ESP.getFreeHeap() > 16384) && (_helper.ESPX->getHeapFragmentation() < 40)){
             this->max_size += 5;
         }
     }

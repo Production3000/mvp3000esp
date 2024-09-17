@@ -16,6 +16,10 @@ limitations under the License.
 
 #include "MVP3000.h"
 
+#include "_Helper.h"
+extern _Helper _helper;
+
+
 MVP3000 mvp;
 
 
@@ -63,7 +67,7 @@ void MVP3000::loop() {
     if (delayedRestart_ms > 0) {
         if (millis() > delayedRestart_ms) {
             // delayedRestart_ms = 0; // Not needed as we reset the ESP
-            ESPX.reset();
+            _helper.ESPX->reset();
         }
     }
 }
@@ -132,11 +136,11 @@ String MVP3000::webPageProcessor(uint8_t var) {
         case 11:
             return String(__DATE__) + " " + String(__TIME__);
         case 12:
-            return String(ESP.getFreeHeap()) + " / " + String(ESPX.getHeapFragmentation());
+            return String(ESP.getFreeHeap()) + " / " + String(_helper.ESPX->getHeapFragmentation());
         case 13:
-            return String(helper.millisToTime(millis()));
+            return String(_helper.millisToTime(millis()));
         case 14:
-            return String(ESPX.getResetReason().c_str());
+            return String(_helper.ESPX->getResetReason().c_str());
         case 15:
             return String(ESP.getCpuFreqMHz());
         case 16:

@@ -19,8 +19,6 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include "_Helper.h"
-
 #include "Logger.h"
 #include "Led.h"
 #include "Config.h"
@@ -70,7 +68,7 @@ class MVP3000 {
         STATE_TYPE state = STATE_TYPE::INIT;
 
         Config config;
-        Helper helper;
+        // Helper helper;
         Led led;
         Logger logger;
         Net net;

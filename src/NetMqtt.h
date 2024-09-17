@@ -29,12 +29,6 @@ limitations under the License.
 #include <ArduinoMqttClient.h>
 
 #include "Config.h"
-#include "ESPX.h"
-#ifdef ESP8266
-    extern EspClass ESPX;
-#else
-    extern EspClassX ESPX;
-#endif
 
 #include "_Helper_LimitTimer.h"
 

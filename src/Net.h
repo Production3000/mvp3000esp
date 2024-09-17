@@ -29,12 +29,6 @@ limitations under the License.
 #include "NetMqtt.h"
 #include "NetCom.h"
 #include "NetWeb.h"
-#include "ESPX.h"
-#ifdef ESP8266
-    extern EspClass ESPX;
-#else
-    extern EspClassX ESPX;
-#endif
 
 
 struct CfgNet : public CfgJsonInterface  {
@@ -81,7 +75,7 @@ class Net {
         NetCom netCom;
         NetMqtt netMqtt;
 
-        String apSsid = "device" + String(ESPX.getChipId());
+        String apSsid = "device" + String(_helper.ESPX->getChipId());
 
         IPAddress myIp = INADDR_NONE;
 

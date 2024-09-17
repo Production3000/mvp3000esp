@@ -19,6 +19,9 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
+#include "_Helper.h"
+extern _Helper _helper;
+
 
 void NetWeb::setup() {
     // Initialize folders/requests
@@ -152,7 +155,7 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
     // Double check for deviceId for confirmation
     if (request->url().substring(1,6) == "check") {                      
         if (request->hasParam("deviceId", true)) {   
-            if ( (mvp.helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == ESPX.getChipId()) ) {
+            if ( (_helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == ESPX.getChipId()) ) {
                 return true;
             }                
         }
@@ -188,7 +191,7 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom) {
-    if (!mvp.helper.isValidInteger(var)) {
+    if (!_helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return "[" + var + "]";
     }

@@ -14,14 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License. 
 */
 
-#include "ESPX.h"
-
-// Replicates selected methods available only in ESP8266 to ESP32 to simplify code later on
-// Ensures that the ESPX object is available in the same way on both platforms
-#if defined(ESP8266)
-    EspClass ESPX = ESP;
-#elif defined(ESP32)
-    EspClassX ESPX;
-#else // Ensure architecture is correct, just for the sake of it
-    #error "Unsupported platform"
-#endif
+#include "_Helper.h"
+_Helper _helper;

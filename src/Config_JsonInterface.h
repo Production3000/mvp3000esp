@@ -21,6 +21,7 @@ limitations under the License.
 #include <ArduinoJson.h>
 
 #include "_Helper.h"
+extern _Helper _helper;
 
 
 /**
@@ -66,8 +67,6 @@ struct JsonInterface {
  */
 struct CfgJsonInterface : public JsonInterface {
     CfgJsonInterface(String _cfgName) : JsonInterface(_cfgName) { };
-
-    Helper helper;
 
     // Type-specific core setting structure
     template <typename T>
@@ -131,7 +130,7 @@ struct CfgJsonInterface : public JsonInterface {
      */
     template <typename T>
     void addSetting(String key, T *value, std::function<bool(T)> checkValue) {
-        SettingNode* newSetting = new SettingNode(helper.hashStringDjb2(key.c_str()), value, checkValue);
+        SettingNode* newSetting = new SettingNode(_helper.hashStringDjb2(key.c_str()), value, checkValue);
         if (head == nullptr) {
             head = newSetting;
             tail = newSetting;
@@ -207,7 +206,7 @@ struct CfgJsonInterface : public JsonInterface {
         // Loop through all settings to find the correct one    
         SettingNode* current = head;
         while (current != nullptr) {
-            if (current->hash == helper.hashStringDjb2(key.c_str())) {
+            if (current->hash == _helper.hashStringDjb2(key.c_str())) {
                 // Found the setting, switch to its type and check/set the value
                 switch (current->type) {
                     case 0: // boolean

@@ -19,6 +19,9 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
+#include "_Helper.h"
+extern _Helper _helper;
+
 
 void Logger::setup() {
     // Do nothing if turned off
@@ -58,7 +61,7 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {
     }
     // Network output, omit DATA level
     if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
-        webSocketPrint(mvp.helper.millisToTime(millis()) + " " + message);
+        webSocketPrint(_helper.millisToTime(millis()) + " " + message);
     }
 }
 
@@ -88,7 +91,7 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatStri
 String Logger::getRecentLog() {
     String str = "";
     linkedListLog.loop([&](DataStructLog *node , uint8_t index) {
-        str += mvp.helper.millisToTime(node->time) + " " + node->message + "\n";
+        str += _helper.millisToTime(node->time) + " " + node->message + "\n";
     }, true);
     return str;
 }
@@ -113,7 +116,7 @@ bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
 
 void Logger::serialPrint(CfgLogger::Level targetLevel, const char *message) {
     // Prefix with timestamp
-    Serial.print(mvp.helper.millisToTime(millis()));
+    Serial.print(_helper.millisToTime(millis()));
 
     // Add type literal
     switch (targetLevel) {

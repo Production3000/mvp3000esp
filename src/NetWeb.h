@@ -21,13 +21,6 @@ limitations under the License.
 
 #include <ESPAsyncWebServer.h>
 
-#include "ESPX.h"
-#ifdef ESP8266
-    extern EspClass ESPX;
-#else
-    extern EspClassX ESPX;
-#endif
-
 #include "Config_JsonInterface.h"
 #include "NetWeb_WebStructs.h"
 

@@ -21,7 +21,6 @@ limitations under the License.
 #include <ArduinoJson.h>
 
 #include "Config_JsonInterface.h"
-#include "_Helper.h"
 
 
 struct DataProcessing : public JsonInterface {
