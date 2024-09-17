@@ -179,9 +179,9 @@ struct LinkedListNEW3001 : virtual LinkedListNEW3000<T> {
      * @brief Append element to the list or move it to the tail of the list.
      *
      * @param dataStruct The data structure to be appended to the linked list.
-     * @param moveToFront (optional) Move the element to the tail/newest of the list. Default is true.
+     * @param moveToFront (optional) Move the element to the tail/newest of the list. Default is false.
      */
-    void appendUnique(T* dataStruct, boolean moveToFront = true) {
+    void appendUniqueDataStruct(T* dataStruct, boolean moveToFront = false) {
         if (moveToFront) {
             // Just delete if exists and create new, this does not allow a counter of how often that happend
             this->_removeNode(findByContent(dataStruct));

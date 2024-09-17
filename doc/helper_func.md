@@ -118,7 +118,7 @@ Main linked list with basic functionality.
 
 #### <a name='LinkedList3001'></a>LinkedList3001
 
-Extends LinkedList3000 with additional functionalities: appendUnique, findByContent, and removeByContent. The data structure needs an `equals()` method.
+Extends LinkedList3000 with additional functionalities: appendUnique, findByContent, and removeByContent. The data structure needs an `equals()` method to compare it with another.
 
 ##### Constructor
 
@@ -126,20 +126,9 @@ Extends LinkedList3000 with additional functionalities: appendUnique, findByCont
 
 ##### Methods
 
-* `void appendUnique(T* dataStruct, boolean moveToFront = true)`: Appends an element to the list or moves it to the tail of the list if it already exists.
+* `void appendUnique(T* dataStruct, boolean moveToFront = false)`: Appends an element to the list if it does not already exists, or optionally moves it to the tail of the list. 
 * `Node* findByContent(T* dataStruct)`: Finds a node by its content.
 * `void removeByContent(T* dataStruct)`: Removes a node by its content.
-
-##### DataStruct
-
-The dataStruct needs an equals() method to compare it with another.
-
-    bool equals(DataStruct* other) {
-        if (other == nullptr)
-            return false;
-
-        return data == other->data;
-    }
 
 #### <a name='LinkedList3010'></a>LinkedList3010
 
@@ -227,7 +216,7 @@ Timestamped log of domain visits. Duplicate entries are moved to the tail (newes
         LinkedListLog(uint16_t size) : LinkedListNEW3001<DataStructLog>(size) { }
 
         void append(const String& domain) {
-            this->appendUnique(new DataStructLog(domain));
+            this->appendUnique(new DataStructLog(domain), true);
         }
 
         <!-- void remove(const String& domain) {

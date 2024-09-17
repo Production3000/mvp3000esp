@@ -52,12 +52,12 @@ class NetWeb {
         /**
          * @brief Register an action to be executed using a form on the web interface.
          * 
-         * @param action The action to add.
+         * @param actionKey The actionKey to add.
          * @param actionFkt The function to execute.
          * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will display a 'restarting'-page, but not restart itself automatically.
          */
-        void registerAction(String action, WebActionFunction actionFkt); // One cannot overload bool with String
-        void registerAction(String action, WebActionFunction actionFkt, String successMessage);
+        void registerAction(const String& actionKey, WebActionFunction actionFkt); // One cannot overload bool with String
+        void registerAction(const String& actionKey, WebActionFunction actionFkt, const String& successMessage);
 
         /**
          * @brief Register a websocket to be used with the web interface.
@@ -78,7 +78,7 @@ class NetWeb {
         uint64_t postMessageTime = 0;
         uint16_t postMessageLifetime = 15000; // 15 seconds
 
-        WebActionList webActionList;
+        LinkedListWebActions linkedListWebActions = LinkedListWebActions(15);
 
         WebCfgList webCfgList;
 

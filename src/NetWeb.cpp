@@ -50,12 +50,12 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerAction(String action, WebActionFunction actionFkt) {
-    webActionList.add(action, WebActionList::ResponseType::RESTART, actionFkt, "");
+void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt) {
+    linkedListWebActions.appendUnique(actionKey, DataStructWebAction::ResponseType::RESTART, actionFkt, "");
 }
 
-void NetWeb::registerAction(String action, WebActionFunction actionFkt, String successMessage) {
-    webActionList.add(action, WebActionList::ResponseType::MESSAGE, actionFkt, successMessage);
+void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt, const String& successMessage) {
+    linkedListWebActions.appendUnique(actionKey, DataStructWebAction::ResponseType::MESSAGE, actionFkt, successMessage);
 };
 
 void NetWeb::registerCfg(CfgJsonInterface *Cfg, std::function<void()> callback) {
@@ -121,22 +121,28 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
         return;
     }
 
-    // Loops through all actions and executes it if found
-    WebActionList::Node* result = webActionList.loopActions(request->params(), [&](int i) { return request->getParam(i)->name(); }, [&](int i) { return request->getParam(i)->value(); });
+    DataStructWebAction* webAction = linkedListWebActions.findAction(request->getParam(0)->name());
 
-    // Not found or failed
-    if (result == nullptr) {
-        responseRedirect(request, "Invalid input or action not found!");
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid action/input from: %s", request->client()->remoteIP().toString().c_str());
+    if (webAction == nullptr) {
+        // Not found
+        responseRedirect(request, "Action not found!");
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Action not found from: %s", request->client()->remoteIP().toString().c_str());
+        return;
+    }
+
+    if (!webAction->actionFkt(request->params(), [&](int i) { return request->getParam(i)->name(); }, [&](int i) { return request->getParam(i)->value(); })) {
+        // Execution failed
+        responseRedirect(request, "Invalid action input!");
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid action input from: %s", request->client()->remoteIP().toString().c_str());
         return;
     }
 
     // Report success or restart
-    switch (result->successResponse) {
-        case WebActionList::ResponseType::MESSAGE:
-            responseRedirect(request, result->successMessage.c_str());
+    switch (webAction->successResponse) {
+        case DataStructWebAction::ResponseType::MESSAGE:
+            responseRedirect(request, webAction->successMessage.c_str());
             break;
-        case WebActionList::ResponseType::RESTART:
+        case DataStructWebAction::ResponseType::RESTART:
             responseMetaRefresh(request); // Restarts after 25 ms, page reloads after 4 s
             break;
 

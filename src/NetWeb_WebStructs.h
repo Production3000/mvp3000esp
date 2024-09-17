@@ -22,55 +22,47 @@ limitations under the License.
 #include <ESPAsyncWebServer.h>
 #include "Config_JsonInterface.h"
 
+#include "_Helper_LinkedList.h"
+
 
 typedef std::function<String(int)> WebArgKeyValue;
 typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionFunction;
 
-// Linked list for action callbacks
-struct WebActionList {
+
+// Linked list for web actions
+struct DataStructWebAction {
     enum ResponseType {
         NONE = 0,
         MESSAGE = 1,
         RESTART = 2
     };
 
-    struct Node {
-        String action;
-        ResponseType successResponse;
-        String successMessage;
-        WebActionFunction actionFkt;
-        
-        Node* next;
+    String actionKey;
+    ResponseType successResponse;
+    String successMessage;
+    WebActionFunction actionFkt;
 
-        Node() { }
-        Node(String _action, ResponseType _successResponse, WebActionFunction _actionFkt, String _successMessage) : action(_action), successResponse(_successResponse), actionFkt(_actionFkt), successMessage(_successMessage) { }
-    };
+    DataStructWebAction() { }
+    DataStructWebAction(const String& actionKey) : actionKey(actionKey){ }
+    DataStructWebAction(const String& actionKey, ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) : actionKey(actionKey), successResponse(successResponse), actionFkt(actionFkt), successMessage(successMessage) { }
 
-    Node* head = nullptr;
+    bool equals(DataStructWebAction* other) {
+        if (other == nullptr)
+            return false;
+        // Compare the actionKey string
+        return actionKey.equals(other->actionKey);
+    }
+};
 
+struct LinkedListWebActions : LinkedListNEW3001<DataStructWebAction> {
+    LinkedListWebActions(uint16_t size) : LinkedListNEW3001<DataStructWebAction>(size) { }
 
-    void add(String action, ResponseType successResponse, WebActionFunction actionFkt, String successMessage) {
-        Node* newNode = new Node(action, successResponse, actionFkt, successMessage);
-        newNode->next = head;
-        head = newNode;
+    void appendUnique(const String& actionKey, DataStructWebAction::ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) {
+        this->appendUniqueDataStruct(new DataStructWebAction(actionKey, successResponse, actionFkt, successMessage));
     }
 
-    // Loops through all cfgs and updates the value if found
-    Node* loopActions(int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
-        Node* current = head;
-        // Loop through all nodes
-        while (current != nullptr) {
-            // Check if key matches and execute action
-            if (argKey(0) == current->action) {
-                if (current->actionFkt(args, argKey, argValue)) {
-                    return current;
-                } else {
-                    return nullptr;
-                }
-            }
-            current = current->next;
-        }
-        return nullptr;
+    DataStructWebAction* findAction(const String& argKey) {
+        return this->findByContent(new DataStructWebAction(argKey))->dataStruct;
     }
 };
 
