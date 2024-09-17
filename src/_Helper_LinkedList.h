@@ -19,14 +19,23 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include "ESPX.h"
+#ifdef ESP8266
+    extern EspClass ESPX;
+#else
+    extern EspClassX ESPX;
+#endif
+
+
 /**
  * @brief A templated linked list implementation for the MVP3000 framework.
  * 
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
  * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
- * 3001 extends bare: appendUnique, findByContent, removeByContent - dataStruct needs equals() method
- * 3010 extends bare: bookmarkByIndex, hasBookmark, moveBookmark - dataStruct has no requirements
- * 3011 combines 3001 and 3010
+ * 3001 extends bare: unique list nodes - dataStruct needs equals() method
+ * 3010 extends bare: bookmark node - dataStruct has no requirements
+ * 3100 extends bare: grow list - dataStruct has no requirements
+ * 3xxx various combinations of the above
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  * @param size The maximum element count of the list.
@@ -80,7 +89,7 @@ struct LinkedListNEW3000 {
      * 
      * @param newDataStruct The data structure to be passed on to be stored in the linked list.
      */
-    void append(T* newDataStruct) {
+    void appendDataStruct(T* newDataStruct) {
         // Check if size limit is reached and cannot be grown, then remove the oldest node
         if (size >= max_size) {
             _removeNode(head);
@@ -156,9 +165,10 @@ struct LinkedListNEW3000 {
  * 
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
  * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
- * 3001 extends bare: appendUnique, findByContent, removeByContent - dataStruct needs equals() method
- * 3010 extends bare: bookmarkByIndex, hasBookmark, moveBookmark - dataStruct has no requirements
- * 3011 combines 3001 and 3010
+ * 3001 extends bare: unique list nodes - dataStruct needs equals() method
+ * 3010 extends bare: bookmark node - dataStruct has no requirements
+ * 3100 extends bare: grow list - dataStruct has no requirements
+ * 3xxx various combinations of the above
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  * @param size The maximum element count of the list.
@@ -179,11 +189,11 @@ struct LinkedListNEW3001 : virtual LinkedListNEW3000<T> {
         if (moveToFront) {
             // Just delete if exists and create new, this does not allow a counter of how often that happend
             this->_removeNode(findByContent(dataStruct));
-            this->append(dataStruct);
+            this->appendDataStruct(dataStruct);
         } else {
             // Only append if not exists
             if (!findByContent(dataStruct))
-                this->append(dataStruct);
+                this->appendDataStruct(dataStruct);
         }
     }
 
@@ -210,14 +220,16 @@ struct LinkedListNEW3001 : virtual LinkedListNEW3000<T> {
 };
 
 
+
 /**
  * @brief A templated linked list implementation for the MVP3000 framework.
  * 
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
  * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
- * 3001 extends bare: appendUnique, findByContent, removeByContent - dataStruct needs equals() method
- * 3010 extends bare: bookmarkByIndex, hasBookmark, moveBookmark - dataStruct has no requirements
- * 3011 combines 3001 and 3010
+ * 3001 extends bare: unique list nodes - dataStruct needs equals() method
+ * 3010 extends bare: bookmark node - dataStruct has no requirements
+ * 3100 extends bare: grow list - dataStruct has no requirements
+ * 3xxx various combinations of the above
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  * @param size The maximum element count of the list.
@@ -271,14 +283,61 @@ struct LinkedListNEW3010 : virtual LinkedListNEW3000<T> {
 };
 
 
+
 /**
  * @brief A templated linked list implementation for the MVP3000 framework.
  * 
  * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
  * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
- * 3001 extends bare: appendUnique, findByContent, removeByContent - dataStruct needs equals() method
- * 3010 extends bare: bookmarkByIndex, hasBookmark, moveBookmark, getBookmarkData - dataStruct has no requirements
- * 3011 combines 3001 and 3010
+ * 3001 extends bare: unique list nodes - dataStruct needs equals() method
+ * 3010 extends bare: bookmark node - dataStruct has no requirements
+ * 3100 extends bare: grow list - dataStruct has no requirements
+ * 3xxx various combinations of the above
+ * 
+ * @tparam T The pre-defined data structure to be stored in the linked list.
+ * @param size The maximum element count of the list.
+ */
+template <typename T>
+struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
+    LinkedListNEW3100(uint16_t size) : LinkedListNEW3000<T>(size) { this->max_size = size; }
+
+    using typename LinkedListNEW3000<T>::Node;
+
+    boolean allow_growing = false;
+
+    boolean isAdaptive() const { return allow_growing; }
+
+    /**
+     * @brief Grows the maximum size of the linked list if enough memory is available.
+     * 
+     * @return True if the maximum size was increased, otherwise false.
+     */
+    void growMaxSize() {
+        // Growing enabled, size limit reached, enough free memory, heap fragmentation below 40%
+        // 16kB free memory seems reasonable for single core ESP8266, after allocation it will be around 12kB
+        // However ESP32 has two cores, with seperate heaps ... difficult to quantify
+        if (allow_growing && (this->size >= this->max_size) && (ESP.getFreeHeap() > 16384) && (ESPX.getHeapFragmentation() < 40)){
+            this->max_size += 5;
+        }
+    }
+
+    void appendDataStruct(T* newDataStruct) {
+        growMaxSize();
+        LinkedListNEW3000<T>::appendDataStruct(newDataStruct);
+    }
+};
+
+
+
+/**
+ * @brief A templated linked list implementation for the MVP3000 framework.
+ * 
+ * The list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
+ * 3000 bare: append, clear, loop, getNewest, getOldest, getSize - dataStruct has no requirements
+ * 3001 extends bare: unique list nodes - dataStruct needs equals() method
+ * 3010 extends bare: bookmark node - dataStruct has no requirements
+ * 3100 extends bare: grow list - dataStruct has no requirements
+ * 3xxx various combinations of the above
  * 
  * @tparam T The pre-defined data structure to be stored in the linked list.
  * @param size The maximum element count of the list.
@@ -288,5 +347,9 @@ struct LinkedListNEW3011 : LinkedListNEW3001<T>, LinkedListNEW3010<T> {
     LinkedListNEW3011(uint16_t size) : LinkedListNEW3001<T>(size), LinkedListNEW3010<T>(size) { }
 };
 
+template <typename T>
+struct LinkedListNEW3110 : LinkedListNEW3010<T>, LinkedListNEW3100<T>{
+    LinkedListNEW3110(uint16_t size) : LinkedListNEW3010<T>(size), LinkedListNEW3100<T>(size) { }
+};
 
 #endif

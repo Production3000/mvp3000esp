@@ -20,7 +20,7 @@ limitations under the License.
 #include <Arduino.h>
 #include <stdarg.h>
 
-#include "_LinkedList.h"
+#include "_Helper_LinkedList.h"
 
 
 
@@ -77,16 +77,16 @@ class Logger {
             uint8_t level;
             String message;
 
-            DataStructLog(uint64_t _time, String _message, uint8_t _level) : time(_time), message(_message), level(_level) { }
+            DataStructLog(String message, uint8_t level) : time(millis()), message(message), level(level) { }
         };
 
-        struct LinkedListLog : LinkedList3000<DataStructLog> {
-            LinkedListLog(uint16_t size) : LinkedList3000<DataStructLog>(size) { }
+        struct LinkedListLog : LinkedListNEW3000<DataStructLog> {
+            LinkedListLog(uint16_t size) : LinkedListNEW3000<DataStructLog>(size) { }
 
             void append(uint8_t level, String message) {
                 // Create data structure and add node to linked list
                 // Using this-> as base class/function is templated
-                this->appendNode(new DataStructLog{millis(), message, level});
+                this->appendDataStruct(new DataStructLog(message, level));
             }
         };
 

@@ -261,7 +261,7 @@ size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, s
     if (!firstOnly && (index == 0)) {
         // The index relates only to string position, and does allow to select the next measurement
         // Workaround is a bookmark in the linked list
-        dataCollection.linkedListSensor.setBookmark(0, false, true); // Start with the oldest data
+        dataCollection.linkedListSensor.bookmarkByIndex(0, false, true); // Start with the oldest data
     }
 
     size_t pos = 0;

@@ -87,7 +87,7 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatStri
 
 String Logger::getRecentLog() {
     String str = "";
-    linkedListLog.loopNodes([&](DataStructLog *node , uint8_t index) {
+    linkedListLog.loop([&](DataStructLog *node , uint8_t index) {
         str += mvp.helper.millisToTime(node->time) + " " + node->message + "\n";
     }, true);
     return str;

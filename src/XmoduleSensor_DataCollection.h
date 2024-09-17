@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef MVP3000_XMODULESENSOR_DATACOLLECTION
 #define MVP3000_XMODULESENSOR_DATACOLLECTION
 
-#include "_LinkedList.h"
 #include "XmoduleSensor_DataCollection_NumberArray.h"
 #include "XmoduleSensor_DataProcessing.h"
 
@@ -43,13 +42,13 @@ struct DataCollection {
     /**
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
-    struct LinkedListSensor : LinkedList3000<DataStructSensor> {
-        LinkedListSensor(uint16_t size) : LinkedList3000<DataStructSensor>(size) { }
+    struct LinkedListSensor : LinkedListNEW3110<DataStructSensor> {
+        LinkedListSensor(uint16_t size) : LinkedListNEW3110<DataStructSensor>(size) { }
 
         void append(uint64_t time, NumberArrayLateInit<int32_t> *data) {
             // Create data structure and add node to linked list
             // Using this-> as base class/function is templated
-            this->appendNode(new DataStructSensor(time, data->values, data->value_size));
+            this->appendDataStruct(new DataStructSensor(time, data->values, data->value_size));
         }
 
         String getBookmarkAsCsv(uint8_t columnCount, DataProcessing *processing) { return nodeToCSV(bookmark, columnCount, processing); }
@@ -75,7 +74,7 @@ struct DataCollection {
 
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
-    uint16_t dataStoreLength = 100;
+    uint16_t dataStoreLength = 10;
     LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging

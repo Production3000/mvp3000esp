@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include "_Helper_LimitTimer.h"
 #include "_Helper_LinkedList.h"
 
 

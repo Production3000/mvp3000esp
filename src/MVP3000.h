@@ -115,7 +115,7 @@ class MVP3000 {
         <li>Main loop duration: %16% ms (mean/min/max)</li>
         <br>
         <li>Log websocket: ws://%2%/wslog </br>
-            <textarea readonly rows='3' cols='80'>%17%</textarea> </li> </ul>
+            <textarea readonly rows='3' cols='120'>%17%</textarea> </li> </ul>
     <h3>Framework settings</h3> <ul>
         <li><a href='/net'>Network</a></li>
         <li> %18% </li>
