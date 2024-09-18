@@ -178,9 +178,9 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* message) {
-    // Message to serve on next page load and timestamp to discard if it is too old       
+    // Message to serve on next page load and set expiry time       
     postMessage = message;
-    postMessageTime = millis();
+    postMessageExpiry = millis() + postMessageLifetime;
 
     // Redirect to avoid post reload, 303 temporary
     // Points to the referer [sic] to stay on the page the form was on 
@@ -189,7 +189,7 @@ void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* messag
 
 void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
     // http-equiv seems to not show up in history
-    request->send(200, "text/html", "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>");
+    request->send(200, "text/html", webPageRedirect);
 }
 
 
@@ -201,21 +201,22 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt p
         return "[" + var + "]";
     }
 
-    String str; // Needs to be defined outside of switch
     switch (var.toInt()) {
-        // Main placeholders
 
-        case 0: // Post message
-            // Discard if it is too old, clear message for next load
-            if (millis() < postMessageTime + postMessageLifetime) {
-                str = postMessage;
-            }
-            postMessage = "";
-            return str;
+        // Main placeholders
+        case 0: // Standard HTML head
+            return webPageHead;
         case 1: // Device ID
             return String(ESPX.getChipId());
         case 2: // Device IP
             return mvp.net.myIp.toString();
+        case 3: // Post message
+            // Send message if within lifetime
+            if (millis() < postMessageExpiry) {
+                postMessageExpiry = 0; // Expire message for next load, saves a string copy
+                return postMessage;
+            }
+            return "";
 
         // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
         default:
