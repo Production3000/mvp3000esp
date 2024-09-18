@@ -123,7 +123,7 @@ The number of measurements stored is limited by the available memory on the ESP.
 
 Data handling within the MVP3000 framework is done as integer. When working with floats/decimal raw data or when rounding after averaging it is important to maintain sufficient significant digits. This is done by shifting the decimal point of the raw value *x* using an exponent *n* multiplier to yield the decimal-shifted value *x' = x \* 10<sup>n</sup>*. This value *x'* is stored, averaged, and scaled by the sensor module, and reported. The following table shows the 'encoding' step on the ESP.
 
-|           | Raw value | Exponent  | Multiplicator | Reported int              |
+|           | Raw value | Exponent  | Multiplier    | Reported int              |
 | ---       | ---       | ---       | ---           | ---                       |
 |           | x         | n         | 10<sup>n</sup>| x' = x * 10<sup>n</sup>   |
 | Sensor A  | 12345     | -1        | 0.1           | 1235                      |
@@ -131,7 +131,7 @@ Data handling within the MVP3000 framework is done as integer. When working with
 
 In order to retrieve the original value for display or data analysis, the decimal shift of the reported value needs to be reversed. This is done using the inverse exponent *-n* multiplier to yield the decimal-un-shifted value *x" = x' \* 10<sup>-n</sup>*. The following table shows the 'decoding' step on the computer.
 
-|           | Received int  | Inv. Exp. | Multiplicator     | Reported value            | Sign. digits  |
+|           | Received int  | Inv. Exp. | Multiplier        | Reported value            | Sign. digits  |
 | ---       | ---           | ---       | ---               | ---                       | ---           |
 |           | x             | n         | 10<sup>-n</sup>   | x" = x' * 10<sup>-n</sup> |               |
 | Sensor A  | 1235          | 1         | 10                | 12350                     | 4 \*          |

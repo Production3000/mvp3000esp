@@ -8,14 +8,13 @@
 	* [Constructor and Functions](#ConstructorandFunctions)
 	* [Usage Example](#UsageExample)
 * [Linked List](#LinkedList)
+	* [Overview](#Overview)
 	* [List Templates](#ListTemplates)
 		* [LinkedList3000](#LinkedList3000)
 		* [LinkedList3001](#LinkedList3001)
 		* [LinkedList3010](#LinkedList3010)
 		* [LinkedList3100](#LinkedList3100)
 	* [Implementation](#Implementation)
-		* [Example: Adaptive Data List](#Example:AdaptiveDataList)
-		* [Example: Unique Log Entries](#Example:UniqueLogEntries)
 * [License](#License)
 
 <!-- vscode-markdown-toc-config
@@ -86,6 +85,8 @@ The LimitTimer class provides a mechanism for creating non-blocking millisecond 
 
 ## <a name='LinkedList'></a>Linked List
 
+### <a name='Overview'></a>Overview
+
 A templated linked list implementation for the MVP3000 framework offering various flavours.
 
 In the bare flavour, the list has a maximum size limit set during initialization. If the limit is reached, the oldest element is automatically removed.
@@ -94,7 +95,8 @@ In the bare flavour, the list has a maximum size limit set during initialization
  * 3001 extends bare: Unique values for list entries.
  * 3010 extends bare: Bookmarking of list entries for intermittent output.
  * 3100 extends bare: Adaptive growing list size depending on memory.
- * 3xxx: Various combinations of the above.
+ * 3xxx: Combinations of the above: 3011, 3101, 3111.
+
 
 ### <a name='ListTemplates'></a>List Templates
 
@@ -147,11 +149,12 @@ Extends the bare LinkedList3000 with additional functionality to bookmark a node
 
 #### <a name='LinkedList3100'></a>LinkedList3100
 
-Extends LinkedListNEW3000 with additional functionalities: adaptive growing of the list size. The list still defaults to not grow, the feature needs to be enabled explicitly.
+Extends LinkedListNEW3000 with additional functionalities: adaptive growing of the list size.
 
 ##### Constructor
 
-* `LinkedListNEW3100(uint16_t size)`: Initializes the linked list with the specified initial maximum size.
+* `LinkedListNEW3100()`: Initializes the linked list with adaptive growth enabled.
+* `LinkedListNEW3100(uint16_t size)`: Initializes the linked list with the specified initial maximum size. Adaptive growth needs to be explicitly enabled.
 
 ##### Methods
 
@@ -163,70 +166,14 @@ Extends LinkedListNEW3000 with additional functionalities: adaptive growing of t
 
 ### <a name='Implementation'></a>Implementation
 
-Any implementation of a LinkedList3xxx 
+Please see the [Examples](/doc/helper_func_examples.md#linked-list-examples).
+
+Any implementation of a LinkedList3xxx:
 
  1. Define the DataStruct that holds the data. Add an equals() method if needed.
  2. Define a custom LinkedList class/struct that inherits the desired flavour/combination. Create at least an append() method matching the DataStruct.
  3. Optionally extend the custom LinkedList class/struct with additional functionality.
 
-
-#### <a name='Example:AdaptiveDataList'></a>Example: Adaptive Data List
-
-    struct DataStructSensor {
-        uint64_t time;
-        float_t data;
-
-        DataStructSensor(uint64_t time, float_t data) : time(time), data(data) { }
-    };
-    
-    struct LinkedListSensor : LinkedListNEW3110<DataStructSensor> {
-        LinkedListSensor(uint16_t size) : LinkedListNEW3110<DataStructSensor>(size) { }
-
-        void append(uint64_t time, float_t data) {
-            this->appendDataStruct(new DataStructSensor(time, data));
-        }
-    }
-
-    LinkedListSensor linkedListsensor = LinkedListSensor(10);
-
-    linkedListsensor.enableAdaptiveGrowing();
-
-    linkedListsensor.append(millis(), 12345);
-
-
-#### <a name='Example:UniqueLogEntries'></a>Example: Unique Log Entries
-
-Timestamped log of domain visits. Duplicate entries are moved to the tail (newest) end of the list.
-
-    struct DataStructLog {
-        uint64_t time;
-        String domain;
-        DataStructLog(const String& domain) : time(millis()), domain(domain) { }
-
-        bool equals(DataStructLog* other) {
-            if (other == nullptr)
-                return false;
-            // Compare the data string, ignore the time stamp
-            return domain.equals(other->domain);
-        }
-        
-    };
-
-    struct LinkedListLog : LinkedListNEW3001<DataStructLog> {
-        LinkedListLog(uint16_t size) : LinkedListNEW3001<DataStructLog>(size) { }
-
-        void append(const String& domain) {
-            this->appendUnique(new DataStructLog(domain), true);
-        }
-
-        <!-- void remove(const String& domain) {
-            this->removeByContent(new DataStructLog(domain));
-        } -->
-    };
-
-    LinkedListLog linkedListLog = LinkedListLog(10);
-
-    linkedListLog.append("mydomain.com);
 
 
 ## <a name='License'></a>License

@@ -90,7 +90,7 @@ struct LinkedListMqttTopic : LinkedListNEW3111<DataStructMqttTopic> {
         this->loop([&](DataStructMqttTopic* current, uint16_t i) {
             // Only subscribe if there is a callback
             if (current->dataCallback != nullptr) {
-                mqttClient->subscribe(current->getCtrlTopic().c_str()); // String conversion
+                mqttClient->subscribe(current->getCtrlTopic());
             }
         });
     }

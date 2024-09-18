@@ -46,7 +46,7 @@ struct CfgNetMqtt : public CfgJsonInterface {
     CfgNetMqtt() : CfgJsonInterface("cfgNetMqtt") {
         addSetting<boolean>("mqttEnabled", &mqttEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
-        addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](String x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
+        addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](const String& x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
     }
 };
 
