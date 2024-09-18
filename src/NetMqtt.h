@@ -65,7 +65,7 @@ class NetMqtt {
          * @param dataCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.
          */
-        std::function<void(const String &message)> registerMqtt(String topic, MqttDataCallback dataCallback = nullptr);
+        std::function<void(const String& message)> registerMqtt(const String& topic, MqttDataCallback dataCallback = nullptr);
 
     private:
 
@@ -78,7 +78,7 @@ class NetMqtt {
         };
         MQTT_STATE mqttState;
 
-        LinkedListMqttTopic linkedListMqttTopic = LinkedListMqttTopic(&mqttClient);
+        LinkedListMqttTopic linkedListMqttTopic = LinkedListMqttTopic(&mqttClient); // Adaptive size
 
         CfgNetMqtt cfgNetMqtt;
 
@@ -101,6 +101,7 @@ class NetMqtt {
 
 
         String webPageProcessor(uint8_t var);
+        String webPageProcessorLinkedListFiller();
         char const* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>

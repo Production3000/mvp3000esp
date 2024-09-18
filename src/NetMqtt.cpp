@@ -110,7 +110,7 @@ void NetMqtt::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const String &message)> NetMqtt::registerMqtt(String subtopic, MqttDataCallback dataCallback) {
+std::function<void(const String &message)> NetMqtt::registerMqtt(const String& subtopic, MqttDataCallback dataCallback) {
     // Store topic and callback for registering with MQTT, return the function to write to this topic
     return linkedListMqttTopic.appendUnique(subtopic, dataCallback);
 }
@@ -184,7 +184,6 @@ void NetMqtt::saveCfgCallback() {
 }
 
 String NetMqtt::webPageProcessor(uint8_t var) { 
-    String str;
     switch (var) {
         case 51:
             return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
@@ -201,19 +200,48 @@ String NetMqtt::webPageProcessor(uint8_t var) {
                     return "no broker";
             }
         case 53:
-            return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString().c_str() : "-";
+            return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString() : "-";
         case 54:
-            return cfgNetMqtt.mqttForcedBroker.c_str();
+            return cfgNetMqtt.mqttForcedBroker;
         case 55:
             return String(cfgNetMqtt.mqttPort);
 
-        case 60: // Capture 60 and above, limit to 99 (100+ are supposed to be reserved for xmodules)     
+        // Filling of the MQTT topics is better be split, long strings are never good during runtime
+        case 60:
+            // Check if list is empty
+            if (linkedListMqttTopic.getSize() == 0) {                                                                   
+                return "<li>None</li>";
+            }
+            // Set initial bookmark
+            linkedListMqttTopic.bookmarkByIndex(0, true);
+        case 61:
+            return webPageProcessorLinkedListFiller();
+
         default:
-            if (var > 99)
-                return str;
-            str = linkedListMqttTopic.getTopicStrings(var - 60);
-            if (str.length() > 0)
-                str = "<li>" + str + "</li> %" + String(var + 1) + "%";
-            return str;
+            return "";
     }
+}
+
+String NetMqtt::webPageProcessorLinkedListFiller() {
+    // String length unknown, 1-2 topics + htmlstrings, 100 should do it
+    String str;
+    if (!str.reserve(100)) {
+        mvp.log("Out of memory: String to display MQTT topics could not be reserved.");
+        return str;
+    };           
+
+    // Fill placeholder with current bookmark
+    str += "<li>";
+    str += linkedListMqttTopic.getBookmarkData()->getDataTopic();
+    if (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) {
+        str += " | ";
+        str += linkedListMqttTopic.getBookmarkData()->getCtrlTopic();
+    }
+    str += "</li>";
+
+    // Move bookmark, if there is more on the list add additional placeholder for repeated call
+    if (linkedListMqttTopic.moveBookmark())
+        str += "%61%";
+
+    return str;
 }
