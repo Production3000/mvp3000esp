@@ -42,7 +42,7 @@ struct DataStructWebAction {
     String successMessage;
     WebActionFunction actionFkt;
 
-    DataStructWebAction(const String& actionKey) : actionKey(actionKey){ } // For comparision only
+    DataStructWebAction(const String& actionKey) : actionKey(actionKey) { } // For comparision only
     DataStructWebAction(const String& actionKey, ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) : actionKey(actionKey), successResponse(successResponse), actionFkt(actionFkt), successMessage(successMessage) { }
 
     bool equals(DataStructWebAction* other) {
@@ -114,7 +114,7 @@ struct LinkedListWebCfg : LinkedListNEW3100<DataStructWebCfg> {
 ///////////////////////////////////////////////////////////////////////////////////
 
 typedef std::function<String (uint8_t)> AwsTemplateProcessorInt;
-typedef std::function<String (const String &, AwsTemplateProcessorInt)> AwsTemplateProcessorWrapper;
+typedef std::function<String (const String&, AwsTemplateProcessorInt)> AwsTemplateProcessorWrapper;
 
 // Collection of web pages TODO for some reason this does not work in a linked list ???
 struct WebPageColl {

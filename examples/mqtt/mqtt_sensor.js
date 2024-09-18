@@ -61,10 +61,11 @@ function onConnect() {
 }
 
 function subscribe() {
-    topic = document.getElementById('topic').value + "_sensor";
-    if (!topic) {
+    if (document.getElementById('topic').value.length == 0) {
+        console.log("No topic specified");
         return;
     }
+    topic = document.getElementById('topic').value + "_sensor";
 
     let _topic = topic + "_data";
     client.subscribe(_topic);

@@ -58,7 +58,7 @@ void NetMqtt::loop() {
     // Called from net.loop() only if wifi is up and in client mode, check again
 
     // Check if there is actually something to do
-    if ((mqttState == MQTT_STATE::DISABLEDX) || !mqttTopicList.hasTopics() || !mvp.net.connectedAsClient())
+    if ((mqttState == MQTT_STATE::DISABLEDX) || !linkedListMqttTopic.hasTopics() || !mvp.net.connectedAsClient())
         return;
 
     int messageSize;
@@ -75,7 +75,7 @@ void NetMqtt::loop() {
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
                 mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics.");
-                mqttTopicList.subscribeAll();
+                linkedListMqttTopic.subscribeAll();
                 break;
             }
 
@@ -112,7 +112,7 @@ void NetMqtt::loop() {
 
 std::function<void(const String &message)> NetMqtt::registerMqtt(String subtopic, MqttDataCallback dataCallback) {
     // Store topic and callback for registering with MQTT, return the function to write to this topic
-    return mqttTopicList.add(subtopic, dataCallback);
+    return linkedListMqttTopic.appendUnique(subtopic, dataCallback);
 }
 
 void NetMqtt::setMqttState() {
@@ -170,7 +170,7 @@ void NetMqtt::handleMessage(int messageSize) {
     buf[messageSize] = '\0';
 
     // Find the topic in the list and execute callback
-    if (!mqttTopicList.findAndExecute(topic, (char *)buf))
+    if (!linkedListMqttTopic.findAndExecute(topic, (char *)buf))
         mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "MQTT control with unknown topic '%s'", topic.c_str());
 }
 
@@ -211,7 +211,7 @@ String NetMqtt::webPageProcessor(uint8_t var) {
         default:
             if (var > 99)
                 return str;
-            str = mqttTopicList.getTopicStrings(var - 60);
+            str = linkedListMqttTopic.getTopicStrings(var - 60);
             if (str.length() > 0)
                 str = "<li>" + str + "</li> %" + String(var + 1) + "%";
             return str;

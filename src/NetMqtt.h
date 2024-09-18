@@ -78,7 +78,7 @@ class NetMqtt {
         };
         MQTT_STATE mqttState;
 
-        MqttTopicList mqttTopicList = MqttTopicList(&mqttClient);
+        LinkedListMqttTopic linkedListMqttTopic = LinkedListMqttTopic(&mqttClient);
 
         CfgNetMqtt cfgNetMqtt;
 

@@ -29,83 +29,90 @@ limitations under the License.
 
 typedef std::function<void(char*)> MqttDataCallback;
 
-struct MqttTopicList {
-    struct Node {
-        String subtopic;
-        MqttDataCallback dataCallback;
 
-        Node* next;
+struct DataStructMqttTopic {
+    String subtopic;
+    MqttDataCallback dataCallback;
 
     MqttClient* mqttClient;
 
-        Node() { }
-        Node(String subtopic, MqttDataCallback dataCallback, MqttClient* mqttClient) : subtopic(subtopic), dataCallback(dataCallback), mqttClient(mqttClient) { }
+    DataStructMqttTopic() { }
+    DataStructMqttTopic(String subtopic) : subtopic(subtopic) { } // For comparision only
+    DataStructMqttTopic(String subtopic, MqttDataCallback dataCallback, MqttClient* mqttClient) : subtopic(subtopic), dataCallback(dataCallback), mqttClient(mqttClient) { }
 
-        String getCtrlTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_ctrl"; }
-        String getDataTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_data"; }
+    String getCtrlTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_ctrl"; }
+    String getDataTopic() { return String(ESPX.getChipId()) + "_" + subtopic + "_data"; }
 
-        std::function<void(const String &message)> getMqttPrint() { return std::bind(&Node::mqttPrint, this, std::placeholders::_1); }
-        void mqttPrint(const String &message) {
-            // Only write if connected
-            if (mqttClient->connected()) {
-                mqttClient->beginMessage(getDataTopic());
-                mqttClient->print(message);
-                mqttClient->endMessage();
-            }
+    std::function<void(const String &message)> getMqttPrint() { return std::bind(&DataStructMqttTopic::mqttPrint, this, std::placeholders::_1); }
+    void mqttPrint(const String &message) {
+        // Only write if connected
+        if (mqttClient->connected()) {
+            mqttClient->beginMessage(getDataTopic());
+            mqttClient->print(message);
+            mqttClient->endMessage();
         }
-    };
+    }
 
-    Node* head = nullptr;
+    bool equals(DataStructMqttTopic* other) {
+        if (other == nullptr)
+            return false;
+        // Compare the actionKey string
+        return subtopic.equals(other->subtopic);
+    }
+};
+
+struct LinkedListMqttTopic : LinkedListNEW3101<DataStructMqttTopic> {
+    LinkedListMqttTopic(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
     MqttClient* mqttClient;
 
+    boolean hasTopics() { return this->getSize(); }
 
-    MqttTopicList(MqttClient* mqttClient) : mqttClient(mqttClient) { }
+    std::function<void(const String &message)> appendUnique(String subtopic, MqttDataCallback dataCallback = nullptr) {
+        this->appendUniqueDataStruct(new DataStructMqttTopic(subtopic, dataCallback, mqttClient));
 
+        return this->tail->dataStruct->getMqttPrint();
+    }
 
-    std::function<void(const String &message)> add(String subtopic, MqttDataCallback dataCallback = nullptr) {
-        Node* newNode = new Node(subtopic , dataCallback, mqttClient);
-        newNode->next = head;
-        head = newNode;
-
-        return newNode->getMqttPrint();
+    bool updateSetting(const String& key, const String& value) {
+        boolean success = false;
+        this->loop([&](DataStructMqttTopic* current, uint16_t i) {
+            
+            
+        });
+        return success;
     }
 
     boolean findAndExecute(String subtopic, char* data) {
-        Node* current = head;
-        while (current != nullptr) {
-            if (current->subtopic == subtopic) {
-                current->dataCallback(data);
-                return true;
-            }
-            current = current->next;
+        Node* node = this->findByContent(new DataStructMqttTopic(subtopic));
+        if (node == nullptr) {
+            return false;
         }
-        return false;
+        if (node->dataStruct->dataCallback == nullptr) {
+            return false;
+        }
+        node->dataStruct->dataCallback(data);
+        return true;
     }
-
-    boolean hasTopics() { return head != nullptr; }
 
     void subscribeAll() {
-        Node* current = head;
-        while (current != nullptr) {
+        this->loop([&](DataStructMqttTopic* current, uint16_t i) {
             // Only subscribe if there is a callback
             if (current->dataCallback != nullptr) {
-                mqttClient->subscribe(current->getCtrlTopic().c_str());
+                mqttClient->subscribe(current->getCtrlTopic().c_str()); // String conversion
             }
-            current = current->next;
-        }
+        });
     }
 
-    String getTopicStrings(uint8_t index) {
-        Node* current = head;
-        uint8_t counter = 0;
-        while (current != nullptr) {
-            if (counter++ == index) {
-                return current->getDataTopic() + ( (current->dataCallback == nullptr) ? "" : " | " + current->getCtrlTopic() ) ;
+    String getTopicStrings(uint8_t index) {                                             // TODO with bookmark LinkedListNEW3111
+        String str;
+        this->loop([&](DataStructMqttTopic* current, uint16_t i) {
+            if (i == index) {
+                str = current->getDataTopic() + ( (current->dataCallback == nullptr) ? "" : " | " + current->getCtrlTopic() );
+                return;
             }
-            current = current->next;
-        }
-        return "";
+        });
+        return str;
     }
 };
 
