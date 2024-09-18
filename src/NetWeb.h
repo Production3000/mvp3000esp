@@ -78,9 +78,8 @@ class NetWeb {
         uint64_t postMessageTime = 0;
         uint16_t postMessageLifetime = 15000; // 15 seconds
 
-        LinkedListWebActions linkedListWebActions = LinkedListWebActions(15);
-
-        WebCfgList webCfgList;
+        LinkedListWebActions linkedListWebActions = LinkedListWebActions(); // Adaptive size
+        LinkedListWebCfg linkedListWebCfg = LinkedListWebCfg(); // Adaptive size
 
         String webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom);
         WebPageColl webPageColl = WebPageColl(&server, std::bind(&NetWeb::webPageProcessorMain, this, std::placeholders::_1, std::placeholders::_2));

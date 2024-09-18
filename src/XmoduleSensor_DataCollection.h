@@ -74,7 +74,7 @@ struct DataCollection {
 
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
-    uint16_t dataStoreLength = 10;
+    uint16_t dataStoreLength = 50;
     LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging

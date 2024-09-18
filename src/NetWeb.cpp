@@ -35,8 +35,8 @@ void NetWeb::setup() {
         request->redirect("/");
     });
 
-    // Initialize cfgList
-    webCfgList = WebCfgList([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
+    // Set the save function for the config
+    linkedListWebCfg.setSaveCfgFkt([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
     
     // Start server, independent of wifi status
@@ -58,8 +58,8 @@ void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt
     linkedListWebActions.appendUnique(actionKey, DataStructWebAction::ResponseType::MESSAGE, actionFkt, successMessage);
 };
 
-void NetWeb::registerCfg(CfgJsonInterface *Cfg, std::function<void()> callback) {
-    webCfgList.add(Cfg, callback);
+void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) {
+    linkedListWebCfg.append(cfg, callback);
 }
 
 void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessorInt processor, String type) {
@@ -106,9 +106,8 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
     if (!formInputCheck(request)) {
         return;
     }
-
-    // Try to change setting and respond
-    if (webCfgList.loopUpdateSingleValue(request->getParam(0)->name(), request->getParam(0)->value())) {
+    // This is always a single setting that is updated at a time, try update and respond
+    if (linkedListWebCfg.updateSetting(request->getParam(0)->name(), request->getParam(0)->value())) {
         responseRedirect(request, "Settings saved!");
     } else {
         responseRedirect(request, "Input error!");

@@ -42,8 +42,7 @@ struct DataStructWebAction {
     String successMessage;
     WebActionFunction actionFkt;
 
-    DataStructWebAction() { }
-    DataStructWebAction(const String& actionKey) : actionKey(actionKey){ }
+    DataStructWebAction(const String& actionKey) : actionKey(actionKey){ } // For comparision only
     DataStructWebAction(const String& actionKey, ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) : actionKey(actionKey), successResponse(successResponse), actionFkt(actionFkt), successMessage(successMessage) { }
 
     bool equals(DataStructWebAction* other) {
@@ -54,15 +53,20 @@ struct DataStructWebAction {
     }
 };
 
-struct LinkedListWebActions : LinkedListNEW3001<DataStructWebAction> {
-    LinkedListWebActions(uint16_t size) : LinkedListNEW3001<DataStructWebAction>(size) { }
+struct LinkedListWebActions : LinkedListNEW3101<DataStructWebAction> {
+    LinkedListWebActions() : LinkedListNEW3101<DataStructWebAction>() { }
+    LinkedListWebActions(uint16_t size) : LinkedListNEW3101<DataStructWebAction>(size) { }
 
     void appendUnique(const String& actionKey, DataStructWebAction::ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) {
         this->appendUniqueDataStruct(new DataStructWebAction(actionKey, successResponse, actionFkt, successMessage));
     }
 
     DataStructWebAction* findAction(const String& argKey) {
-        return this->findByContent(new DataStructWebAction(argKey))->dataStruct;
+        Node* node = this->findByContent(new DataStructWebAction(argKey));
+        if (node == nullptr) {
+            return nullptr;
+        }
+        return node->dataStruct;
     }
 };
 
@@ -70,45 +74,39 @@ struct LinkedListWebActions : LinkedListNEW3001<DataStructWebAction> {
 ///////////////////////////////////////////////////////////////////////////////////
 
 // Linked list for configuration objects
-struct WebCfgList {
-    struct Node {
-        CfgJsonInterface* Cfg;
-        std::function<void()> callback;
-        Node* next;
-    };
-    Node* head = nullptr;
+struct DataStructWebCfg {
+    CfgJsonInterface* cfg;
+    std::function<void()> callback;
 
-    std::function<void(CfgJsonInterface&)> saveCfgFkt; // Function to save the configuration
+    DataStructWebCfg(CfgJsonInterface* cfg, std::function<void()> callback) : cfg(cfg), callback(callback) { }
+};
 
-    WebCfgList() { }
-    WebCfgList(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
+struct LinkedListWebCfg : LinkedListNEW3100<DataStructWebCfg> {
+    // Function to save the configuration
+    std::function<void(CfgJsonInterface&)> saveCfgFkt;
+
+    void setSaveCfgFkt(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
         this->saveCfgFkt = saveCfgFkt;
     }
 
-    void add(CfgJsonInterface* Cfg, std::function<void()> callback) {
-        Node* newNode = new Node;
-        newNode->Cfg = Cfg;
-        newNode->next = head;
-        newNode->callback = callback;
-        head = newNode;
+    void append(CfgJsonInterface* cfg, std::function<void()> callback) {
+        this->appendDataStruct(new DataStructWebCfg(cfg, callback));
     }
 
-    // Loops through all cfgs and updates the value if found
-    bool loopUpdateSingleValue(String key, String value) {
-        Node* current = head;
-        // Loop through all nodes
-        while (current != nullptr) {
+    bool updateSetting(const String& key, const String& value) {
+        boolean success = false;
+        this->loop([&](DataStructWebCfg* current, uint16_t i) {
             // Try to update value, if successful save Cfg and return
-            if (current->Cfg->updateSingleValue(key, value)) {
-                saveCfgFkt(*current->Cfg);
+            if (current->cfg->updateSingleValue(key, value)) {
+                saveCfgFkt(*current->cfg);
                 if (current->callback != nullptr) {
                     current->callback();
                 }
-                return true;
+                success = true; // set flag
+                return;
             }
-            current = current->next;
-        }
-        return false;
+        });
+        return success;
     }
 };
 
@@ -118,7 +116,7 @@ struct WebCfgList {
 typedef std::function<String (uint8_t)> AwsTemplateProcessorInt;
 typedef std::function<String (const String &, AwsTemplateProcessorInt)> AwsTemplateProcessorWrapper;
 
-// Collection of web pages
+// Collection of web pages TODO for some reason this does not work in a linked list ???
 struct WebPageColl {
     struct Node {
         String uri;

@@ -195,9 +195,8 @@ class XmoduleSensor : public Xmodule {
     <style>body { font-family: sans-serif; } table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
 <body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
     <p><a href='/'>Home</a></p>
-<h3>%101%</h3> <ul>
-    <li>%102% </li>
-    <li>%103% </li> </ul>
+<h3>%101%: %102%</h3>
+    <p>%103%</p>
 <h3>Data Handling</h3> <ul>
     <li>Sample averaging:<br> <form action='/save' method='post'> <input name='sampleAveraging' value='%111%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Averaging of offset and scaling measurements:<br> <form action='/save' method='post'> <input name='averagingOffsetScaling' value='%112%' type='number' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
