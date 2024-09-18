@@ -151,12 +151,12 @@ Extends the bare LinkedList3000 with additional functionality to bookmark a node
 
 #### <a name='LinkedList3100'></a>LinkedList3100
 
-Extends LinkedListNEW3000 with additional functionalities: adaptive growing of the list size.
+Extends LinkedList3000 with additional functionalities: adaptive growing of the list size.
 
 ##### Constructor
 
-* `LinkedListNEW3100()`: Initializes the linked list with adaptive growth enabled.
-* `LinkedListNEW3100(uint16_t size)`: Initializes the linked list with the specified initial maximum size. Adaptive growth needs to be explicitly enabled.
+* `LinkedList3100()`: Initializes the linked list with adaptive growth enabled.
+* `LinkedList3100(uint16_t size)`: Initializes the linked list with the specified initial maximum size. Adaptive growth needs to be explicitly enabled.
 
 ##### Methods
 

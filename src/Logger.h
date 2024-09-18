@@ -78,8 +78,8 @@ class Logger {
             DataStructLog(const String& message, uint8_t level) : time(millis()), message(message), level(level) { }
         };
 
-        struct LinkedListLog : LinkedListNEW3010<DataStructLog> {
-            LinkedListLog(uint16_t size) : LinkedListNEW3010<DataStructLog>(size) { }
+        struct LinkedListLog : LinkedList3010<DataStructLog> {
+            LinkedListLog(uint16_t size) : LinkedList3010<DataStructLog>(size) { }
 
             void append(uint8_t level, const String& message) {
                 // Create data structure and add node to linked list

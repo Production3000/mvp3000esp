@@ -37,7 +37,7 @@ extern _Helper _helper;
  * @param size The maximum element count of the list.
  */
 template <typename T>
-struct LinkedListNEW3000 {
+struct LinkedList3000 {
 
     struct Node {
         T* dataStruct;
@@ -70,12 +70,12 @@ struct LinkedListNEW3000 {
      * 
      * @param size The maximum element count of the list.
      */
-    LinkedListNEW3000(uint16_t size) : max_size(size) { }
+    LinkedList3000(uint16_t size) : max_size(size) { }
     // This class is often inherited virtually. In that case its constructor is called directly by the most derived class's constructor
     // To simplify the code in user classes, a default constructor is added here, and the max size is set in the 30xx classes
-    LinkedListNEW3000() : max_size(1) { } // Call when virtual inheritance is used
+    LinkedList3000() : max_size(1) { } // Call when virtual inheritance is used
 
-    ~LinkedListNEW3000() {
+    ~LinkedList3000() {
         clear(); // IMPORTANT: Make sure to also free memory within the dataStruct
     }
 
@@ -171,10 +171,10 @@ struct LinkedListNEW3000 {
  * @param size The maximum element count of the list.
  */
 template <typename T>
-struct LinkedListNEW3001 : virtual LinkedListNEW3000<T> {
-    LinkedListNEW3001(uint16_t size) : LinkedListNEW3000<T>(size) { this->max_size = size; }
+struct LinkedList3001 : virtual LinkedList3000<T> {
+    LinkedList3001(uint16_t size) : LinkedList3000<T>(size) { this->max_size = size; }
 
-    using typename LinkedListNEW3000<T>::Node;
+    using typename LinkedList3000<T>::Node;
 
     /**
      * @brief Append element to the list or move it to the tail of the list.
@@ -232,10 +232,10 @@ struct LinkedListNEW3001 : virtual LinkedListNEW3000<T> {
  * @param size The maximum element count of the list.
  */
 template <typename T>
-struct LinkedListNEW3010 : virtual LinkedListNEW3000<T> {
-    LinkedListNEW3010(uint16_t size) : LinkedListNEW3000<T>(size) { this->max_size = size; }
+struct LinkedList3010 : virtual LinkedList3000<T> {
+    LinkedList3010(uint16_t size) : LinkedList3000<T>(size) { this->max_size = size; }
 
-    using typename LinkedListNEW3000<T>::Node;
+    using typename LinkedList3000<T>::Node;
 
     Node* bookmark = nullptr; // bookmark is a temporary pointer, e.g. for slow looping
 
@@ -295,11 +295,11 @@ struct LinkedListNEW3010 : virtual LinkedListNEW3000<T> {
  * @param size (optional) The maximum element count of the list. If given adaptive growth is not enabled by default but needs to be enabled explicitly
  */
 template <typename T>
-struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
-    LinkedListNEW3100() : LinkedListNEW3000<T>() { this->max_size = 1; adpative = true; } // Without size limit to always enable autogrow
-    LinkedListNEW3100(uint16_t size) : LinkedListNEW3000<T>(size) { this->max_size = size; adpative = false; } // With size limit to force additional call to enable autogrow
+struct LinkedList3100 : virtual LinkedList3000<T> {
+    LinkedList3100() : LinkedList3000<T>() { this->max_size = 1; adpative = true; } // Without size limit to always enable autogrow
+    LinkedList3100(uint16_t size) : LinkedList3000<T>(size) { this->max_size = size; adpative = false; } // With size limit to force additional call to enable autogrow
 
-    using typename LinkedListNEW3000<T>::Node;
+    using typename LinkedList3000<T>::Node;
 
     boolean adpative;
 
@@ -337,7 +337,7 @@ struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
     void appendDataStruct(T* newDataStruct) {
         if (this->size >= this->max_size)
             growMaxSize();
-        LinkedListNEW3000<T>::appendDataStruct(newDataStruct);
+        LinkedList3000<T>::appendDataStruct(newDataStruct);
     }
 };
 
@@ -357,26 +357,26 @@ struct LinkedListNEW3100 : virtual LinkedListNEW3000<T> {
  * @param size The maximum element count of the list.
  */
 template <typename T>
-struct LinkedListNEW3011 : LinkedListNEW3001<T>, LinkedListNEW3010<T> {
-    LinkedListNEW3011(uint16_t size) : LinkedListNEW3001<T>(size), LinkedListNEW3010<T>(size) { }
+struct LinkedList3011 : LinkedList3001<T>, LinkedList3010<T> {
+    LinkedList3011(uint16_t size) : LinkedList3001<T>(size), LinkedList3010<T>(size) { }
 };
 
 template <typename T>
-struct LinkedListNEW3101 : LinkedListNEW3001<T>, LinkedListNEW3100<T> {
-    LinkedListNEW3101() : LinkedListNEW3001<T>(1), LinkedListNEW3100<T>() { }
-    LinkedListNEW3101(uint16_t size) : LinkedListNEW3001<T>(size), LinkedListNEW3100<T>(size) { }
+struct LinkedList3101 : LinkedList3001<T>, LinkedList3100<T> {
+    LinkedList3101() : LinkedList3001<T>(1), LinkedList3100<T>() { }
+    LinkedList3101(uint16_t size) : LinkedList3001<T>(size), LinkedList3100<T>(size) { }
 };
 
 template <typename T>
-struct LinkedListNEW3110 : LinkedListNEW3010<T>, LinkedListNEW3100<T> {
-    LinkedListNEW3110() : LinkedListNEW3010<T>(1), LinkedListNEW3100<T>() { }
-    LinkedListNEW3110(uint16_t size) : LinkedListNEW3010<T>(size), LinkedListNEW3100<T>(size) { }
+struct LinkedList3110 : LinkedList3010<T>, LinkedList3100<T> {
+    LinkedList3110() : LinkedList3010<T>(1), LinkedList3100<T>() { }
+    LinkedList3110(uint16_t size) : LinkedList3010<T>(size), LinkedList3100<T>(size) { }
 };
 
 template <typename T>
-struct LinkedListNEW3111 : LinkedListNEW3001<T>, LinkedListNEW3010<T>, LinkedListNEW3100<T> {
-    LinkedListNEW3111() : LinkedListNEW3001<T>(1), LinkedListNEW3010<T>(1), LinkedListNEW3100<T>() { }
-    LinkedListNEW3111(uint16_t size) : LinkedListNEW3001<T>(size), LinkedListNEW3010<T>(size), LinkedListNEW3100<T>(size) { }
+struct LinkedList3111 : LinkedList3001<T>, LinkedList3010<T>, LinkedList3100<T> {
+    LinkedList3111() : LinkedList3001<T>(1), LinkedList3010<T>(1), LinkedList3100<T>() { }
+    LinkedList3111(uint16_t size) : LinkedList3001<T>(size), LinkedList3010<T>(size), LinkedList3100<T>(size) { }
 };
 
 #endif

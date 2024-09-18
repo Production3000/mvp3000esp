@@ -61,7 +61,7 @@ struct DataStructMqttTopic {
     }
 };
 
-struct LinkedListMqttTopic : LinkedListNEW3111<DataStructMqttTopic> {
+struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
     LinkedListMqttTopic(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
     MqttClient* mqttClient;

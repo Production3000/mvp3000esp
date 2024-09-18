@@ -53,9 +53,9 @@ struct DataStructWebAction {
     }
 };
 
-struct LinkedListWebActions : LinkedListNEW3101<DataStructWebAction> {
-    LinkedListWebActions() : LinkedListNEW3101<DataStructWebAction>() { }
-    LinkedListWebActions(uint16_t size) : LinkedListNEW3101<DataStructWebAction>(size) { }
+struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
+    LinkedListWebActions() : LinkedList3101<DataStructWebAction>() { }
+    LinkedListWebActions(uint16_t size) : LinkedList3101<DataStructWebAction>(size) { }
 
     void appendUnique(const String& actionKey, DataStructWebAction::ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) {
         this->appendUniqueDataStruct(new DataStructWebAction(actionKey, successResponse, actionFkt, successMessage));
@@ -81,7 +81,7 @@ struct DataStructWebCfg {
     DataStructWebCfg(CfgJsonInterface* cfg, std::function<void()> callback) : cfg(cfg), callback(callback) { }
 };
 
-struct LinkedListWebCfg : LinkedListNEW3100<DataStructWebCfg> {
+struct LinkedListWebCfg : LinkedList3100<DataStructWebCfg> {
     // Function to save the configuration
     std::function<void(CfgJsonInterface&)> saveCfgFkt;
 

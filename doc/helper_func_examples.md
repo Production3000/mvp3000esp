@@ -35,9 +35,9 @@ It is not recommended to use an adaptive list during development as this hides a
         DataStructSensor(uint64_t time, float_t data) : time(time), data(data) { }
     };
     
-    struct LinkedListSensor : LinkedListNEW3100<DataStructSensor> {
-        LinkedListSensor() : LinkedListNEW3100<DataStructSensor>() { }
-        LinkedListSensor(uint16_t size) : LinkedListNEW3100<DataStructSensor>(size) { }
+    struct LinkedListSensor : LinkedList3100<DataStructSensor> {
+        LinkedListSensor() : LinkedList3100<DataStructSensor>() { }
+        LinkedListSensor(uint16_t size) : LinkedList3100<DataStructSensor>(size) { }
 
         void append(uint64_t time, float_t data) {
             this->appendDataStruct(new DataStructSensor(time, data));
@@ -71,8 +71,8 @@ Timestamped log of domain visits. Duplicate entries are moved to the tail (newes
         }
     };
 
-    struct LinkedListLog : LinkedListNEW3001<DataStructLog> {
-        LinkedListLog(uint16_t size) : LinkedListNEW3001<DataStructLog>(size) { }
+    struct LinkedListLog : LinkedList3001<DataStructLog> {
+        LinkedListLog(uint16_t size) : LinkedList3001<DataStructLog>(size) { }
 
         void appendUnique(const String& domain) {
             this->appendUniqueDataStruct(new DataStructLog(domain), true);
@@ -95,8 +95,8 @@ Timestamped log of domain visits. Duplicate entries are moved to the tail (newes
         DataStructText(const String& longText) : longText(longText) { }
     };
 
-    struct LinkedListText : LinkedListNEW3010<DataStructText> {
-        LinkedListText(uint16_t size) : LinkedListNEW3010<DataStructText>(size) { }
+    struct LinkedListText : LinkedList3010<DataStructText> {
+        LinkedListText(uint16_t size) : LinkedList3010<DataStructText>(size) { }
 
         void append(const String& longText) {
             this->appendDataStruct(new DataStructText(longText));
