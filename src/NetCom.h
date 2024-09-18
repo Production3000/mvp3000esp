@@ -86,7 +86,7 @@ class NetCom {
         void sendDiscovery();
 
         void udpReceiveMessage();
-        void udpSendMessage(const char *message, IPAddress remoteIp = INADDR_NONE);
+        void udpSendMessage(const char* message, IPAddress remoteIp = INADDR_NONE);
 
 
         String webPageProcessor(uint8_t var);

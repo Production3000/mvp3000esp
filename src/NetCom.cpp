@@ -119,7 +119,7 @@ void NetCom::udpReceiveMessage() {
     }
 }
 
-void NetCom::udpSendMessage(const char *message, IPAddress remoteIp) {
+void NetCom::udpSendMessage(const char* message, IPAddress remoteIp) {
     // Test this using netcat: nc -ul [laptopIP] [port]
 
     if (!cfgNetCom.udpEnabled) {

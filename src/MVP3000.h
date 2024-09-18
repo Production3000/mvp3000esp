@@ -47,7 +47,7 @@ class MVP3000 {
          * 
          * @param message The message to log.
          */
-        void log(const char *message) { logger.write(CfgLogger::Level::USER, message); };
+        void log(const String& message) { logger.write(CfgLogger::Level::USER, message); };
 
         /**
          * @brief Enable or disable ANSI encoding of serial output.

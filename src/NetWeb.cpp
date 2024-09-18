@@ -177,7 +177,7 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char *message) {
+void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* message) {
     // Message to serve on next page load and timestamp to discard if it is too old       
     postMessage = message;
     postMessageTime = millis();

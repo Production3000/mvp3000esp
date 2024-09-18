@@ -92,7 +92,7 @@ void Config::writeCfg(JsonInterface &cfg) {
     writeJsonToFile(cfg.cfgName.c_str());
 }
 
-bool Config::readFileToJson(const char *fileName) {
+bool Config::readFileToJson(const char* fileName) {
     // Check if all other operations are done (this is mainly useful while coding)
     if (!jsonDoc.isNull()) {
         mvp.logger.write(CfgLogger::Level::WARNING, "JSON doc was not empty.");
@@ -126,7 +126,7 @@ bool Config::readFileToJson(const char *fileName) {
     });
 }
 
-void Config::writeJsonToFile(const char *fileName) {
+void Config::writeJsonToFile(const char* fileName) {
     // Empty cfg, remove file if any
     if (jsonDoc.isNull()) {
         removeFile(fileName);
@@ -174,14 +174,14 @@ void Config::factoryResetDevice(boolean keepWifi) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Config::removeFile(const char *fileName) {
+void Config::removeFile(const char* fileName) {
     if (!fileSystemOK)
         return;
 
     SPIFFS.remove(fileNameCompletor(fileName));
 }
 
-String Config::fileNameCompletor(const char *fileName) {
+String Config::fileNameCompletor(const char* fileName) {
     // Remove leading '/', there should be none
     if (fileName[0] == '/')
         fileName = fileName + 1;
@@ -189,7 +189,7 @@ String Config::fileNameCompletor(const char *fileName) {
     return "/" + String(fileName) + ".json";
 }
 
-bool Config::readFile(const char *fileName, std::function<bool(File& file)> readerFunc) {
+bool Config::readFile(const char* fileName, std::function<bool(File& file)> readerFunc) {
     if (!fileSystemOK)
         return false;
 
@@ -219,7 +219,7 @@ bool Config::readFile(const char *fileName, std::function<bool(File& file)> read
     return result;
 }
 
-bool Config::writeFile(const char *fileName, std::function<bool(File& file)> writerFunc) {   
+bool Config::writeFile(const char* fileName, std::function<bool(File& file)> writerFunc) {   
     if (!fileSystemOK)
         return false;
 

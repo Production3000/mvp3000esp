@@ -54,13 +54,13 @@ class Config {
         boolean fileSystemOK = false;
         bool isReadyFS();
 
-        bool readFileToJson(const char *fileName);
-        void writeJsonToFile(const char *fileName);
+        bool readFileToJson(const char* fileName);
+        void writeJsonToFile(const char* fileName);
 
-        bool readFile(const char *filename, std::function<bool(File& file)> writerFunc);
-        bool writeFile(const char *filename, std::function<bool(File& file)> writerFunc);
-        void removeFile(const char *fileName);
-        String fileNameCompletor(const char *fileName);
+        bool readFile(const char* filename, std::function<bool(File& file)> writerFunc);
+        bool writeFile(const char* filename, std::function<bool(File& file)> writerFunc);
+        void removeFile(const char* fileName);
+        String fileNameCompletor(const char* fileName);
 };
 
 #endif
