@@ -28,6 +28,9 @@ limitations under the License.
 #include "XmoduleSensor.h"
 
 
+#include <stdarg.h>
+
+
 class MVP3000 {
 
     public:

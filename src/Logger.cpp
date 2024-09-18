@@ -37,7 +37,7 @@ void Logger::setup() {
     }
 
     if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
-        webSocketPrint = mvp.net.netWeb.registerWebSocket("/wslog"); // Not sure why this works here, before the netWeb.setup() call ...
+        webSocketPrint = mvp.net.netWeb.registerWebSocket("/wslog");
     }
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
@@ -47,7 +47,7 @@ void Logger::setup() {
 //////////////////////////////////////////////////////////////////////////////////
 
 void Logger::write(CfgLogger::Level targetLevel, const char *message) {
-    // Store errors, warrnings, usermsg for web display
+    // Store errors, warnings, usermsg for web display
     if (targetLevel <= CfgLogger::Level::CONTROL) {
         linkedListLog.append(targetLevel, message);
     }
@@ -66,13 +66,13 @@ void Logger::write(CfgLogger::Level targetLevel, const char *message) {
 }
 
 void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount) {
-    String message = "";
+    String message;
     for (uint8_t i = 0; i < dataLength; i++) {
         // Outputs:
         //  1,2,3,4,5,6; for rowLength is max uint8/255
         //  1,2,3;4,5,6; for rowLength is 3
         // matrixColumnCount defaults to 255, which is the maximum length of a single row
-        message += String(dataArray[i]);
+        message += dataArray[i];
         message += ((i == dataLength - 1) || ((i + 1) % (matrixColumnCount) == 0) ) ? ";" : "," ;
     }
     write(targetLevel, message.c_str());
@@ -91,7 +91,10 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatStri
 String Logger::getRecentLog() {
     String str = "";
     linkedListLog.loop([&](DataStructLog *node , uint8_t index) {
-        str += _helper.millisToTime(node->time) + " " + node->message + "\n";
+        str += _helper.millisToTime(node->time);
+        str += " ";
+        str += node->message;
+        str += "\n";
     }, true);
     return str;
 }

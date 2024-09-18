@@ -50,7 +50,7 @@ struct JsonInterface {
      */
     virtual bool importFromJson(JsonDocument &jsonDoc) { return true; };
 
-    JsonInterface(String _cfgName) : cfgName(_cfgName) { };
+    JsonInterface(const String& cfgName) : cfgName(cfgName) { };
 
 };
 
@@ -66,7 +66,7 @@ struct JsonInterface {
  * @param _cfgName The name of the configuration file.
  */
 struct CfgJsonInterface : public JsonInterface {
-    CfgJsonInterface(String _cfgName) : JsonInterface(_cfgName) { };
+    CfgJsonInterface(const String& cfgName) : JsonInterface(cfgName) { };
 
     // Type-specific core setting structure
     template <typename T>
@@ -111,7 +111,7 @@ struct CfgJsonInterface : public JsonInterface {
         SettingNode(uint32_t _hash, uint16_t *_value, std::function<bool(uint16_t)> checkValue) : hash(_hash), type(1) {
             settingCore.i = new SettingCore<uint16_t>(_value, checkValue);
         };
-        SettingNode(uint32_t _hash, String *_value, std::function<bool(String)> checkValue) : hash(_hash), type(2) {
+        SettingNode(uint32_t _hash, String *_value, std::function<bool(const String&)> checkValue) : hash(_hash), type(2) {
             settingCore.s = new SettingCore<String>(_value, checkValue);
         };
     };
@@ -129,7 +129,7 @@ struct CfgJsonInterface : public JsonInterface {
      * @param checkValue A function to check if the value is valid.
      */
     template <typename T>
-    void addSetting(String key, T *value, std::function<bool(T)> checkValue) {
+    void addSetting(const String& key, T *value, std::function<bool(T)> checkValue) {
         SettingNode* newSetting = new SettingNode(_helper.hashStringDjb2(key.c_str()), value, checkValue);
         if (head == nullptr) {
             head = newSetting;
@@ -202,7 +202,7 @@ struct CfgJsonInterface : public JsonInterface {
      * @param key The key of the setting to update, will be hashed.
      * @param value The new value of the setting.
      */
-    bool updateSingleValue(String key, String value) {    
+    bool updateSingleValue(const String& key, const String& value) {    
         // Loop through all settings to find the correct one    
         SettingNode* current = head;
         while (current != nullptr) {

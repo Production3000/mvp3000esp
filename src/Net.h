@@ -50,8 +50,8 @@ struct CfgNet : public CfgJsonInterface  {
 
     CfgNet() : CfgJsonInterface("cfgNet") {
         addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [](uint16_t x) { return (x > 100) ? false : true; }); // Limit to 100, any more is 'forever'
-        addSetting<String>("clientSsid", &clientSsid, [](String x) { return true; } ); // Check is in extra function
-        addSetting<String>("clientPass", &clientPass, [](String x) { return true; }); // Check is in extra function
+        addSetting<String>("clientSsid", &clientSsid, [](const String& x) { return true; } ); // Check is in extra function
+        addSetting<String>("clientPass", &clientPass, [](const String& x) { return true; }); // Check is in extra function
         addSetting<boolean>("forceClientMode", &forceClientMode, [](boolean _) { return true; });
     }
 };
@@ -75,14 +75,14 @@ class Net {
         NetCom netCom;
         NetMqtt netMqtt;
 
-        String apSsid = "device" + String(_helper.ESPX->getChipId());
+        String apSsid = "device" + _helper.ESPX->getChipId();
 
         IPAddress myIp = INADDR_NONE;
 
         void setup();
         void loop();
 
-        bool editClientConnection(String newSsid, String newPass);
+        bool editClientConnection(const String& newSsid, const String& newPass);
         void cleanCfgKeepClientInfo();
 
         boolean connectedAsClient() { return (netState == NET_STATE_TYPE::CLIENT); }

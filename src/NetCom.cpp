@@ -68,7 +68,7 @@ void NetCom::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-IPAddress NetCom::checkSkill(String requestedSkill) {
+IPAddress NetCom::checkSkill(const String& requestedSkill) {
     // Check if the requested skill is in the string of skills
     if (serverSkills.indexOf(requestedSkill) >= 0)
         return serverIp;
@@ -157,7 +157,7 @@ String NetCom::webPageProcessor(uint8_t var) {
         case 42:
             return String(cfgNetCom.discoveryPort);
         case 43:
-            return (serverIp != INADDR_NONE) ? serverIp.toString() + ": " + serverSkills : "none";
+            return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s: %s", serverIp.toString().c_str(), serverSkills.c_str());             // TODO c_str() needed???
 
         default:
             return "";

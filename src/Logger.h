@@ -25,7 +25,7 @@ limitations under the License.
 
 
 struct CfgLogger {
-    // Not loaded from SPIFFS, as thatis not started yet.
+    // Not loaded from SPIFFS, as that is not started yet.
     
     enum Level: uint8_t {
         ERROR = 0,
@@ -67,7 +67,7 @@ class Logger {
         void write(CfgLogger::Level targetLevel, const char *message);
         // Output data in CSV format
         void writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount);
-        // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hellow World", 42);
+        // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hello World", 42);
         void writeFormatted(CfgLogger::Level targetLevel, const char* formatString, ...);
 
     private:
@@ -77,13 +77,13 @@ class Logger {
             uint8_t level;
             String message;
 
-            DataStructLog(String message, uint8_t level) : time(millis()), message(message), level(level) { }
+            DataStructLog(const String& message, uint8_t level) : time(millis()), message(message), level(level) { }
         };
 
         struct LinkedListLog : LinkedListNEW3000<DataStructLog> {
             LinkedListLog(uint16_t size) : LinkedListNEW3000<DataStructLog>(size) { }
 
-            void append(uint8_t level, String message) {
+            void append(uint8_t level, const String& message) {
                 // Create data structure and add node to linked list
                 // Using this-> as base class/function is templated
                 this->appendDataStruct(new DataStructLog(message, level));
@@ -93,14 +93,14 @@ class Logger {
 
         CfgLogger cfgLogger;
 
-        uint8_t logStoreLength = 10;
+        uint8_t logStoreLength = 5;
         LinkedListLog linkedListLog = LinkedListLog(logStoreLength);
 
         bool checkTargetLevel(CfgLogger::Level targetLevel);
 
         void serialPrint(CfgLogger::Level targetLevel, const char *message);
 
-        std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
+        std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
 };
 

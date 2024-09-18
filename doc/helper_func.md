@@ -4,6 +4,7 @@
 * [Helper Class](#HelperClass)
 	* [Check String for Integer / Decimal](#CheckStringforIntegerDecimal)
 	* [Millis to Time String](#MillistoTimeString)
+	* [Formatted String](#FormattedString)
 * [LimitTimer](#LimitTimer)
 	* [Constructor and Functions](#ConstructorandFunctions)
 	* [Usage Example](#UsageExample)
@@ -30,15 +31,16 @@ The Helper class provides a range of functions for checking and converting strin
 
 ### <a name='CheckStringforIntegerDecimal'></a>Check String for Integer / Decimal 
 
- *  `bool isValidDecimal(const char *str)`: Check if a string is a valid decimal number.
- *  `bool isValidDecimal(String str)`: Check if a string is a valid decimal number.
- *  `bool isValidInteger(const char *str)`: Check if a string is a valid integer number.
- *  `bool isValidInteger(String str)`: Check if a string is a valid integer number.
+ *  `bool isValidDecimal(const String& str)`: Check if a string is a valid decimal number.
+ *  `bool isValidInteger(const String& str)`: Check if a string is a valid integer number.
 
 ### <a name='MillistoTimeString'></a>Millis to Time String 
 
- *  `String millisToTime(uint64_t total_ms)`: Convert milliseconds to a time string with the format "d hh:mm:ss"
+ *  `String millisToTime(uint64_t total_ms)`: Convert milliseconds to a time string with the format "d hh:mm:ss".
 
+### <a name='FormattedString'></a>Formatted String
+
+ *  `String printFormatted(const String& formatString, ...)`: Print a formatted string.
 
 ## <a name='LimitTimer'></a>LimitTimer
 

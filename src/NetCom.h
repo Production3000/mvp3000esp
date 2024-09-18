@@ -57,7 +57,7 @@ class NetCom {
         void setup();
         void loop();
 
-        IPAddress checkSkill(String requestedSkill);
+        IPAddress checkSkill(const String& requestedSkill);
 
         void hardDisable() { cfgNetCom.isHardDisabled = true; }
         boolean isHardDisabled() { return cfgNetCom.isHardDisabled; }

@@ -222,13 +222,22 @@ String NetMqtt::webPageProcessor(uint8_t var) {
     }
 }
 
+
+
+
 String NetMqtt::webPageProcessorLinkedListFiller() {
     // String length unknown, 1-2 topics + htmlstrings, 100 should do it
+
+// char message[128];
+// snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
+
+
     String str;
     if (!str.reserve(100)) {
         mvp.log("Out of memory: String to display MQTT topics could not be reserved.");
         return str;
-    };           
+    };
+    
 
     // Fill placeholder with current bookmark
     str += "<li>";

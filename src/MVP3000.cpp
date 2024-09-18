@@ -130,40 +130,41 @@ void MVP3000::updateLoopDuration() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+
 String MVP3000::webPageProcessor(uint8_t var) {
     String str = ""; // Needs to be defined outside of switch
     switch (var) {
         case 11:
-            return String(__DATE__) + " " + String(__TIME__);
+            return __DATE__ " " __TIME__; // Timestamp concatenated at compilation time
         case 12:
-            return String(ESP.getFreeHeap()) + " / " + String(_helper.ESPX->getHeapFragmentation());
+            return _helper.printFormatted("%d / %d", ESP.getFreeHeap(), _helper.ESPX->getHeapFragmentation());
         case 13:
             return String(_helper.millisToTime(millis()));
         case 14:
-            return String(_helper.ESPX->getResetReason().c_str());
+            return _helper.ESPX->getResetReason();
         case 15:
             return String(ESP.getCpuFreqMHz());
         case 16:
-            return String(loopDurationMean_ms) + " / " + String(loopDurationMin_ms) + " / " + String(loopDurationMax_ms);
+            return _helper.printFormatted("%d / %d / %d", loopDurationMean_ms, loopDurationMin_ms, loopDurationMax_ms);
         case 17:
             return logger.getRecentLog();
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
-        case 20:
+
+
+        case 20:                                                                                            // TODO linked list ...                                                                          
             if (moduleCount == 0)
                 return "<li>None</li>";
             for (uint8_t i = 0; i < moduleCount; i++) {
-                char message[128];
                 if ((xmodules[i]->uri).length() > 0) {
-                    snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
+                    str += _helper.printFormatted("<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
                 } else {
-                    snprintf(message, sizeof(message), "<li>%s</li>", xmodules[i]->description.c_str());
+                    str += _helper.printFormatted("<li>%s</li>", xmodules[i]->description.c_str());
                 }
-                str += message;
             }
             return str;
 
         default:
-            return str;
+            return "";
     }
 }

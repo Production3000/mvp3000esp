@@ -82,7 +82,7 @@ void Net::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-bool Net::editClientConnection(String newSsid, String newPass) {
+bool Net::editClientConnection(const String& newSsid, const String& newPass) {
     // SSID and pass are both either empty or IEEE conform
     if (((newSsid.length() == 0) && (newPass.length() == 0)) || ((newSsid.length() >= 1) && (newSsid.length() <= 32) && (newPass.length() >= 8) && (newPass.length() <= 63))) {
         cfgNet.clientSsid = newSsid;

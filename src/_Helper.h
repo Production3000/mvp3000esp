@@ -42,22 +42,20 @@ struct _Helper {
 ///////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @brief Check if a string is a valid decimal number
+     * @brief Check if a string is a valid decimal number (including integer)
      * 
      * @param str String to check
      */
-    bool isValidDecimal(const char *str) { return _checkNumberType(String(str), false); };
-    bool isValidDecimal(String str) { return _checkNumberType(str, false); };
+    bool isValidDecimal(const String& str) { return _checkNumberType(str, false); };
 
     /**
      * @brief Check if a string is a valid integer
      * 
      * @param str String to check
      */
-    bool isValidInteger(const char *str) { return _checkNumberType(String(str), true); };
-    bool isValidInteger(String str) { return _checkNumberType(str, true); };
+    bool isValidInteger(const String& str) { return _checkNumberType(str, true); };
 
-    bool _checkNumberType(String str, boolean limitToInteger)  {
+    bool _checkNumberType(const String& str, boolean limitToInteger)  {
         // Empty string is not an integer
         if (str.length() < 1)
             return false;
@@ -106,9 +104,30 @@ struct _Helper {
         remaining_s = total_s % 3600;
         uint8_t minutes = remaining_s / 60;
         uint8_t seconds = remaining_s % 60;
-        char buffer[15]; // max 9999 days
-        snprintf(buffer, sizeof(buffer), "%dd %02d:%02d:%02d", days, hours, minutes, seconds);
-        return String(buffer);
+        return printFormatted("%dd %02d:%02d:%02d", days, hours, minutes, seconds);
+    }
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @brief Print a formatted string
+     * 
+     * @param formatString Format string
+     * @param ... Arguments
+     * 
+     * @return Formatted string
+     */
+    String printFormatted(const String& formatString, ...) {
+        va_list args;
+        va_start(args, formatString);
+        // Estimate length incl termination
+        // For numbers this is often to large, assuming not all numbers are filling all their digits
+        uint8_t len = snprintf( nullptr, 0, formatString.c_str(), args) + 1;
+        char message[len];
+        vsnprintf(message, sizeof(message), formatString.c_str(), args);
+        va_end(args);
+        return message;
     }
 
 
