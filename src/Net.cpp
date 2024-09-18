@@ -193,15 +193,15 @@ void Net::WiFiStationDisconnected() {
 
 String Net::webPageProcessor(uint8_t var) {
     switch (var) {
-        case 31:
+        case 41:
             return apSsid.c_str();
-        case 32:
+        case 42:
             return cfgNet.clientSsid.c_str();
-        case 33:
+        case 43:
             return cfgNet.clientPass.c_str();
-        case 34:
+        case 44:
             return String(cfgNet.clientConnectRetries);
-        case 35:
+        case 45:
             return (cfgNet.forceClientMode == true) ? "checked" : "";
         default:
             return "";

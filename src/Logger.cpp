@@ -28,6 +28,9 @@ void Logger::setup() {
     if (cfgLogger.target == CfgLogger::Target::NONE)
         return;
 
+    // Define web page
+    mvp.net.netWeb.registerPage("/log", webPage, std::bind(&Logger::webPageProcessor, this, std::placeholders::_1)); 
+
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
         Serial.begin(115200);
         while (!Serial)
@@ -93,16 +96,6 @@ void Logger::writeFormatted(CfgLogger::Level targetLevel, const String& formatSt
     write(targetLevel, message);
 }
 
-String Logger::getRecentLog() {
-    String str = "";
-    linkedListLog.loop([&](DataStructLog *node , uint8_t index) {
-        str += _helper.millisToTime(node->time);
-        str += " ";
-        str += node->message;
-        str += "\n";
-    }, true);
-    return str;
-}
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -164,4 +157,24 @@ void Logger::serialPrint(CfgLogger::Level targetLevel, const String& message) {
         Serial.print("\033[0m");
     }
     Serial.println("");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
+String Logger::webPageProcessor(uint8_t var) {
+    switch (var) {
+
+        case 30:
+            if (linkedListLog.getSize() == 0) {                                                                   
+                return "-";
+            }
+            // Set initial bookmark
+            linkedListLog.bookmarkByIndex(0, true);
+        case 31:
+            return _helper.printFormatted("%s %s %s", _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(), linkedListLog.getBookmarkData()->message.c_str(), (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
+
+        default:
+            return "";
+    }
 }

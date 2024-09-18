@@ -121,7 +121,7 @@ struct WebPageColl {
     struct Node {
         String uri;
         const char* html;
-        String contentType;
+        String contentType;                                                         // TODO make this enum
         AwsResponseFiller responseFiller;
 
         AwsTemplateProcessor processor;

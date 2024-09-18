@@ -109,11 +109,9 @@ class MVP3000 {
 <li>Uptime: %13%</li>
 <li>Last restart reason: %14%</li>
 <li>CPU frequency: %15% MHz</li>
-<li>Main loop duration: %16% ms (mean/min/max)</li>
-<br>
-<li>Log websocket: ws://%2%/wslog <br>
-<textarea readonly rows='3' cols='120'>%17%</textarea> </li> </ul>
+<li>Main loop duration: %16% ms (mean/min/max)</li> </ul>
 <h3>Framework settings</h3> <ul>
+<li><a href='/log'>Log</a></li>
 <li><a href='/net'>Network</a></li>
 <li> %18% </li>
 <li><a href='/netmqtt'>MQTT</a></li> </ul>

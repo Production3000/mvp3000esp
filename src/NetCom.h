@@ -93,9 +93,9 @@ class NetCom {
         const char* webPage = R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>UDP Auto-Discovery</h3> <ul>
-<li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %41% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
-<li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%42%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-<li>Discovery: %43% </li> </ul>
+<li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %51% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
+<li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
+<li>Discovery: %53% </li> </ul>
 <p>&nbsp;</body></html>)===";
 
 };

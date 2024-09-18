@@ -185,9 +185,9 @@ void NetMqtt::saveCfgCallback() {
 
 String NetMqtt::webPageProcessor(uint8_t var) { 
     switch (var) {
-        case 51:
+        case 61:
             return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
-        case 52:
+        case 62:
             switch (mqttState) {
                 case MQTT_STATE::CONNECTED:
                     return "connected";
@@ -199,22 +199,22 @@ String NetMqtt::webPageProcessor(uint8_t var) {
                 case MQTT_STATE::NOBROKER:
                     return "no broker";
             }
-        case 53:
+        case 63:
             return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString() : "-";
-        case 54:
+        case 64:
             return cfgNetMqtt.mqttForcedBroker;
-        case 55:
+        case 65:
             return String(cfgNetMqtt.mqttPort);
 
         // Filling of the MQTT topics is better be split, long strings are never good during runtime
-        case 60:
+        case 70:
             // Check if list is empty
             if (linkedListMqttTopic.getSize() == 0) {                                                                   
                 return "<li>None</li>";
             }
             // Set initial bookmark
             linkedListMqttTopic.bookmarkByIndex(0, true);
-        case 61:
+        case 71:
             return _helper.printFormatted("<li>%s %s %s</li> %s", linkedListMqttTopic.getBookmarkData()->getDataTopic().c_str(),
                 (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? " | " : "",
                 (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? linkedListMqttTopic.getBookmarkData()->getCtrlTopic().c_str() : "",

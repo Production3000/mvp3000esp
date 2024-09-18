@@ -117,19 +117,14 @@ class XmoduleExample : public Xmodule {
             }
         }
 
-        const char* webPage = R"===(
-<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %1%</title>
-    <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
-    <style>body { font-family: sans-serif; } table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
-    <p><a href='/'>Home</a></p>
-    <h3>%100%</h3>
-    <h3>Settings</h3> <ul>
-        <li>Some fixed number: %101% </li>
-        <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
-    <h3>Action</h3> <ul>
-        <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
+        const char* webPage = R"===(%0%
+<p><a href='/'>Home</a></p>
+<h3>%100%</h3>
+<h3>Settings</h3> <ul>
+    <li>Some fixed number: %101% </li>
+    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
+<h3>Action</h3> <ul>
+    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
 <p>&nbsp;</body></html>         
 )===";
 

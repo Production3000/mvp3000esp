@@ -101,22 +101,16 @@ class NetMqtt {
 
 
         String webPageProcessor(uint8_t var);
-        const char* webPage = R"===(
-<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %1%</title>
-<script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
-<style>body { font-family: sans-serif; } table { border-collapse: collapse; border-style: hidden; } table td { border: 1px solid black; ; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%0%</h3>
+        const char* webPage = R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>MQTT Communication</h3> <ul>
-    <li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %51% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
-    <li>Status: %52% </li>
-    <li>Local broker: %53% </li>
-    <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%54%'> <input type='submit' value='Save'> </form> </li>
-    <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%55%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Topics: <ul> %60% </ul> </li> </ul>
-<p>&nbsp;</body></html>
-)===";
+<li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %61% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
+<li>Status: %62% </li>
+<li>Local broker: %63% </li>
+<li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%64%'> <input type='submit' value='Save'> </form> </li>
+<li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%65%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
+<li>Topics: <ul> %70% </ul> </li> </ul>
+<p>&nbsp;</body></html>)===";
 
 };
 

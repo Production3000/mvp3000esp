@@ -218,7 +218,13 @@ String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt p
             }
             return "";
 
-        // Custom placeholders, core framework starts at 10+, Xmodules should start at 100+
+        // Custom placeholders
+        //  10 System
+        //  30 Log
+        //  40 Network
+        //  50 UDP
+        //  60 MQTT     80
+        //  Xmodules should start at 100+
         default:
             return processorCustom(var.toInt());
             // Sadly there is no way to know if no placeholder was matched or if the string is just empty

@@ -130,7 +130,6 @@ void MVP3000::updateLoopDuration() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-
 String MVP3000::webPageProcessor(uint8_t var) {
     switch (var) {
         case 11:
@@ -145,8 +144,6 @@ String MVP3000::webPageProcessor(uint8_t var) {
             return String(ESP.getCpuFreqMHz());
         case 16:
             return _helper.printFormatted("%d / %d / %d", loopDurationMean_ms, loopDurationMin_ms, loopDurationMax_ms);
-        case 17:
-            return logger.getRecentLog();
             
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";

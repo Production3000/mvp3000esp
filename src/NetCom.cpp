@@ -152,11 +152,11 @@ void NetCom::saveCfgCallback() {
 
 String NetCom::webPageProcessor(uint8_t var) { 
     switch (var) {
-        case 41:
+        case 51:
             return (cfgNetCom.udpEnabled) ? "checked" : "";
-        case 42:
+        case 52:
             return String(cfgNetCom.discoveryPort);
-        case 43:
+        case 53:
             return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s: %s", serverIp.toString().c_str(), serverSkills.c_str());
 
         default:

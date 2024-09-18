@@ -61,8 +61,6 @@ class Logger {
 
         void ansiColor(boolean enable) { cfgLogger.ansiColor = enable; }
 
-        String getRecentLog();
-       
         // Plain test output
         void write(CfgLogger::Level targetLevel, const String& message);
         // Output data in CSV format
@@ -80,8 +78,8 @@ class Logger {
             DataStructLog(const String& message, uint8_t level) : time(millis()), message(message), level(level) { }
         };
 
-        struct LinkedListLog : LinkedListNEW3000<DataStructLog> {
-            LinkedListLog(uint16_t size) : LinkedListNEW3000<DataStructLog>(size) { }
+        struct LinkedListLog : LinkedListNEW3010<DataStructLog> {
+            LinkedListLog(uint16_t size) : LinkedListNEW3010<DataStructLog>(size) { }
 
             void append(uint8_t level, const String& message) {
                 // Create data structure and add node to linked list
@@ -101,6 +99,15 @@ class Logger {
         void serialPrint(CfgLogger::Level targetLevel, const String& message);
 
         std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
+
+
+        String webPageProcessor(uint8_t var);
+        const char* webPage = R"===(%0%
+<p><a href='/'>Home</a></p>
+<h3>Log</h3> <ul>
+<li>Log websocket: ws://%2%/wslog </li>
+<li>Recent entries: <br> %30% </li> </ul>
+<p>&nbsp;</body></html>)===";
 
 };
 
