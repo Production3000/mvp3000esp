@@ -132,7 +132,6 @@ void MVP3000::updateLoopDuration() {
 
 
 String MVP3000::webPageProcessor(uint8_t var) {
-    String str = ""; // Needs to be defined outside of switch
     switch (var) {
         case 11:
             return __DATE__ " " __TIME__; // Timestamp concatenated at compilation time
@@ -151,18 +150,16 @@ String MVP3000::webPageProcessor(uint8_t var) {
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
 
-
-        case 20:                                                                                            // TODO linked list ...                                                                          
+        case 20: // Not so long, could be one string
             if (moduleCount == 0)
                 return "<li>None</li>";
-            for (uint8_t i = 0; i < moduleCount; i++) {
-                if ((xmodules[i]->uri).length() > 0) {
-                    str += _helper.printFormatted("<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
-                } else {
-                    str += _helper.printFormatted("<li>%s</li>", xmodules[i]->description.c_str());
-                }
+            webPageProcessorIndex = 0;
+        case 21:
+            if ((xmodules[webPageProcessorIndex]->uri).length() > 0) {
+                return _helper.printFormatted("<li><a href='%s'>%s</a></li> %s", xmodules[webPageProcessorIndex]->uri.c_str(), xmodules[webPageProcessorIndex]->description.c_str(), (webPageProcessorIndex++ < moduleCount - 1) ? "%21%" : "");
+            } else {
+                return _helper.printFormatted("<li>%s</li> %s", xmodules[webPageProcessorIndex]->description.c_str(), (webPageProcessorIndex++ < moduleCount - 1) ? "%21%" : "");
             }
-            return str;
 
         default:
             return "";

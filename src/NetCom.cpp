@@ -157,7 +157,7 @@ String NetCom::webPageProcessor(uint8_t var) {
         case 42:
             return String(cfgNetCom.discoveryPort);
         case 43:
-            return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s: %s", serverIp.toString().c_str(), serverSkills.c_str());             // TODO c_str() needed???
+            return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s: %s", serverIp.toString().c_str(), serverSkills.c_str());
 
         default:
             return "";

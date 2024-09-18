@@ -189,6 +189,7 @@ class XmoduleSensor : public Xmodule {
         std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
         String webPageProcessor(uint8_t var);
+        uint8_t webPageProcessorIndex;
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
         const char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>

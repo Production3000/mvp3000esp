@@ -216,11 +216,8 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
     }
 }
 
-uint8_t myIndex = 0;
 
 String XmoduleSensor::webPageProcessor(uint8_t var) {
-
-    String str;
     switch (var) {
         case 101:
             return description;
@@ -241,12 +238,12 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
             return String(cfgXmoduleSensor.dataValueCount);
 
         case 120: // Split the long string into multiple rows
-            myIndex = 0;
+            webPageProcessorIndex = 0;
         case 121:
             // Sensor details: type, unit, offset, scaling, float to int exponent - placeholder for next row
             return _helper.printFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s",
-                myIndex+1, cfgXmoduleSensor.sensorTypes[myIndex], cfgXmoduleSensor.sensorUnits[myIndex], dataCollection.processing.offset.values[myIndex], dataCollection.processing.scaling.values[myIndex], dataCollection.processing.sampleToIntExponent.values[myIndex],
-                (myIndex++ < cfgXmoduleSensor.dataValueCount - 1) ? "%121%" : "");
+                webPageProcessorIndex+1, cfgXmoduleSensor.sensorTypes[webPageProcessorIndex], cfgXmoduleSensor.sensorUnits[webPageProcessorIndex], dataCollection.processing.offset.values[webPageProcessorIndex], dataCollection.processing.scaling.values[webPageProcessorIndex], dataCollection.processing.sampleToIntExponent.values[webPageProcessorIndex],
+                (webPageProcessorIndex++ < cfgXmoduleSensor.dataValueCount - 1) ? "%121%" : "");
 
         default:
             return "";

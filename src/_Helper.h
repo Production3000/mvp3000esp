@@ -121,12 +121,14 @@ struct _Helper {
     String printFormatted(const String& formatString, ...) {
         va_list args;
         va_start(args, formatString);
+
         // Get length incl termination
         uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
-        char message[len];
-        vsnprintf(message, sizeof(message), formatString.c_str(), args);
+        char buffer[len];
+        vsnprintf(buffer, len, formatString.c_str(), args);
+        
         va_end(args);
-        return message;
+        return buffer;
     }
 
 

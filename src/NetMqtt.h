@@ -101,7 +101,6 @@ class NetMqtt {
 
 
         String webPageProcessor(uint8_t var);
-        String webPageProcessorLinkedListFiller();
         const char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>

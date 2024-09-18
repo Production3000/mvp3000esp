@@ -46,7 +46,7 @@ void Logger::setup() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void Logger::write(CfgLogger::Level targetLevel, const char *message) {
+void Logger::write(CfgLogger::Level targetLevel, const String& message) {
     // Store errors, warnings, usermsg for web display
     if (targetLevel <= CfgLogger::Level::CONTROL) {
         linkedListLog.append(targetLevel, message);
@@ -78,11 +78,16 @@ void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t 
     write(targetLevel, message.c_str());
 }
 
-void Logger::writeFormatted(CfgLogger::Level targetLevel, const char* formatString, ...) {
-    char message[256]; // Define the buffer size as per your requirement
+void Logger::writeFormatted(CfgLogger::Level targetLevel, const String& formatString, ...) {
+    // This is a copy from Helper::printFormatted - for some reason we cannot call it from here
     va_list args;
     va_start(args, formatString);
-    vsnprintf(message, sizeof(message), formatString, args);
+
+    // Get length incl termination
+    uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
+    char message[len];
+    vsnprintf(message, sizeof(message), formatString.c_str(), args);
+
     va_end(args);
 
     write(targetLevel, message);
@@ -117,7 +122,7 @@ bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
     return true;
 }
 
-void Logger::serialPrint(CfgLogger::Level targetLevel, const char *message) {
+void Logger::serialPrint(CfgLogger::Level targetLevel, const String& message) {
     // Prefix with timestamp
     Serial.print(_helper.millisToTime(millis()));
 

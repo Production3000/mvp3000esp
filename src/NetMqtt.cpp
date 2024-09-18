@@ -215,42 +215,12 @@ String NetMqtt::webPageProcessor(uint8_t var) {
             // Set initial bookmark
             linkedListMqttTopic.bookmarkByIndex(0, true);
         case 61:
-            return webPageProcessorLinkedListFiller();
+            return _helper.printFormatted("<li>%s %s %s</li> %s", linkedListMqttTopic.getBookmarkData()->getDataTopic().c_str(),
+                (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? " | " : "",
+                (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? linkedListMqttTopic.getBookmarkData()->getCtrlTopic().c_str() : "",
+                (linkedListMqttTopic.moveBookmark()) ? "%61%" : "");
 
         default:
             return "";
     }
-}
-
-
-
-
-String NetMqtt::webPageProcessorLinkedListFiller() {
-    // String length unknown, 1-2 topics + htmlstrings, 100 should do it
-
-// char message[128];
-// snprintf(message, sizeof(message), "<li><a href='%s'>%s</a></li>", xmodules[i]->uri.c_str(), xmodules[i]->description.c_str());
-
-
-    String str;
-    if (!str.reserve(100)) {
-        mvp.log("Out of memory: String to display MQTT topics could not be reserved.");
-        return str;
-    };
-    
-
-    // Fill placeholder with current bookmark
-    str += "<li>";
-    str += linkedListMqttTopic.getBookmarkData()->getDataTopic();
-    if (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) {
-        str += " | ";
-        str += linkedListMqttTopic.getBookmarkData()->getCtrlTopic();
-    }
-    str += "</li>";
-
-    // Move bookmark, if there is more on the list add additional placeholder for repeated call
-    if (linkedListMqttTopic.moveBookmark())
-        str += "%61%";
-
-    return str;
 }
