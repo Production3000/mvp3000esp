@@ -129,12 +129,12 @@ struct WebPageColl {
         AwsTemplateProcessorInt processorCustom;
 
         Node () { }
-        Node(String _uri, const char* _html, String _contentType, AwsTemplateProcessorInt _processorCustom, AwsTemplateProcessorWrapper _processorMain, AsyncWebServer *server) : uri(_uri), html(_html), contentType(_contentType), processorCustom(_processorCustom), processorMain(_processorMain) { 
+        Node(const String& uri, const char* html, const String& contentType, AwsTemplateProcessorInt processorCustom, AwsTemplateProcessorWrapper processorMain, AsyncWebServer *server) : uri(uri), html(html), contentType(contentType), processorCustom(processorCustom), processorMain(processorMain) { 
             processor = std::bind(&Node::htmlTemplateProcessor, this, std::placeholders::_1);
             responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
             attach(server);
         }
-        Node(String _uri, String _contentType, AwsResponseFiller _responseFiller, AsyncWebServer *server) : uri(_uri), html(""), contentType(_contentType), responseFiller(_responseFiller), processor(nullptr) {
+        Node(const String& uri, const String& contentType, AwsResponseFiller responseFiller, AsyncWebServer *server) : uri(uri), html(""), contentType(contentType), responseFiller(responseFiller), processor(nullptr) {
             attach(server);
         }
 
@@ -169,18 +169,18 @@ struct WebPageColl {
     AwsTemplateProcessorWrapper processorMain;
 
 
-    WebPageColl(AsyncWebServer *_server) : server(_server) { }
-    WebPageColl(AsyncWebServer *_server, AwsTemplateProcessorWrapper _processorMain) : server(_server), processorMain(_processorMain) { }
+    WebPageColl(AsyncWebServer *server) : server(server) { }
+    WebPageColl(AsyncWebServer *server, AwsTemplateProcessorWrapper processorMain) : server(server), processorMain(processorMain) { }
 
 
-    bool add(String uri, const char* _html, AwsTemplateProcessorInt processor, String contentType) {
+    bool add(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType) {
         if (nodeCount >= nodesSize) {
             return false;
         }
-        nodes[nodeCount++] = new Node(uri, _html, contentType, processor, processorMain, server);
+        nodes[nodeCount++] = new Node(uri, html, contentType, processor, processorMain, server);
         return true;
     }
-    bool add(String uri, AwsResponseFiller responseFiller, String contentType) {
+    bool add(const String& uri, AwsResponseFiller responseFiller, const String& contentType) {
         if (nodeCount >= nodesSize) {
             return false;
         }
@@ -204,7 +204,7 @@ struct WebSocketColl {
         WebSocketEventLog webSocketEventLog;
 
         Node() { }
-        Node(String uri, WebSocketDataCallback _dataCallback, WebSocketEventLog _webSocketEventLog, AsyncWebServer *server) : dataCallback(_dataCallback), webSocketEventLog(_webSocketEventLog) {
+        Node(const String& uri, WebSocketDataCallback dataCallback, WebSocketEventLog webSocketEventLog, AsyncWebServer *server) : dataCallback(dataCallback), webSocketEventLog(webSocketEventLog) {
             websocket = new AsyncWebSocket(uri);
             // Event log and custom handerl
             websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
@@ -224,8 +224,8 @@ struct WebSocketColl {
             server->addHandler(websocket);
         }
 
-        std::function<void(const String &message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
-        void textAll(const String &message) {
+        std::function<void(const String& message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
+        void textAll(const String& message) {
             websocket->textAll(message);
         }
     };
@@ -239,10 +239,10 @@ struct WebSocketColl {
     WebSocketEventLog webSocketEventLog;
 
 
-    WebSocketColl(AsyncWebServer *_server, WebSocketEventLog _webSocketEventLog) : server(_server), webSocketEventLog(_webSocketEventLog) { }
+    WebSocketColl(AsyncWebServer *server, WebSocketEventLog webSocketEventLog) : server(server), webSocketEventLog(webSocketEventLog) { }
 
 
-    bool add(String uri, WebSocketDataCallback dataCallback) {
+    bool add(const String& uri, WebSocketDataCallback dataCallback) {
         if (nodeCount >= nodesSize) {
             return false;
         }
@@ -250,7 +250,7 @@ struct WebSocketColl {
         return true;
     }
 
-    std::function<void(const String &message)> getTextAll() {
+    std::function<void(const String& message)> getTextAll() {
         return (nodeCount > 0) ? nodes[nodeCount - 1]->getTextAll() : nullptr;
     }
 };

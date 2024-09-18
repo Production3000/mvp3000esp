@@ -60,7 +60,11 @@ struct DataCollection {
             if (node == nullptr) {
                 return "";
             }
-            String str = (withTime) ? String(node->dataStruct->time) + ";" : "";
+            String str;
+            if (withTime) {
+                str += String(node->dataStruct->time);
+                str += ";";
+            }
             for (uint8_t i = 0; i < node->dataStruct->value_size; i++) {
                 str += (processing == nullptr) ? node->dataStruct->values[i] : processing->applyProcessing(node->dataStruct->values[i], i);
                 str += (i == node->dataStruct->value_size - 1) || ((i + 1) % columnCount == 0) ? ";" : ",";
@@ -74,7 +78,7 @@ struct DataCollection {
 
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
-    uint16_t dataStoreLength = 50;
+    uint16_t dataStoreLength = 5;                                                                                           // TODO 50
     LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging

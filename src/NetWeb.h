@@ -39,8 +39,8 @@ class NetWeb {
          * @param responseFiller The response filler function for the page, typically used for large pages or datasets.
          * @param contentType The content type of the page, optional, Default is "text/html".
          */
-        void registerPage(String uri, const char* html, AwsTemplateProcessorInt processor, String contentType = "text/html");
-        void registerPage(String uri, AwsResponseFiller responseFiller, String contentType = "text/html");
+        void registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType = "text/html");
+        void registerPage(const String& uri, AwsResponseFiller responseFiller, const String& contentType = "text/html");
 
         /**
          * @brief Register a configuration interface to make its settings editable using a form on the web interface.
@@ -66,8 +66,8 @@ class NetWeb {
          * @param dataCallback The function to execute when data is received.
          * @return Returns the function to write data to the websocket.
          */
-        std::function<void(const String &message)> registerWebSocket(String uri) { return registerWebSocket(uri, nullptr); };
-        std::function<void(const String &message)> registerWebSocket(String uri, WebSocketDataCallback dataCallback);
+        std::function<void(const String& message)> registerWebSocket(const String& uri) { return registerWebSocket(uri, nullptr); };
+        std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketDataCallback dataCallback);
 
     private:
 

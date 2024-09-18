@@ -24,8 +24,8 @@ const uint8_t valueCount = 2;
 // Add a description of the sensor for the web interface
 String infoName = "MAGNITUDE";
 String infoDescription = "The MAGNITUDE is a dummy sensor for testing. It generates 'data' with values of vastly different orders of magnitude.";
-String sensorTypes[valueCount] = {"rnd 10/20", "rnd -100/200"};
-String sensorUnits[valueCount] = {"au", "au"};
+String sensorTypes[valueCount] = {"rnd(10/20)", "-rnd(100/200)"};
+String sensorUnits[valueCount] = {"a.u.", "a.u."};
 
 // Local data variable
 int32_t data[valueCount];

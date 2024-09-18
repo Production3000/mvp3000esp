@@ -121,9 +121,8 @@ struct _Helper {
     String printFormatted(const String& formatString, ...) {
         va_list args;
         va_start(args, formatString);
-        // Estimate length incl termination
-        // For numbers this is often to large, assuming not all numbers are filling all their digits
-        uint8_t len = snprintf( nullptr, 0, formatString.c_str(), args) + 1;
+        // Get length incl termination
+        uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
         char message[len];
         vsnprintf(message, sizeof(message), formatString.c_str(), args);
         va_end(args);

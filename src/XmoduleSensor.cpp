@@ -19,6 +19,9 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
+#include "_Helper.h"
+extern _Helper _helper;
+
 
 void XmoduleSensor::setup() {
     if (cfgXmoduleSensor.dataValueCount == 0) {
@@ -213,16 +216,18 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
     }
 }
 
+uint8_t myIndex = 0;
+
 String XmoduleSensor::webPageProcessor(uint8_t var) {
 
     String str;
     switch (var) {
         case 101:
-            return description.c_str();
+            return description;
         case 102:
-            return cfgXmoduleSensor.infoName.c_str();
+            return cfgXmoduleSensor.infoName;
         case 103:
-            return cfgXmoduleSensor.infoDescription.c_str();
+            return cfgXmoduleSensor.infoDescription;
 
         case 111:
             return String(cfgXmoduleSensor.sampleAveraging);
@@ -231,18 +236,17 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
         case 113:
             return String(cfgXmoduleSensor.reportingInterval);
         case 114:
-            return String(dataCollection.linkedListSensor.getSize()) + "/" + String(dataCollection.linkedListSensor.getMaxSize()) + " (" + (dataCollection.linkedListSensor.isAdaptive() ? "adaptive" : "fixed") + ")";
-
-        case 121: // Sensor details: type, unit, offset, scaling, float to int exponent
-            char message[128];
-            for (uint8_t i = 0; i < cfgXmoduleSensor.dataValueCount; i++) {
-                snprintf(message, sizeof(message), "<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>", 
-                    i+1, cfgXmoduleSensor.sensorTypes[i].c_str(), cfgXmoduleSensor.sensorUnits[i].c_str(), dataCollection.processing.offset.values[i], dataCollection.processing.scaling.values[i], dataCollection.processing.sampleToIntExponent.values[i]);
-                str += message;
-            }
-            return str;
-        case 122:
+            return _helper.printFormatted("%d / %d (%s)", dataCollection.linkedListSensor.getSize(), dataCollection.linkedListSensor.getMaxSize(), (dataCollection.linkedListSensor.isAdaptive() ? "adaptive" : "fixed"));
+        case 115:
             return String(cfgXmoduleSensor.dataValueCount);
+
+        case 120: // Split the long string into multiple rows
+            myIndex = 0;
+        case 121:
+            // Sensor details: type, unit, offset, scaling, float to int exponent - placeholder for next row
+            return _helper.printFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s",
+                myIndex+1, cfgXmoduleSensor.sensorTypes[myIndex], cfgXmoduleSensor.sensorUnits[myIndex], dataCollection.processing.offset.values[myIndex], dataCollection.processing.scaling.values[myIndex], dataCollection.processing.sampleToIntExponent.values[myIndex],
+                (myIndex++ < cfgXmoduleSensor.dataValueCount - 1) ? "%121%" : "");
 
         default:
             return "";

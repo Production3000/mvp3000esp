@@ -62,17 +62,17 @@ void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) 
     linkedListWebCfg.append(cfg, callback);
 }
 
-void NetWeb::registerPage(String uri, const char* html, AwsTemplateProcessorInt processor, String type) {
-    if (!webPageColl.add(uri, html, processor, type))
+void NetWeb::registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType) {
+    if (!webPageColl.add(uri, html, processor, contentType))
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
 }
 
-void NetWeb::registerPage(String uri, AwsResponseFiller responseFiller, String type) {
-    if (!webPageColl.add(uri, responseFiller, type))
+void NetWeb::registerPage(const String& uri, AwsResponseFiller responseFiller, const String& contentType) {
+    if (!webPageColl.add(uri, responseFiller, contentType))
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
 }
 
-std::function<void(const String &message)> NetWeb::registerWebSocket(String uri, WebSocketDataCallback dataCallback) {
+std::function<void(const String& message)> NetWeb::registerWebSocket(const String& uri, WebSocketDataCallback dataCallback) {
     if (!webSocketColl.add(uri, dataCallback)) {
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many websockets registered, max %d", WebSocketColl::nodesSize);
         return nullptr;

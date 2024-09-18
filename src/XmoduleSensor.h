@@ -48,10 +48,10 @@ struct CfgXmoduleSensor : CfgJsonInterface {
     // Number of values recorded per measurement, for example one each for temperature, humidity, pressure -> 3
     uint8_t dataValueCount = 0;
 
-    String infoName;
-    String infoDescription;
-    String *sensorTypes;
-    String *sensorUnits;
+    const char* infoName;
+    const char* infoDescription;
+    const char** sensorTypes;
+    const char** sensorUnits;
 
     // Used for output only, matrix data with a row length, if matrixColumnCount >= dataValueCount it is obviously a single row
     uint8_t matrixColumnCount = 255;
@@ -60,27 +60,29 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         dataValueCount = _dataValueCount;
 
         delete [] sensorTypes;
-        sensorTypes = new String[dataValueCount];
+        sensorTypes = new const char*[dataValueCount];
         delete [] sensorUnits;
-        sensorUnits = new String[dataValueCount];
+        sensorUnits = new const char*[dataValueCount];
     }
 
-    void setSensorInfo(String _infoName, String _infoDescription, String *_sensorTypes, String *_sensorUnits) {
-        infoName = _infoName;
-        infoDescription = _infoDescription;
-        sensorTypes = _sensorTypes;
-        sensorUnits = _sensorUnits;
-    }
-    void setSensorInfo(String _infoName, String _infoDescription, String _pixelType, String _pixelUnit, uint8_t _matrixColumnCount) {
-        infoName = _infoName;
-        infoDescription = _infoDescription;
+    void setSensorInfo(const String& _infoName, const String& _infoDescription, String* _sensorTypes, String* _sensorUnits) {
+        infoName = _infoName.c_str();
+        infoDescription = _infoDescription.c_str();
         for (u_int8_t i = 0; i < dataValueCount; i++) {
-            sensorTypes[i] = _pixelType;
-            sensorUnits[i] = _pixelUnit;
+            sensorTypes[i] = _sensorTypes[i].c_str();
+            sensorUnits[i] = _sensorUnits[i].c_str();
+        }
+    }
+
+    void setSensorInfo(const String& _infoName, const String& _infoDescription, const String& _pixelType, const String& _pixelUnit, uint8_t _matrixColumnCount) {
+        infoName = _infoName.c_str();
+        infoDescription = _infoDescription.c_str();
+        for (u_int8_t i = 0; i < dataValueCount; i++) {
+            sensorTypes[i] = _pixelType.c_str();
+            sensorUnits[i] = _pixelUnit.c_str();
         }
         matrixColumnCount = _matrixColumnCount;
     }
-
 };
 
 
@@ -129,7 +131,7 @@ class XmoduleSensor : public Xmodule {
          * @param sensorTypes The types of the sensor values as array.
          * @param sensorUnits The units of the sensor values as array.
          */
-        void setSensorInfo(String infoName, String infoDescription, String *sensorTypes, String *sensorUnits) {
+        void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits) {
             cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
         };
 
@@ -142,7 +144,7 @@ class XmoduleSensor : public Xmodule {
          * @param pixelUnit The unit of the pixel value.
          * @param matrixColumnCount The number of columns in the data matrix.
          */
-        void setSensorInfo(String infoName, String infoDescription, String pixelType, String pixelUnit, uint8_t matrixColumnCount) {
+        void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount) {
             cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, matrixColumnCount);
         };
 
@@ -183,12 +185,12 @@ class XmoduleSensor : public Xmodule {
         void measureOffsetScalingFinish();
 
         void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
-        std::function<void(const String &message)> mqttPrint; // Function to print to the MQTT topic
-        std::function<void(const String &message)> webSocketPrint; // Function to print to the websocket
+        std::function<void(const String& message)> mqttPrint; // Function to print to the MQTT topic
+        std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
         String webPageProcessor(uint8_t var);
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
-        char const* webPage = R"===(
+        const char* webPage = R"===(
 <!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
     <script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
@@ -208,10 +210,10 @@ class XmoduleSensor : public Xmodule {
     <li>CSV data: <a href='/sensordatasscaled'>/sensordatasscaled</a>, <a href='/sensordatasraw'>/sensordatasraw</a> </li> </ul>
 <h3>Sensor Details</h3> <table>
     <tr> <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td> </tr>
-    %121%
+    %120%
     <tr> <td colspan='3'></td>
         <td valign='bottom'> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%122%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
+        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%115%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
         <td></td> </tr>
     <tr> <td colspan='3'></td>
         <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>
