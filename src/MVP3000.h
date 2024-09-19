@@ -99,9 +99,11 @@ class MVP3000 {
         void updateLoopDuration();
 
 
-        String webPageProcessor(uint8_t var);
+    public:
+
+        String templateProcessor(uint8_t var);
         uint8_t webPageProcessorIndex;
-        const char* webPage = R"===(%0%
+        const char* webPage = R"===(
 <h3>System</h3> <ul>
 <li>ID: %1%</li>
 <li>Build: %11%</li>
@@ -110,17 +112,12 @@ class MVP3000 {
 <li>Last restart reason: %14%</li>
 <li>CPU frequency: %15% MHz</li>
 <li>Main loop duration: %16% ms (mean/min/max)</li> </ul>
-<h3>Framework settings</h3> <ul>
-<li><a href='/log'>Log</a></li>
-<li><a href='/net'>Network</a></li>
-<li> %18% </li>
-<li><a href='/netmqtt'>MQTT</a></li> </ul>
-<h3>Loaded Modules</h3>
+<h3>Modules</h3>
 <ul> %20% </ul>
 <h3>Maintenance</h3> <ul>
 <li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
 <li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
-<p>&nbsp;</body></html>)===";
+)===";
 
 };
 

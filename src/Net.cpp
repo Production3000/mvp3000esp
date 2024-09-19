@@ -32,9 +32,6 @@ void Net::setup() {
     netCom.setup();
     netMqtt.setup();
 
-    // Define web page
-    mvp.net.netWeb.registerPage("/net", webPage , std::bind(&Net::webPageProcessor, this, std::placeholders::_1));
-
     // Register config
     netWeb.registerCfg(&cfgNet);
 
@@ -191,7 +188,7 @@ void Net::WiFiStationDisconnected() {
     }
 }
 
-String Net::webPageProcessor(uint8_t var) {
+String Net::templateProcessor(uint8_t var) {
     switch (var) {
         case 41:
             return apSsid.c_str();

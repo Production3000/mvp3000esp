@@ -38,7 +38,10 @@ void NetWeb::setup() {
     // Set the save function for the config
     linkedListWebCfg.setSaveCfgFkt([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
 
-    
+    server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
+        request->sendChunked("text/html", std::bind(&NetWeb::responseFillerHome, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3) , std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1) );
+    });
+
     // Start server, independent of wifi status
     server.begin();
 }
@@ -61,6 +64,8 @@ void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt
 void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) {
     linkedListWebCfg.append(cfg, callback);
 }
+
+
 
 void NetWeb::registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType) {
     if (!webPageColl.add(uri, html, processor, contentType))
@@ -194,6 +199,95 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
+
+size_t NetWeb::responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index) {
+    // Head
+    if (index < strlen(webPageHead))
+        return responseFiller(webPageHead, buffer, maxLen, index);
+    index -= strlen(webPageHead);
+    // Main
+    if (index < strlen(mvp.webPage))
+        return responseFiller(mvp.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.webPage);
+    // Log
+    if (index < strlen(mvp.logger.webPage))
+        return responseFiller(mvp.logger.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.logger.webPage);
+    // Network
+    if (index < strlen(mvp.net.webPage))
+        return responseFiller(mvp.net.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.net.webPage);
+    // UDP
+    if (index < strlen(mvp.net.netCom.webPage))
+        return responseFiller(mvp.net.netCom.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.net.netCom.webPage);
+    // MQTT
+    if (index < strlen(mvp.net.netMqtt.webPage))
+        return responseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
+    // Footer
+    index -= strlen(mvp.net.netMqtt.webPage);
+    return responseFiller(webPageFoot, buffer, maxLen, index);
+}
+
+size_t NetWeb::responseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index) {
+    // Chunked response filler for the html template
+    size_t len = strlen(html);
+    if (index + maxLen > len) {
+        maxLen = len - index;
+    }
+    memcpy(buffer, html + index, maxLen);
+    return maxLen;
+}
+
+
+String NetWeb::templateProcessorWrapper(const String& var) { 
+    if (!_helper.isValidInteger(var)) {
+        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
+        return "[" + var + "]";
+    }
+    int32_t varInt = var.toInt();
+    switch (varInt) {
+
+        // Main placeholders
+        case 0: // Standard HTML head
+            return webPageHead;
+        case 1: // Device ID
+            return String(ESPX.getChipId());
+        case 2: // Device IP
+            return mvp.net.myIp.toString();
+        case 3: // Post message
+            // Send message if within lifetime
+            if (millis() < postMessageExpiry) {
+                postMessageExpiry = 0; // Expire message for next load, saves a string copy
+                return postMessage;
+            }
+            return "";
+
+        // Class placeholders
+        case 10 ... 29: // System
+            return mvp.templateProcessor(varInt);
+        case 30 ... 39: // Log
+            return mvp.logger.templateProcessor(varInt);
+        case 40 ... 49: // Network
+            return mvp.net.templateProcessor(varInt);
+        case 50 ... 59: // UDP
+            return mvp.net.netCom.templateProcessor(varInt);
+        case 60 ... 79: // MQTT
+            return mvp.net.netMqtt.templateProcessor(varInt);
+
+        //  Xmodules placeholders
+        case 100 ... 255:
+            // for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+            //     if (mvp.xmodules[i]->webPageProcessorIndex == varInt) {
+            //         return mvp.xmodules[i]->webPageProcessor(varInt);
+            //     }
+            // }
+            return "";
+
+        default:
+            return "";
+    }
+}
 
 String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom) {
     if (!_helper.isValidInteger(var)) {

@@ -28,9 +28,6 @@ void Logger::setup() {
     if (cfgLogger.target == CfgLogger::Target::NONE)
         return;
 
-    // Define web page
-    mvp.net.netWeb.registerPage("/log", webPage, std::bind(&Logger::webPageProcessor, this, std::placeholders::_1)); 
-
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
         Serial.begin(115200);
         while (!Serial)
@@ -162,7 +159,7 @@ void Logger::serialPrint(CfgLogger::Level targetLevel, const String& message) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String Logger::webPageProcessor(uint8_t var) {
+String Logger::templateProcessor(uint8_t var) {
     switch (var) {
 
         case 30:

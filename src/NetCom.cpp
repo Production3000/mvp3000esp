@@ -38,15 +38,15 @@ void NetCom::setup() {
     mvp.config.readCfg(cfgNetCom);
 
     // This can be completely disabled to allow external UDP uses, in a Xmodule or other.
-    if (cfgNetCom.isHardDisabled)
+    if (cfgNetCom.isHardDisabled) {
+        webPage = webPageOff; // Set web to display disabled html
         return;
+    }
 
     // Start UDP for discovery and reverse-discovery of this ESP device
     if (cfgNetCom.udpEnabled)
         udp.begin(cfgNetCom.discoveryPort);
 
-    // Define web page
-    mvp.net.netWeb.registerPage("/netcom", webPage ,  std::bind(&NetCom::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetCom, std::bind(&NetCom::saveCfgCallback, this));
 
@@ -150,7 +150,7 @@ void NetCom::saveCfgCallback() {
 }
 
 
-String NetCom::webPageProcessor(uint8_t var) { 
+String NetCom::templateProcessor(uint8_t var) { 
     switch (var) {
         case 51:
             return (cfgNetCom.udpEnabled) ? "checked" : "";

@@ -110,17 +110,17 @@ class Net {
         WiFiEventHandler gotIpEventHandler, disconnectedEventHandler;
 #endif
 
+    public:
 
-        String webPageProcessor(uint8_t var);
-        const char* webPage = R"===(%0%
-<p><a href='/'>Home</a></p>
+        String templateProcessor(uint8_t var);
+        const char* webPage = R"===(
 <h3>Network</h3> <ul>
 <li>Fallback AP SSID: '%41%'</li>
 <li>Network credentials: leave SSID empty to remove, any changes are applied at once.<br> <form action='/start' method='post' onsubmit='return confirm(`Change network?`);'> <input name='setwifi' type='hidden'> SSID <input name='newSsid' value='%42%'> Passphrase <input type='password' name='newPass' value='%43%'> <input type='submit' value='Save'> </form> </li>
 <li>Reconnect tries: <br> <form action='/save' method='post'> <input name='clientConnectRetries' type='number' value='%44%' min='1' max='255'> <input type='submit' value='Save'> </form> </li>
 <li>Force client mode. WARNING: If the credentials are wrong, the device will be inaccessible via network, thus require re-flashing!
 <form action='/checksave' method='post' onsubmit='return promptId(this);'> <input name='forceClientMode' type='checkbox' %45% value='1'> <input name='forceClientMode' type='hidden' value='0'> <input name='deviceId' type='hidden'> <input type='submit' value='Save'> </form> </li> </ul>
-<p>&nbsp;</body></html>)===";
+)===";
 
 };
 

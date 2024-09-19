@@ -32,9 +32,6 @@ void MVP3000::setup() {
 
     net.setup();
 
-    // Register home page
-    net.netWeb.registerPage("/", webPage, std::bind(&MVP3000::webPageProcessor, this, std::placeholders::_1));
-
     // Register actions
     net.netWeb.registerAction("restart", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         delayedRestart(25); // Restarts after 25 ms
@@ -130,7 +127,7 @@ void MVP3000::updateLoopDuration() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String MVP3000::webPageProcessor(uint8_t var) {
+String MVP3000::templateProcessor(uint8_t var) {
     switch (var) {
         case 11:
             return __DATE__ " " __TIME__; // Timestamp concatenated at compilation time

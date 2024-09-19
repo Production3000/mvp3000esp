@@ -100,14 +100,14 @@ class Logger {
 
         std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
+    public:
 
-        String webPageProcessor(uint8_t var);
-        const char* webPage = R"===(%0%
-<p><a href='/'>Home</a></p>
+        String templateProcessor(uint8_t var);
+        const char* webPage = R"===(
 <h3>Log</h3> <ul>
 <li>Log websocket: ws://%2%/wslog </li>
 <li>Recent entries: <br> %30% </li> </ul>
-<p>&nbsp;</body></html>)===";
+)===";
 
 };
 

@@ -42,8 +42,6 @@ void NetMqtt::setup() {
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
 
-    // Define web page
-    mvp.net.netWeb.registerPage("/netmqtt", webPage, std::bind(&NetMqtt::webPageProcessor, this, std::placeholders::_1)); 
     // Register config
     mvp.net.netWeb.registerCfg(&cfgNetMqtt, std::bind(&NetMqtt::saveCfgCallback, this));
 
@@ -183,7 +181,7 @@ void NetMqtt::saveCfgCallback() {
     mqttClient.stop();
 }
 
-String NetMqtt::webPageProcessor(uint8_t var) { 
+String NetMqtt::templateProcessor(uint8_t var) { 
     switch (var) {
         case 61:
             return (cfgNetMqtt.mqttEnabled) ? "checked" : "";

@@ -88,15 +88,17 @@ class NetCom {
         void udpReceiveMessage();
         void udpSendMessage(const char* message, IPAddress remoteIp = INADDR_NONE);
 
+    public:
 
-        String webPageProcessor(uint8_t var);
-        const char* webPage = R"===(%0%
-<p><a href='/'>Home</a></p>
+        String templateProcessor(uint8_t var);
+        const char* webPage = R"===(
 <h3>UDP Auto-Discovery</h3> <ul>
 <li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %51% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
 <li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
 <li>Discovery: %53% </li> </ul>
-<p>&nbsp;</body></html>)===";
+)===";
+
+        const char* webPageOff = "<h3>UDP Auto-Discovery (DISABLED)</h3>";
 
 };
 

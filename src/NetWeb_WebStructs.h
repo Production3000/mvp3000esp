@@ -125,11 +125,11 @@ struct WebPageColl {
         AwsResponseFiller responseFiller;
 
         AwsTemplateProcessor processor;
-        AwsTemplateProcessorWrapper processorMain;
+        AwsTemplateProcessorWrapper* processorMain;
         AwsTemplateProcessorInt processorCustom;
 
         Node () { }
-        Node(const String& uri, const char* html, const String& contentType, AwsTemplateProcessorInt processorCustom, AwsTemplateProcessorWrapper processorMain, AsyncWebServer *server) : uri(uri), html(html), contentType(contentType), processorCustom(processorCustom), processorMain(processorMain) { 
+        Node(const String& uri, const char* html, const String& contentType, AwsTemplateProcessorInt processorCustom, AwsTemplateProcessorWrapper* processorMain, AsyncWebServer *server) : uri(uri), html(html), contentType(contentType), processorCustom(processorCustom), processorMain(processorMain) { 
             processor = std::bind(&Node::htmlTemplateProcessor, this, std::placeholders::_1);
             responseFiller = std::bind(&Node::htmlTemplateResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
             attach(server);
@@ -145,7 +145,8 @@ struct WebPageColl {
         }
 
         String htmlTemplateProcessor(const String& var) {
-            return processorMain(var, processorCustom);
+            return processorMain->operator()(var, processorCustom);
+            // return processorMain(var, processorCustom);
         }
 
         size_t htmlTemplateResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
@@ -169,15 +170,15 @@ struct WebPageColl {
     AwsTemplateProcessorWrapper processorMain;
 
 
-    WebPageColl(AsyncWebServer *server) : server(server) { }
-    WebPageColl(AsyncWebServer *server, AwsTemplateProcessorWrapper processorMain) : server(server), processorMain(processorMain) { }
+    WebPageColl(AsyncWebServer* server) : server(server) { }
+    WebPageColl(AsyncWebServer* server, AwsTemplateProcessorWrapper processorMain) : server(server), processorMain(processorMain) { }
 
 
     bool add(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType) {
         if (nodeCount >= nodesSize) {
             return false;
         }
-        nodes[nodeCount++] = new Node(uri, html, contentType, processor, processorMain, server);
+        nodes[nodeCount++] = new Node(uri, html, contentType, processor, &processorMain, server);
         return true;
     }
     bool add(const String& uri, AwsResponseFiller responseFiller, const String& contentType) {

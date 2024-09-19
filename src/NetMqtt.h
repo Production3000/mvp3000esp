@@ -99,10 +99,10 @@ class NetMqtt {
 
         void handleMessage(int messageSize);
 
+    public:
 
-        String webPageProcessor(uint8_t var);
-        const char* webPage = R"===(%0%
-<p><a href='/'>Home</a></p>
+        String templateProcessor(uint8_t var);
+        const char* webPage = R"===(
 <h3>MQTT Communication</h3> <ul>
 <li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %61% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
 <li>Status: %62% </li>
@@ -110,7 +110,7 @@ class NetMqtt {
 <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%64%'> <input type='submit' value='Save'> </form> </li>
 <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%65%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
 <li>Topics: <ul> %70% </ul> </li> </ul>
-<p>&nbsp;</body></html>)===";
+)===";
 
 };
 
