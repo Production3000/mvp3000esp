@@ -106,7 +106,7 @@ class Logger {
         const char* webPage = R"===(
 <h3>Log</h3> <ul>
 <li>Log websocket: ws://%2%/wslog </li>
-<li>Recent entries: <br> %30% </li> </ul>
+<li>Recent entries: <ul> %30% </ul> </li> </ul>
 )===";
 
 };
