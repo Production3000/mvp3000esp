@@ -156,19 +156,6 @@ struct _Helper {
     // uint32_t hashStringDjb2(String str) { return hashStringDjb2(str.c_str()); };
 
 
-            // uint32_t hashString(const char* str) {                                            // TODO this should be in the mvp helper library
-            //     // The djb2 hash function by Dan Bernstein
-            //     uint32_t hash = 5381; // Initial seed value
-            //     int c;
-
-            //     // hash * 33 + c
-            //     while ((c = *str++)) {
-            //         hash = ((hash << 5) + hash) + c; 
-            //     }
-            //     return hash;
-            // }
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////
 

@@ -220,7 +220,7 @@ class XmoduleSensor : public _Xmodule {
 <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>
 <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
 <td></td> </tr> </table>
-<p>&nbsp;</body></html>)==="; }
+%9%)==="; }
 
 };
 

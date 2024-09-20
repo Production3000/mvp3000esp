@@ -286,6 +286,8 @@ String NetWeb::templateProcessorWrapper(const String& var) {
                 return postMessage;
             }
             return "";
+        case 9: // Standard HTML foot
+            return webPageFoot;
 
         // Class placeholders
         case 10 ... 29: // System

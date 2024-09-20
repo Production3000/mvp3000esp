@@ -75,18 +75,11 @@ class NetWeb {
 
         AsyncWebServer server = AsyncWebServer(80);
 
-        // Message to serve on next page load after form save
-        const char* postMessage = "";
-        uint64_t postMessageExpiry = 0;
-        uint16_t postMessageLifetime = 15000; // 15 seconds
-
         LinkedListWebActions linkedListWebActions = LinkedListWebActions(); // Adaptive size
         LinkedListWebCfg linkedListWebCfg = LinkedListWebCfg(); // Adaptive size
-
-        String templateProcessorWrapper(const String& var);
+        LinkedListWebSocket linkedListWebSocket; // Adaptive size
 
         void webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback);
-        LinkedListWebSocket linkedListWebSocket; // Adaptive size
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);
@@ -96,11 +89,17 @@ class NetWeb {
         void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
         void responseMetaRefresh(AsyncWebServerRequest *request);
 
+        // Message to serve on next page load after form save
+        const char* postMessage = "";
+        uint64_t postMessageExpiry = 0;
+        uint16_t postMessageLifetime = 15000; // 15 seconds
+
         int8_t requestedModuleIndex = -1; // None selected, or there is just no module
         void serveModulePage(AsyncWebServerRequest *request);
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
         size_t extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
+        String templateProcessorWrapper(const String& var);
 
         const char* webPageHead = R"===(<!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
