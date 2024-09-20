@@ -25,21 +25,21 @@ limitations under the License.
 extern _Helper _helper;
 
 
-typedef std::function<void(char*)> MqttDataCallback;
+typedef std::function<void(char*)> MqttCtrlCallback;
 
 
 struct DataStructMqttTopic {
-    String subtopic;
-    MqttDataCallback dataCallback;
+    String baseTopic;
+    MqttCtrlCallback ctrlCallback;
 
     MqttClient* mqttClient;
 
     DataStructMqttTopic() { }
-    DataStructMqttTopic(const String& subtopic) : subtopic(subtopic) { } // For comparision only
-    DataStructMqttTopic(const String& subtopic, MqttDataCallback dataCallback, MqttClient* mqttClient) : subtopic(subtopic), dataCallback(dataCallback), mqttClient(mqttClient) { }
+    DataStructMqttTopic(const String& baseTopic) : baseTopic(baseTopic) { } // For comparision only
+    DataStructMqttTopic(const String& baseTopic, MqttCtrlCallback ctrlCallback, MqttClient* mqttClient) : baseTopic(baseTopic), ctrlCallback(ctrlCallback), mqttClient(mqttClient) { }
 
-    String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += subtopic; str += "_ctrl";  return str; }
-    String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += subtopic; str += "_data";  return str; }
+    String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_ctrl";  return str; }
+    String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_data";  return str; }
 
     std::function<void(const String& message)> getMqttPrint() { return std::bind(&DataStructMqttTopic::mqttPrint, this, std::placeholders::_1); }
     void mqttPrint(const String& message) {
@@ -53,42 +53,21 @@ struct DataStructMqttTopic {
 };
 
 struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
-    LinkedListMqttTopic(MqttClient* mqttClient) : mqttClient(mqttClient) { }
 
-    MqttClient* mqttClient;
-
-    boolean hasTopics() { return this->getSize(); }
-
-    std::function<void(const String& message)> appendUnique(const String& subtopic, MqttDataCallback dataCallback = nullptr) {
-        this->appendUniqueDataStruct(new DataStructMqttTopic(subtopic, dataCallback, mqttClient));
-
+    std::function<void(const String& message)> appendUnique(MqttClient* mqttClient, const String& baseTopic, MqttCtrlCallback ctrlCallback = nullptr) {
+        this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback, mqttClient));
         return this->tail->dataStruct->getMqttPrint();
     }
 
-    boolean findAndExecute(const String& subtopic, char* data) {
-        Node* node = this->findByContent(new DataStructMqttTopic(subtopic));
-        if (node == nullptr) {
-            return false;
-        }
-        if (node->dataStruct->dataCallback == nullptr) {
-            return false;
-        }
-        node->dataStruct->dataCallback(data);
-        return true;
-    }
-
-    void subscribeAll() {
-        this->loop([&](DataStructMqttTopic* current, uint16_t i) {
-            // Only subscribe if there is a callback
-            if (current->dataCallback != nullptr) {
-                mqttClient->subscribe(current->getCtrlTopic());
-            }
-        });
+    DataStructMqttTopic* findTopic(const String& baseTopic) {
+        return this->findByContentData(new DataStructMqttTopic(baseTopic));
     }
 
     boolean compareContent(DataStructMqttTopic* dataStruct, DataStructMqttTopic* other) override {
-        return dataStruct->subtopic.equals(other->subtopic);
+        return dataStruct->baseTopic.equals(other->baseTopic);
     }
+
+    boolean hasTopics() { return this->getSize(); }
 };
 
 #endif

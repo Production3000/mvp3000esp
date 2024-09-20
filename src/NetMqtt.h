@@ -62,10 +62,10 @@ class NetMqtt {
          * @brief Register a topic for MQTT communication.
          * 
          * @param topic The topic to register. It is prefixed with the device ID and suffixed with _data and _ctrl.
-         * @param dataCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
+         * @param ctrlCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.
          */
-        std::function<void(const String& message)> registerMqtt(const String& topic, MqttDataCallback dataCallback = nullptr);
+        std::function<void(const String& message)> registerMqtt(const String& topic, MqttCtrlCallback ctrlCallback = nullptr);
 
     private:
 
@@ -78,7 +78,7 @@ class NetMqtt {
         };
         MQTT_STATE mqttState;
 
-        LinkedListMqttTopic linkedListMqttTopic = LinkedListMqttTopic(&mqttClient); // Adaptive size
+        LinkedListMqttTopic linkedListMqttTopic; // Adaptive size
 
         CfgNetMqtt cfgNetMqtt;
 

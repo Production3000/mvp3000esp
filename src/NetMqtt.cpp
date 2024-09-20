@@ -73,7 +73,13 @@ void NetMqtt::loop() {
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
                 mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics.");
-                linkedListMqttTopic.subscribeAll();
+                // Subscribe to all topics with a callback
+                linkedListMqttTopic.loop([&](DataStructMqttTopic* current, uint16_t i) {
+                    // Only subscribe if there is a callback
+                    if (current->ctrlCallback != nullptr) {
+                        mqttClient.subscribe(current->getCtrlTopic());
+                    }
+                });
                 break;
             }
 
@@ -108,9 +114,9 @@ void NetMqtt::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const String &message)> NetMqtt::registerMqtt(const String& subtopic, MqttDataCallback dataCallback) {
+std::function<void(const String &message)> NetMqtt::registerMqtt(const String& baseTopic, MqttCtrlCallback ctrlCallback) {
     // Store topic and callback for registering with MQTT, return the function to write to this topic
-    return linkedListMqttTopic.appendUnique(subtopic, dataCallback);
+    return linkedListMqttTopic.appendUnique(&mqttClient, baseTopic, ctrlCallback);
 }
 
 void NetMqtt::setMqttState() {
@@ -159,7 +165,7 @@ void NetMqtt::handleMessage(int messageSize) {
         return; // Handling of duplicates not implemented
 
     String topic = mqttClient.messageTopic();
-    // Topic is prefixed with the device ID and suffixed with _data and _ctrl, we only need the subtopic
+    // Topic is prefixed with the device ID and suffixed with _ctrl, we only need the base topic
     topic = topic.substring(topic.indexOf('_') + 1, topic.lastIndexOf('_'));                           
     
     // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
@@ -168,8 +174,12 @@ void NetMqtt::handleMessage(int messageSize) {
     buf[messageSize] = '\0';
 
     // Find the topic in the list and execute callback
-    if (!linkedListMqttTopic.findAndExecute(topic, (char *)buf))
+    DataStructMqttTopic *mqttTopic = linkedListMqttTopic.findTopic(topic);
+    if ((mqttTopic != nullptr) && (mqttTopic->ctrlCallback != nullptr)) {
+        mqttTopic->ctrlCallback((char *)buf);
+    } else {
         mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "MQTT control with unknown topic '%s'", topic.c_str());
+    }
 }
 
 
@@ -214,8 +224,8 @@ String NetMqtt::templateProcessor(uint8_t var) {
             linkedListMqttTopic.bookmarkByIndex(0, true);
         case 71:
             return _helper.printFormatted("<li>%s %s %s</li> %s", linkedListMqttTopic.getBookmarkData()->getDataTopic().c_str(),
-                (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? " | " : "",
-                (linkedListMqttTopic.getBookmarkData()->dataCallback != nullptr) ? linkedListMqttTopic.getBookmarkData()->getCtrlTopic().c_str() : "",
+                (linkedListMqttTopic.getBookmarkData()->ctrlCallback != nullptr) ? " | " : "",
+                (linkedListMqttTopic.getBookmarkData()->ctrlCallback != nullptr) ? linkedListMqttTopic.getBookmarkData()->getCtrlTopic().c_str() : "",
                 (linkedListMqttTopic.moveBookmark()) ? "%61%" : "");
 
         default:
