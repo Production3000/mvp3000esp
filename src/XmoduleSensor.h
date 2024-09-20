@@ -190,7 +190,11 @@ class XmoduleSensor : public _Xmodule {
 
         String webPageProcessor(uint8_t var);
         uint8_t webPageProcessorIndex;
-        size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
+
+        size_t csvRawResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        size_t csvLastestResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        size_t csvScaledResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        size_t csvExtendedResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
 
         const char*  getWebPage() override { return R"===(%0%
 <p><a href='/'>Home</a></p>

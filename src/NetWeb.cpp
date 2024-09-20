@@ -64,37 +64,18 @@ void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) 
 }
 
 void NetWeb::registerModulePage(const String& uri) {
-    // Death of to many lambdas, we never have all info and objects get destroyed
+    // Death of to many lambdas, no place has all info and objects get destroyed
     //  1. Bind the onRequest to NetWeb
-    //  2. Use the request url to select the module-index
-    //  3. Store the module-index in NetWeb
-    //  4. Create the request send
-    //  5. Use the module-index to point to the html text
-    //  6. The template processor also uses the module-index
-    server.on(uri.c_str(), HTTP_GET, std::bind(&NetWeb::moduleWebPage, this, std::placeholders::_1));
+    //  2. Use the request->url to select (index of) the module
+    //  3. Store the index in NetWeb
+    //  4. Create the request send using he index to point to the html text
+    //  5. The template processor also uses the index
+    // NOTE: this of course breaks two simultaneous requests to different modules
+    server.on(uri.c_str(), HTTP_GET, std::bind(&NetWeb::serveModulePage, this, std::placeholders::_1));
 }
 
-void NetWeb::moduleWebPage(AsyncWebServerRequest *request) {
-    // Finde the matching module
-    requestedModuleIndex = -1;
-    for (uint8_t i = 0; i < mvp.moduleCount; i++) {
-        if (mvp.xmodules[i]->uri.equals(request->url())) {
-            requestedModuleIndex = i;
-            break;
-        }
-    }
-    if (requestedModuleIndex == -1) // If the register function is used this can never happen
-        request->redirect("/");
-
-    request->sendChunked("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        return variableResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebPage(), buffer, maxLen, index);
-    }, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1));
-}
-
-
-void NetWeb::registerPage(const String& uri, AwsResponseFiller responseFiller, const String& contentType) {
-    if (!webPageColl.add(uri, responseFiller, contentType))
-        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many pages registered, max %d", WebPageColl::nodesSize);
+void NetWeb::registerFillerPage(const String& uri, ArRequestHandlerFunction onRequest) {
+    server.on(uri.c_str(), HTTP_GET, onRequest);
 }
 
 std::function<void(const String& message)> NetWeb::registerWebSocket(const String& uri, WebSocketDataCallback dataCallback) {
@@ -220,36 +201,53 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
+    // Finde the matching module
+    requestedModuleIndex = -1;
+    for (uint8_t i = 0; i < mvp.moduleCount; i++) {
+        if (mvp.xmodules[i]->uri.equals(request->url())) {
+            requestedModuleIndex = i;
+            break;
+        }
+    }
+    if (requestedModuleIndex == -1) // If the register function is used this can never happen
+        request->redirect("/");
+
+    request->sendChunked("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebPage(), buffer, maxLen, index);
+    }, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1));
+}
+
 size_t NetWeb::responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index) {
     // Head
     if (index < strlen(webPageHead))
-        return variableResponseFiller(webPageHead, buffer, maxLen, index);
+        return extendedResponseFiller(webPageHead, buffer, maxLen, index);
     index -= strlen(webPageHead);
     // Main
     if (index < strlen(mvp.webPage))
-        return variableResponseFiller(mvp.webPage, buffer, maxLen, index);
+        return extendedResponseFiller(mvp.webPage, buffer, maxLen, index);
     index -= strlen(mvp.webPage);
     // Log
     if (index < strlen(mvp.logger.webPage))
-        return variableResponseFiller(mvp.logger.webPage, buffer, maxLen, index);
+        return extendedResponseFiller(mvp.logger.webPage, buffer, maxLen, index);
     index -= strlen(mvp.logger.webPage);
     // Network
     if (index < strlen(mvp.net.webPage))
-        return variableResponseFiller(mvp.net.webPage, buffer, maxLen, index);
+        return extendedResponseFiller(mvp.net.webPage, buffer, maxLen, index);
     index -= strlen(mvp.net.webPage);
     // UDP
     if (index < strlen(mvp.net.netCom.webPage))
-        return variableResponseFiller(mvp.net.netCom.webPage, buffer, maxLen, index);
+        return extendedResponseFiller(mvp.net.netCom.webPage, buffer, maxLen, index);
     index -= strlen(mvp.net.netCom.webPage);
     // MQTT
     if (index < strlen(mvp.net.netMqtt.webPage))
-        return variableResponseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
+        return extendedResponseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
     // Footer
     index -= strlen(mvp.net.netMqtt.webPage);
-    return variableResponseFiller(webPageFoot, buffer, maxLen, index);
+    return extendedResponseFiller(webPageFoot, buffer, maxLen, index);
 }
 
-size_t NetWeb::variableResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index) {
+size_t NetWeb::extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index) {
     // Chunked response filler for the html template
     size_t len = strlen(html);
     if (index + maxLen > len) {
@@ -258,7 +256,6 @@ size_t NetWeb::variableResponseFiller(const char* html, uint8_t *buffer, size_t 
     memcpy(buffer, html + index, maxLen);
     return maxLen;
 }
-
 
 String NetWeb::templateProcessorWrapper(const String& var) { 
     if (!_helper.isValidInteger(var)) {
@@ -305,42 +302,3 @@ String NetWeb::templateProcessorWrapper(const String& var) {
             return "";
     }
 }
-
-String NetWeb::webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom) {
-    if (!_helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return "[" + var + "]";
-    }
-
-    switch (var.toInt()) {
-
-        // Main placeholders
-        case 0: // Standard HTML head
-            return webPageHead;
-        case 1: // Device ID
-            return String(ESPX.getChipId());
-        case 2: // Device IP
-            return mvp.net.myIp.toString();
-        case 3: // Post message
-            // Send message if within lifetime
-            if (millis() < postMessageExpiry) {
-                postMessageExpiry = 0; // Expire message for next load, saves a string copy
-                return postMessage;
-            }
-            return "";
-
-        // Custom placeholders
-        //  10 System
-        //  30 Log
-        //  40 Network
-        //  50 UDP
-        //  60 MQTT     80
-        //  Xmodules should start at 100+
-        default:
-            return processorCustom(var.toInt());
-            // Sadly there is no way to know if no placeholder was matched or if the string is just empty
-            // We could encode it, but this would just make it more complex to implement in new templates
-            // mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-    }
-}
-

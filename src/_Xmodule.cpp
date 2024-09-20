@@ -19,6 +19,7 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
+
 void _Xmodule::setupFramework(){
     if (uri.length() > 2)
         mvp.net.netWeb.registerModulePage(uri);

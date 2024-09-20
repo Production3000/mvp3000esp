@@ -64,27 +64,18 @@ void XmoduleSensor::setup() {
         return true;
     }, "Scaling reset.");
 
-    // Data interface for latest data
-    mvp.net.netWeb.registerPage(uri + "data", [&](uint8_t *buffer, size_t maxLen, size_t index)-> size_t {
-        return webPageCsvResponseFiller(buffer, maxLen, index, true, [&]() -> String {
-            return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
-        });
+    // Register CSV: latest, raw, scaled
+    mvp.net.netWeb.registerFillerPage(uri + "data", [&](AsyncWebServerRequest *request) {
+        request->sendChunked("text/html", std::bind(&XmoduleSensor::csvLastestResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     });
 
-    // Data interface for raw CSV data
-    mvp.net.netWeb.registerPage(uri + "datasraw", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
-            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, nullptr);
-        });
-    }, "application/octet-stream");
+    mvp.net.netWeb.registerFillerPage(uri + "datasraw", [&](AsyncWebServerRequest *request) {
+        request->sendChunked("application/octet-stream", std::bind(&XmoduleSensor::csvRawResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    });
 
-    // Data interface for scaled CSV data
-    mvp.net.netWeb.registerPage(uri + "datasscaled", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        return webPageCsvResponseFiller(buffer, maxLen, index, false, [&]() -> String {
-            return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
-        });
-    }, "application/octet-stream");
-
+    mvp.net.netWeb.registerFillerPage(uri + "datasscaled", [&](AsyncWebServerRequest *request) {
+        request->sendChunked("application/octet-stream", std::bind(&XmoduleSensor::csvScaledResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    });
 
     // Register websocket and MQTT
     webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
@@ -247,7 +238,25 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
     }
 }
 
-size_t XmoduleSensor::webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc) {
+size_t XmoduleSensor::csvLastestResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+    return csvExtendedResponseFiller(buffer, maxLen, index, true, [&]() -> String {
+        return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
+    });
+}
+
+size_t XmoduleSensor::csvRawResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+    return csvExtendedResponseFiller(buffer, maxLen, index, false, [&]() -> String {
+        return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, nullptr);
+    });
+}
+
+size_t XmoduleSensor::csvScaledResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+    return csvExtendedResponseFiller(buffer, maxLen, index, false, [&]() -> String {
+        return dataCollection.linkedListSensor.getBookmarkAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
+    });
+}
+
+size_t XmoduleSensor::csvExtendedResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc) {
     // We assume the buffer is large enough for at least the first single row
     // It would be quite the effort to reliably split a row into multiple calls
 

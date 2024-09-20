@@ -34,18 +34,15 @@ class NetWeb {
          * @brief Register a new page for the web interface.
          * 
          * @param uri The URI of the page.
-         * @param html The HTML content of the page, used together with the processor to fill the template.
-         * @param processor The processor function for the page.
-         * @param responseFiller The response filler function for the page, typically used for large pages or datasets.
-         * @param contentType The content type of the page, optional, Default is "text/html".
+         * @param onRequest The function to execute when the page is requested.
          */
-        // void registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType = "text/html");
-        void registerPage(const String& uri, AwsResponseFiller responseFiller, const String& contentType = "text/html");
+        void registerFillerPage(const String& uri, ArRequestHandlerFunction onRequest);
 
         /**
          * @brief Register a configuration interface to make its settings editable using a form on the web interface.
          * 
          * @param Cfg The configuration to add.
+         * @param callback (optional) The function to execute after the configuration has been saved. Leave empty to not execute a function.
          */
         void registerCfg(CfgJsonInterface* Cfg, std::function<void()> callback = nullptr);
 
@@ -63,15 +60,14 @@ class NetWeb {
          * @brief Register a websocket to be used with the web interface.
          * 
          * @param uri The URI of the websocket.
-         * @param dataCallback The function to execute when data is received.
+         * @param dataCallback (optional) The function to execute when data is received. Leave empty to not execute a function.
          * @return Returns the function to write data to the websocket.
          */
-        std::function<void(const String& message)> registerWebSocket(const String& uri) { return registerWebSocket(uri, nullptr); };
-        std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketDataCallback dataCallback);
+        std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketDataCallback dataCallback = nullptr);
 
     public:
 
-
+        // Called on creation of an xmodule 
         void registerModulePage(const String& uri);
 
 
@@ -88,9 +84,6 @@ class NetWeb {
         LinkedListWebCfg linkedListWebCfg = LinkedListWebCfg(); // Adaptive size
 
         String templateProcessorWrapper(const String& var);
-        String webPageProcessorMain(const String& var, AwsTemplateProcessorInt processorCustom);
-
-        WebPageColl webPageColl = WebPageColl(&server, std::bind(&NetWeb::webPageProcessorMain, this, std::placeholders::_1, std::placeholders::_2));
 
         void webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type);
         WebSocketColl webSocketColl = WebSocketColl(&server, std::bind(&NetWeb::webSocketEventLog, this, std::placeholders::_1, std::placeholders::_2));
@@ -104,10 +97,10 @@ class NetWeb {
         void responseMetaRefresh(AsyncWebServerRequest *request);
 
         int8_t requestedModuleIndex = -1; // None selected, or there is just no module
-        void moduleWebPage(AsyncWebServerRequest *request);
+        void serveModulePage(AsyncWebServerRequest *request);
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
-        size_t variableResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
+        size_t extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
 
         const char* webPageHead = R"===(<!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
