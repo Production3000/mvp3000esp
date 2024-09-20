@@ -69,7 +69,7 @@ struct DataProcessing : public JsonInterface {
             // Make sure size is correct to not have memory issues
             if (jsonArray.size() != offset.value_size)
                 return false;
-            
+
             // Assign values
             offset.loopArray([&](int32_t& value, uint8_t i) { value = jsonArray[i].as<int32_t>(); });
         }
@@ -94,7 +94,7 @@ struct DataProcessing : public JsonInterface {
         offset.loopArray([&](int32_t& value, uint8_t i) { value = - offsetMeasurement[i]; });
     };
 
-    void setSampleToIntExponent(int8_t *_sampleToIntExponent) { 
+    void setSampleToIntExponent(int8_t *_sampleToIntExponent) {
         sampleToIntExponent.loopArray([&](int8_t& value, uint8_t i) { value = _sampleToIntExponent[i]; } );
     };
 

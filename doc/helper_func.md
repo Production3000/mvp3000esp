@@ -40,7 +40,11 @@ The Helper class provides a range of functions for checking and converting strin
 
 ### <a name='FormattedString'></a>Formatted String
 
- *  `String printFormatted(const String& formatString, ...)`: Print a formatted string.
+ *  `String printFormatted(const String& formatString, ...)`: Return a formatted string, [see](https://en.cppreference.com/w/cpp/io/c/vfprintf).
+
+### <a name='FormattedString'></a>String Hashing
+
+ *  `constexpr uint32_t hashStringDjb2(const char* str)`: Quasi-unique hash of a string for easy comparing/storage (Dan Bernstein).
 
 ## <a name='LimitTimer'></a>LimitTimer
 

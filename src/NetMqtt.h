@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_NETMQTT
@@ -60,7 +60,7 @@ class NetMqtt {
 
         /**
          * @brief Register a topic for MQTT communication.
-         * 
+         *
          * @param topic The topic to register. It is prefixed with the device ID and suffixed with _data and _ctrl.
          * @param ctrlCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.

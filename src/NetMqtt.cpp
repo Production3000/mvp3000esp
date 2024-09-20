@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ void NetMqtt::loop() {
 
             // When mqttClient.onMessage() would work we could just call mqttClient.poll(); here
             // Check if a MQTT message was received, parseMessage calls poll() itself
-            messageSize = mqttClient.parseMessage(); 
+            messageSize = mqttClient.parseMessage();
             if (messageSize > 0) {
                 handleMessage(messageSize);
             }
@@ -166,8 +166,8 @@ void NetMqtt::handleMessage(int messageSize) {
 
     String topic = mqttClient.messageTopic();
     // Topic is prefixed with the device ID and suffixed with _ctrl, we only need the base topic
-    topic = topic.substring(topic.indexOf('_') + 1, topic.lastIndexOf('_'));                           
-    
+    topic = topic.substring(topic.indexOf('_') + 1, topic.lastIndexOf('_'));
+
     // Copy message to buffer, needs to be done after reading the topic as it clears the message-ready flag
     uint8_t buf[messageSize + 1];
     mqttClient.read(buf, messageSize + 1);
@@ -191,7 +191,7 @@ void NetMqtt::saveCfgCallback() {
     mqttClient.stop();
 }
 
-String NetMqtt::templateProcessor(uint8_t var) { 
+String NetMqtt::templateProcessor(uint8_t var) {
     switch (var) {
         case 61:
             return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
@@ -217,7 +217,7 @@ String NetMqtt::templateProcessor(uint8_t var) {
         // Filling of the MQTT topics is better be split, long strings are never good during runtime
         case 70:
             // Check if list is empty
-            if (linkedListMqttTopic.getSize() == 0) {                                                                   
+            if (linkedListMqttTopic.getSize() == 0) {
                 return "<li>None</li>";
             }
             // Set initial bookmark

@@ -24,7 +24,7 @@ limitations under the License.
 /**
  * @class Xmodule
  * @brief Base class for modules.
- * 
+ *
  * This class provides a base implementation for modules in the MVP3000 system.
  */
 class _Xmodule {

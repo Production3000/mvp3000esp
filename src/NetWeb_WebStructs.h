@@ -32,7 +32,7 @@ typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionCallba
 // Linked list for web actions
 struct DataStructWebAction {
     uint32_t actionKeyHash;
-    
+
     uint8_t responseType;
     String successMessage;
     WebActionCallback actionCallback;

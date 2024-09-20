@@ -134,24 +134,24 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
     }
 }
 
-bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {         
+bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
     if (request->params() == 0) { // Likely a reload-from-locationbar error
         responseRedirect(request, "Redirected ...");
         return false;
     }
-                                              
+
     // Double check for deviceId for confirmation
-    if (request->url().substring(1,6) == "check") {                      
-        if (request->hasParam("deviceId", true)) {   
+    if (request->url().substring(1,6) == "check") {
+        if (request->hasParam("deviceId", true)) {
             if ( (_helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == _helper.ESPX->getChipId()) ) {
                 return true;
-            }                
+            }
         }
     } else {
         // No deviceId check
         return true;
     }
-    
+
     // Failed confirmation check or no deviceId provided
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Invalid deviceId input from: %s",  request->client()->remoteIP().toString().c_str());
     return false;
@@ -191,12 +191,12 @@ void NetWeb::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEven
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* message) {
-    // Message to serve on next page load and set expiry time       
+    // Message to serve on next page load and set expiry time
     postMessage = message;
     postMessageExpiry = millis() + postMessageLifetime;
 
     // Redirect to avoid post reload, 303 temporary
-    // Points to the referer [sic] to stay on the page the form was on 
+    // Points to the referer [sic] to stay on the page the form was on
     request->redirect(request->header("Referer"));
 }
 
@@ -264,7 +264,7 @@ size_t NetWeb::extendedResponseFiller(const char* html, uint8_t *buffer, size_t 
     return maxLen;
 }
 
-String NetWeb::templateProcessorWrapper(const String& var) { 
+String NetWeb::templateProcessorWrapper(const String& var) {
     if (!_helper.isValidInteger(var)) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return "[" + var + "]";

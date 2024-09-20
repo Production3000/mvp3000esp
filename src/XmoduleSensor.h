@@ -94,7 +94,7 @@ class XmoduleSensor : public _Xmodule {
 
         /**
          * @brief Construct a new Sensor Module object.
-         * 
+         *
          * @param valueCount The number of values simultaneously coming from the sensor(s).
          */
         XmoduleSensor(uint8_t valueCount) : _Xmodule("Sensor Module", "/sensor") {
@@ -104,7 +104,7 @@ class XmoduleSensor : public _Xmodule {
 
         /**
          * @brief Add a new sample array to the sensor module.
-         * 
+         *
          * @tparam T The numeric type of the sample, typically int or float.
          * @param newSample The new sample array to add.
          */
@@ -116,7 +116,7 @@ class XmoduleSensor : public _Xmodule {
 
         /**
          * @brief Shift the decimal point of the sample values by the given exponent.
-         * 
+         *
          * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
          */
         void setSampleToIntExponent(int8_t *sampleToIntExponent) {
@@ -125,7 +125,7 @@ class XmoduleSensor : public _Xmodule {
 
         /**
          * @brief Set the sensor information.
-         * 
+         *
          * @param infoName The name of the sensor.
          * @param infoDescription The description of the sensor.
          * @param sensorTypes The types of the sensor values as array.
@@ -137,7 +137,7 @@ class XmoduleSensor : public _Xmodule {
 
         /**
          * @brief Set the sensor information for a matrix sensor.
-         * 
+         *
          * @param infoName The name of the sensor.
          * @param infoDescription The description of the sensor.
          * @param pixelType The type of the pixel value.
@@ -154,7 +154,7 @@ class XmoduleSensor : public _Xmodule {
         void setDataCollectionAdaptive() {
             dataCollection.linkedListSensor.enableAdaptiveGrowing();
         };
-        
+
 
     public:
 

@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #include "Net.h"
@@ -46,7 +46,7 @@ void Net::setup() {
     }, "Connecting to network ...");
 
 }
- 
+
 void Net::loop() {
     switch (netState) {
         case NET_STATE_TYPE::CLIENT:
@@ -58,7 +58,7 @@ void Net::loop() {
             // Captive portal only for AP
             dnsServer.processNextRequest();
             break;
-            
+
         default:
             // Nothing to do without network
             return;
@@ -162,7 +162,7 @@ void Net::connectClient() {
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to (SSID/pass): %s/%s", cfgNet.clientSsid.c_str(), cfgNet.clientPass.c_str());
 }
 
-void Net::WiFiGotIP() { // 
+void Net::WiFiGotIP() { //
     // Filter double-call, maybe because of auto-reconnect within the ESP
     if (netState == NET_STATE_TYPE::CLIENT)
         return;
@@ -202,5 +202,5 @@ String Net::templateProcessor(uint8_t var) {
             return (cfgNet.forceClientMode == true) ? "checked" : "";
         default:
             return "";
-    }    
+    }
  }

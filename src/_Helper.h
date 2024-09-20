@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_HELPER
@@ -43,14 +43,14 @@ struct _Helper {
 
     /**
      * @brief Check if a string is a valid decimal number (including integer)
-     * 
+     *
      * @param str String to check
      */
     bool isValidDecimal(const String& str) { return _checkNumberType(str, false); };
 
     /**
      * @brief Check if a string is a valid integer
-     * 
+     *
      * @param str String to check
      */
     bool isValidInteger(const String& str) { return _checkNumberType(str, true); };
@@ -82,7 +82,7 @@ struct _Helper {
         // Decimal has exactly one dot
         if (!limitToInteger && (dotCount != 1))
             return false;
-        
+
         return true;
     }
 
@@ -91,9 +91,9 @@ struct _Helper {
 
     /**
      * @brief Convert milliseconds to a time string
-     * 
+     *
      * @param total_ms Milliseconds to convert
-     * 
+     *
      * @return Time string in the format "d hh:mm:ss"
      */
     String millisToTime(uint64_t total_ms)  {
@@ -112,10 +112,10 @@ struct _Helper {
 
     /**
      * @brief Print a formatted string
-     * 
+     *
      * @param formatString Format string
      * @param ... Arguments
-     * 
+     *
      * @return Formatted string
      */
     String printFormatted(const String& formatString, ...) {
@@ -124,18 +124,15 @@ struct _Helper {
 
         // Get length incl termination
         uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
-        // __try {
-            char buffer[len];
-            vsnprintf(buffer, len, formatString.c_str(), args);
+        char buffer[len];
+        vsnprintf(buffer, len, formatString.c_str(), args);
 
-            va_end(args);
-            return buffer;
-        // }
-        // __catch(int e) {                    // This just dies quietly
-        // }
+        va_end(args);
+        return buffer;
 
-        // va_end(args);
-        // return "";  
+        // There is no try-catch in ESP, workaround
+        // __try { }
+        // __catch(int e) { } // This just continues quietly
     }
 
 
@@ -143,9 +140,9 @@ struct _Helper {
 
     /**
      * @brief Convert a string to a (quasi) unique hash
-     * 
+     *
      * The djb2 hash function by Dan Bernstein is used to convert a string to a hash.
-     * 
+     *
      * @param str String to convert
      * @param defaultValue Default value if conversion fails
      */
@@ -180,7 +177,7 @@ struct _Helper {
                 // The getMaxAllocHeap() then still indicates a rather large allocatable memory. This is however on the other core.
                 // Best indicator is the shrinking difference between free and largest allocatable memory.
                 // It starts at 50% allocatable, because half of total for each core.
-                // It goes to >99% allocatable, with one heap quasi full, the other having all the space. 
+                // It goes to >99% allocatable, with one heap quasi full, the other having all the space.
 
                 // Math:
                 // 100 - 100 * (free - largest) / (total/2) -> initially 50 .. 100 in the end

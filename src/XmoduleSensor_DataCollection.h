@@ -31,14 +31,14 @@ struct DataCollection {
 
         /**
          * @brief Constructor for data structure.
-         * 
+         *
          * @param _time Time of data
          * @param _values Pointer to data array
          * @param _value_size Size of data array
          */
         DataStructSensor(uint64_t _time, int32_t* _values, uint8_t _value_size) : NumberArray<int32_t>(_values, _value_size), time(_time) { }
     };
-    
+
     /**
      * Derived linked list to store sensor data and its time. Grows automatically.
      */
@@ -78,7 +78,7 @@ struct DataCollection {
 
     // Storing of averages with initial limit of 100 is reasonable on ESP8266
     // The list grows automatically if memory is sufficient
-    uint16_t dataStoreLength = 50;                                                                                           // TODO 50
+    uint16_t dataStoreLength = 50;
     LinkedListSensor linkedListSensor = LinkedListSensor(dataStoreLength);
 
     // Averaging
@@ -158,7 +158,7 @@ struct DataCollection {
             // Store median time and data in linked list
             linkedListSensor.append((uint64_t)nearbyintf( (avgStartTime + millis()) / 2 ), &avgDataSum);
 
-            // Reset temporary values, counters            
+            // Reset temporary values, counters
             avgDataSum.resetValues();
             avgCounter = 0;
             avgStartTime = 0;

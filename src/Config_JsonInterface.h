@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_CONFIG_JSONINTERFACE
@@ -26,10 +26,10 @@ extern _Helper _helper;
 
 /**
  * @brief General interface for exporting and importing configuration data to/from JSON.
- * 
+ *
  * It is the basis for the CfgJsonInterface configuration structure.
  * It can be extended to work with more complex data structures, like arrays or nested objects.
- * 
+ *
  * @param _cfgName The name of the configuration file.
  */
 struct JsonInterface {
@@ -37,14 +37,14 @@ struct JsonInterface {
 
     /**
      * @brief Export the configuration data to a JSON document.
-     * 
+     *
      * @param jsonDoc The JSON document to export the data to.
      */
     virtual void exportToJson(JsonDocument &jsonDoc) { };
 
     /**
      * @brief Import the configuration data from a JSON document.
-     * 
+     *
      * @param jsonDoc The JSON document to import the data from.
      * @return True if the import was successful, false otherwise.
      */
@@ -58,11 +58,11 @@ struct JsonInterface {
 
 /**
  * @brief Configuration structure to hold single value configuration items
- * 
+ *
  * The structure is designed to be extended with class/module specific settings.
  * The values are stored in the main program and the structure is used to manage them.
  * It offser functions to read/write the settings to/from a JSON file.
- * 
+ *
  * @param _cfgName The name of the configuration file.
  */
 struct CfgJsonInterface : public JsonInterface {
@@ -99,7 +99,7 @@ struct CfgJsonInterface : public JsonInterface {
 
         /**
          * @brief Default constructor, overloaded to select the type-specific settings core based on the value type.
-         * 
+         *
          * @param _hash The hash of the key-string.
          * @param _value The value of the setting.
          * @param checkValue A function to check if the value is valid.
@@ -122,7 +122,7 @@ struct CfgJsonInterface : public JsonInterface {
 
     /**
      * @brief Add a setting to the configuration.
-     * 
+     *
      * @tparam T The type of the setting.
      * @param key The key of the setting.
      * @param value The value of the setting.
@@ -142,7 +142,7 @@ struct CfgJsonInterface : public JsonInterface {
 
     /**
      * @brief Export the configuration data to a JSON document.
-     * 
+     *
      * @param jsonDoc The JSON document to export the data to.
      */
     void exportToJson(JsonDocument &jsonDoc) {
@@ -165,7 +165,7 @@ struct CfgJsonInterface : public JsonInterface {
 
     /**
      * @brief Import the configuration data from a JSON document.
-     * 
+     *
      * @param jsonDoc The JSON document to import the data from.
      */
     bool importFromJson(JsonDocument &jsonDoc) {
@@ -198,12 +198,12 @@ struct CfgJsonInterface : public JsonInterface {
 
     /**
      * @brief Update a single setting, typically from a web request.
-     * 
+     *
      * @param key The key of the setting to update, will be hashed.
      * @param value The new value of the setting.
      */
-    bool updateSingleValue(const String& key, const String& value) {    
-        // Loop through all settings to find the correct one    
+    bool updateSingleValue(const String& key, const String& value) {
+        // Loop through all settings to find the correct one
         SettingNode* current = head;
         while (current != nullptr) {
             if (current->hash == _helper.hashStringDjb2(key.c_str())) {

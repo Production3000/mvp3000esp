@@ -34,7 +34,7 @@ function connect() {
     let websocketurl = "ws://" + deviceIp.trim() + wsfolder;
 
     websocket = new WebSocket(websocketurl);
-    
+
     websocket.onopen = function() {
         document.getElementById('coninfo').innerHTML = "Connected";
         console.log('Connection opened');

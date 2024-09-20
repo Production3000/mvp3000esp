@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 
@@ -52,14 +52,14 @@ void loop() {
 
     if (fakeSensorReady()) {
         // Generates 'data' of a typical matrix-sensor with somewhat similar values for all dots
-        //  base 100 with random noise plus 10/20/30... depending on position in row, shifting with each row 
+        //  base 100 with random noise plus 10/20/30... depending on position in row, shifting with each row
         for (uint8_t i = 0; i < valueCount; i++) {
             data[i] = 100 + random(50) + 10 * (i % (columns + 1));
         }
 
-        // Add new data. The values are averaged by default, expected output is close to 15, -150, 1500, -15, ... 
+        // Add new data. The values are averaged by default, expected output is close to 15, -150, 1500, -15, ...
         xmoduleSensor.addSample(data);
-    } 
+    }
 
     // IMPORTANT: Do not ever use blocking delay() in actual code
 }
@@ -68,7 +68,7 @@ void loop() {
 uint32_t nextMeasurement_ms = 0;
 uint32_t measurementInterval_ms = 50;
 bool fakeSensorReady() {
-    // This simulates sensor readout delay. For a real sensor another option might be to just increase averaging count. 
+    // This simulates sensor readout delay. For a real sensor another option might be to just increase averaging count.
     if (millis() > nextMeasurement_ms) {
         nextMeasurement_ms = millis() + measurementInterval_ms;
         return true;

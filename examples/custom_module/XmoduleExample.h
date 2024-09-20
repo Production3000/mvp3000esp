@@ -25,7 +25,7 @@ extern MVP3000 mvp;
 
 struct CfgXmoduleExample : public CfgJsonInterface {
 
-    // Fixed settings, restored with reboot to value set at compile  
+    // Fixed settings, restored with reboot to value set at compile
     uint16_t fixedNumber = 10101;
 
     // Modifiable settings saved to SPIFFS
@@ -74,7 +74,7 @@ class XmoduleExample : public _Xmodule {
     <li>Some fixed number: %101% </li>
     <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Action</h3> <ul>
-    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
+    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>
 %9%)==="; }
 
 };

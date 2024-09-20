@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_mvp
@@ -37,21 +37,21 @@ class MVP3000 {
 
         /**
          * @brief Add a Xmodule to the MVP3000 system.
-         * 
+         *
          * @param XmoduleSensor Pointer to the module to add.
          */
         void addXmodule(_Xmodule *XmoduleSensor);
 
         /**
          * @brief Log a message at 'user' level.
-         * 
+         *
          * @param message The message to log.
          */
         void log(const String& message) { logger.write(CfgLogger::Level::USER, message); };
 
         /**
          * @brief Enable or disable ANSI encoding of serial output.
-         * 
+         *
          * @param enable True to enable, false to disable.
          */
         void logAnsiColor(boolean enable) { logger.ansiColor(enable); };

@@ -58,7 +58,7 @@ void XmoduleSensor::setup() {
         resetOffset();
         return true;
     }, "Offset reset.");
-    
+
     mvp.net.netWeb.registerAction("resetScaling", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
         resetScaling();
         return true;
@@ -298,7 +298,7 @@ size_t XmoduleSensor::csvExtendedResponseFiller(uint8_t* buffer, size_t maxLen, 
         }
 
         // Copy string to the position in the buffer and increment position/total length
-        memcpy(buffer + pos, str.c_str(), strLen); 
+        memcpy(buffer + pos, str.c_str(), strLen);
         pos += strLen;
 
         // Exit if this was the last measurement

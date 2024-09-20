@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #ifndef MVP3000_HELPER_LIMITTIMER
@@ -22,7 +22,7 @@ limitations under the License.
 
 /**
  * @brief Create a new timer to allow non-blocking millisecond delays.
- * 
+ *
  * @param interval_ms The interval in milliseconds, can be 0 for instant finish.
  * @param limit_count (optional) The number of intervals to run, 0 to ignore.
  */
@@ -68,7 +68,7 @@ struct LimitTimer {
 
     /**
      * @brief Restart the timer with a new interval. Only needed after the limit was reached or stop called.
-     * 
+     *
      * @param interval_ms The new interval in milliseconds.
      */
     void restart(uint32_t interval_ms) {

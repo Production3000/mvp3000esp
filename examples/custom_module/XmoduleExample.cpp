@@ -30,7 +30,7 @@ void XmoduleExample::setup() {
         someAction();
         return true;
     }, "Some action was performed.");
-        
+
     // Custom setup code here
 }
 
@@ -63,7 +63,7 @@ String XmoduleExample::webPageProcessor(uint8_t var)  {
 
         // case 150: // Split long strings into multiple parts
         //     // Check if list is empty
-        //     if (linkedListExample.getSize() == 0) {                                                                   
+        //     if (linkedListExample.getSize() == 0) {
         //         return "<li>None</li>";
         //     }
         //     // Set initial bookmark

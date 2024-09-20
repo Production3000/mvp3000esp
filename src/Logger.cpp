@@ -163,7 +163,7 @@ String Logger::templateProcessor(uint8_t var) {
     switch (var) {
 
         case 30:
-            if (linkedListLog.getSize() == 0) {                                                                   
+            if (linkedListLog.getSize() == 0) {
                 return "-";
             }
             // Set initial bookmark

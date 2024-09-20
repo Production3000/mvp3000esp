@@ -32,7 +32,7 @@ class NetWeb {
 
         /**
          * @brief Register a new page for the web interface.
-         * 
+         *
          * @param uri The URI of the page.
          * @param onRequest The function to execute when the page is requested.
          */
@@ -40,7 +40,7 @@ class NetWeb {
 
         /**
          * @brief Register a configuration interface to make its settings editable using a form on the web interface.
-         * 
+         *
          * @param Cfg The configuration to add.
          * @param callback (optional) The function to execute after the configuration has been saved. Leave empty to not execute a function.
          */
@@ -48,7 +48,7 @@ class NetWeb {
 
         /**
          * @brief Register an action to be executed using a form on the web interface.
-         * 
+         *
          * @param actionKey The actionKey to add.
          * @param actionCallback The function to execute.
          * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will display a 'restarting'-page, but not restart itself automatically.
@@ -58,7 +58,7 @@ class NetWeb {
 
         /**
          * @brief Register a websocket to be used with the web interface.
-         * 
+         *
          * @param uri The URI of the websocket.
          * @param dataCallback (optional) The function to execute when data is received. Leave empty to not execute a function.
          * @return Returns the function to write data to the websocket.
@@ -67,7 +67,7 @@ class NetWeb {
 
     public:
 
-        // Called on creation of an xmodule 
+        // Called on creation of an xmodule
         void registerModulePage(const String& uri);
 
 

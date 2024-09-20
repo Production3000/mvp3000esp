@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright Production 3000
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
 */
 
 #include "Config.h"
@@ -78,7 +78,7 @@ void Config::readCfg(JsonInterface &cfg) {
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Config loaded: %s", cfg.cfgName.c_str());
     }
     // Cleanup for next
-    jsonDoc.clear(); 
+    jsonDoc.clear();
 }
 
 void Config::writeCfg(JsonInterface &cfg) {
@@ -99,7 +99,7 @@ bool Config::readFileToJson(const char* fileName) {
         jsonDoc.clear();
     }
 
-    // Check if the file exists, then check content 
+    // Check if the file exists, then check content
     return readFile(fileName, [&](File& jsonFile) -> bool {
         // Deserialize JSON
         DeserializationError error = deserializeJson(jsonDoc, jsonFile);
@@ -167,7 +167,7 @@ void Config::factoryResetDevice(boolean keepWifi) {
     if (keepWifi) {
         mvp.net.cleanCfgKeepClientInfo();
     }
-    
+
     mvp.delayedRestart(25);
 }
 
@@ -196,7 +196,7 @@ bool Config::readFile(const char* fileName, std::function<bool(File& file)> read
     String pathFileName = fileNameCompletor(fileName);
 
     File file = SPIFFS.open(pathFileName, "r");
-    // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
+    // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;)
     if (!file || file.isDirectory()) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File not found for reading: %s", pathFileName.c_str());
         return false;
@@ -208,7 +208,7 @@ bool Config::readFile(const char* fileName, std::function<bool(File& file)> read
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "File empty, removed: %s", pathFileName.c_str());
         return false;
     }
-    
+
     // Load good
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Content read from file: %s", pathFileName.c_str());
 
@@ -219,7 +219,7 @@ bool Config::readFile(const char* fileName, std::function<bool(File& file)> read
     return result;
 }
 
-bool Config::writeFile(const char* fileName, std::function<bool(File& file)> writerFunc) {   
+bool Config::writeFile(const char* fileName, std::function<bool(File& file)> writerFunc) {
     if (!fileSystemOK)
         return false;
 
@@ -227,12 +227,12 @@ bool Config::writeFile(const char* fileName, std::function<bool(File& file)> wri
 
     // Open file, automatically created if not existing
     File file = SPIFFS.open(pathFileName, "w");
-    // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;) 
+    // It's no longer enough to check if open returned true. Also need to check that it is not a folder. The documentations needs to be updated. ;)
     if (!file || file.isDirectory()) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Failed to open file for writing: %s", pathFileName.c_str());
         return false;
     }
-    
+
     // Execute the write function, specific to content type
     if (!writerFunc(file)) {
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Failed to write to file: %s", pathFileName.c_str());
