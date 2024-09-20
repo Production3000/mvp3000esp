@@ -31,42 +31,35 @@ typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionFuncti
 
 // Linked list for web actions
 struct DataStructWebAction {
-    enum ResponseType {
+    uint32_t actionKeyHash;
+    uint8_t responseType;
+    String successMessage;
+    WebActionFunction actionCallback;
+
+    DataStructWebAction(const String& actionKey) : actionKeyHash(_helper.hashStringDjb2(actionKey.c_str())) { } // For comparision only
+    DataStructWebAction(const String& actionKey, uint8_t responseType, WebActionFunction actionCallback, const String& successMessage) : actionKeyHash(_helper.hashStringDjb2(actionKey.c_str())), responseType(responseType), actionCallback(actionCallback), successMessage(successMessage) { }
+};
+
+struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
+    LinkedListWebActions() : LinkedList3101<DataStructWebAction>() { }
+
+    enum ResponseType: uint8_t {
         NONE = 0,
         MESSAGE = 1,
         RESTART = 2
     };
 
-    String actionKey;
-    ResponseType successResponse;
-    String successMessage;
-    WebActionFunction actionFkt;
-
-    DataStructWebAction(const String& actionKey) : actionKey(actionKey) { } // For comparision only
-    DataStructWebAction(const String& actionKey, ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) : actionKey(actionKey), successResponse(successResponse), actionFkt(actionFkt), successMessage(successMessage) { }
-
-    bool equals(DataStructWebAction* other) {
-        if (other == nullptr)
-            return false;
-        // Compare the actionKey string
-        return actionKey.equals(other->actionKey);
-    }
-};
-
-struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
-    LinkedListWebActions() : LinkedList3101<DataStructWebAction>() { }
-    LinkedListWebActions(uint16_t size) : LinkedList3101<DataStructWebAction>(size) { }
-
-    void appendUnique(const String& actionKey, DataStructWebAction::ResponseType successResponse, WebActionFunction actionFkt, const String& successMessage) {
-        this->appendUniqueDataStruct(new DataStructWebAction(actionKey, successResponse, actionFkt, successMessage));
+    void appendUnique(const String& actionKey, ResponseType responseType, WebActionFunction actionCallback, const String& successMessage) {
+        this->appendUniqueDataStruct(new DataStructWebAction(actionKey, responseType, actionCallback, successMessage));
     }
 
     DataStructWebAction* findAction(const String& argKey) {
-        Node* node = this->findByContent(new DataStructWebAction(argKey));
-        if (node == nullptr) {
-            return nullptr;
-        }
-        return node->dataStruct;
+        return this->findByContentData(new DataStructWebAction(argKey));
+    }
+
+    boolean compareContent(DataStructWebAction* dataStruct, DataStructWebAction* other) override {
+        // return dataStruct->actionKey.equals(other->actionKey);
+        return dataStruct->actionKeyHash == other->actionKeyHash;
     }
 };
 
@@ -115,6 +108,8 @@ struct LinkedListWebCfg : LinkedList3100<DataStructWebCfg> {
 
 typedef std::function<void(AsyncWebSocketClient *, AwsEventType)> WebSocketEventLog;
 typedef std::function<void(char*)> WebSocketDataCallback;
+
+
 
 // Collection of websockets
 struct WebSocketColl {

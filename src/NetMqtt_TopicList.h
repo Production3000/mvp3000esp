@@ -20,11 +20,9 @@ limitations under the License.
 #include <Arduino.h>
 
 #include <ArduinoMqttClient.h>
-#ifdef ESP8266
-    extern EspClass ESPX;                                                                                  // TODO replace with helper          
-#else
-    extern EspClassX ESPX;
-#endif
+
+#include "_Helper.h"
+extern _Helper _helper;
 
 
 typedef std::function<void(char*)> MqttDataCallback;
@@ -40,8 +38,8 @@ struct DataStructMqttTopic {
     DataStructMqttTopic(const String& subtopic) : subtopic(subtopic) { } // For comparision only
     DataStructMqttTopic(const String& subtopic, MqttDataCallback dataCallback, MqttClient* mqttClient) : subtopic(subtopic), dataCallback(dataCallback), mqttClient(mqttClient) { }
 
-    String getCtrlTopic() { String str; str += ESPX.getChipId(); str += "_"; str += subtopic; str += "_ctrl";  return str; }
-    String getDataTopic() { String str; str += ESPX.getChipId(); str += "_"; str += subtopic; str += "_data";  return str; }
+    String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += subtopic; str += "_ctrl";  return str; }
+    String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += subtopic; str += "_data";  return str; }
 
     std::function<void(const String& message)> getMqttPrint() { return std::bind(&DataStructMqttTopic::mqttPrint, this, std::placeholders::_1); }
     void mqttPrint(const String& message) {
@@ -51,13 +49,6 @@ struct DataStructMqttTopic {
             mqttClient->print(message);
             mqttClient->endMessage();
         }
-    }
-
-    bool equals(DataStructMqttTopic* other) {
-        if (other == nullptr)
-            return false;
-        // Compare the actionKey string
-        return subtopic.equals(other->subtopic);
     }
 };
 
@@ -93,6 +84,10 @@ struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
                 mqttClient->subscribe(current->getCtrlTopic());
             }
         });
+    }
+
+    boolean compareContent(DataStructMqttTopic* dataStruct, DataStructMqttTopic* other) override {
+        return dataStruct->subtopic.equals(other->subtopic);
     }
 };
 

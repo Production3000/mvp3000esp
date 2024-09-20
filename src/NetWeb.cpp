@@ -51,12 +51,12 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt) {
-    linkedListWebActions.appendUnique(actionKey, DataStructWebAction::ResponseType::RESTART, actionFkt, "");
+void NetWeb::registerAction(const String& actionKey, WebActionFunction actionCallback) {
+    linkedListWebActions.appendUnique(actionKey, LinkedListWebActions::ResponseType::RESTART, actionCallback, "");
 }
 
-void NetWeb::registerAction(const String& actionKey, WebActionFunction actionFkt, const String& successMessage) {
-    linkedListWebActions.appendUnique(actionKey, DataStructWebAction::ResponseType::MESSAGE, actionFkt, successMessage);
+void NetWeb::registerAction(const String& actionKey, WebActionFunction actionCallback, const String& successMessage) {
+    linkedListWebActions.appendUnique(actionKey, LinkedListWebActions::ResponseType::MESSAGE, actionCallback, successMessage);
 };
 
 void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) {
@@ -135,7 +135,7 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
         return;
     }
 
-    if (!webAction->actionFkt(request->params(), [&](int i) { return request->getParam(i)->name(); }, [&](int i) { return request->getParam(i)->value(); })) {
+    if (!webAction->actionCallback(request->params(), [&](int i) { return request->getParam(i)->name(); }, [&](int i) { return request->getParam(i)->value(); })) {
         // Execution failed
         responseRedirect(request, "Invalid action input!");
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid action input from: %s", request->client()->remoteIP().toString().c_str());
@@ -143,11 +143,11 @@ void NetWeb::startAction(AsyncWebServerRequest *request) {
     }
 
     // Report success or restart
-    switch (webAction->successResponse) {
-        case DataStructWebAction::ResponseType::MESSAGE:
+    switch (webAction->responseType) {
+        case LinkedListWebActions::ResponseType::MESSAGE:
             responseRedirect(request, webAction->successMessage.c_str());
             break;
-        case DataStructWebAction::ResponseType::RESTART:
+        case LinkedListWebActions::ResponseType::RESTART:
             responseMetaRefresh(request); // Restarts after 25 ms, page reloads after 4 s
             break;
 
@@ -166,7 +166,7 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
     // Double check for deviceId for confirmation
     if (request->url().substring(1,6) == "check") {                      
         if (request->hasParam("deviceId", true)) {   
-            if ( (_helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == ESPX.getChipId()) ) {
+            if ( (_helper.isValidInteger(request->getParam("deviceId", true)->value())) && (request->getParam("deviceId", true)->value().toInt() == _helper.ESPX->getChipId()) ) {
                 return true;
             }                
         }
@@ -269,7 +269,7 @@ String NetWeb::templateProcessorWrapper(const String& var) {
         case 0: // Standard HTML head
             return webPageHead;
         case 1: // Device ID
-            return String(ESPX.getChipId());
+            return String(_helper.ESPX->getChipId());
         case 2: // Device IP
             return mvp.net.myIp.toString();
         case 3: // Post message

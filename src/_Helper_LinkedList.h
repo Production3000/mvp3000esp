@@ -197,13 +197,23 @@ struct LinkedList3001 : virtual LinkedList3000<T> {
     Node* findByContent(T* dataStruct) {
         Node* current = this->head;
         while (current != nullptr) {
-            if (current->dataStruct->equals(dataStruct)) {
+            if (compareContent(current->dataStruct, dataStruct)) {
                 return current;
             }
             current = current->next;
         }
         return nullptr;
     }
+    
+    T* findByContentData(T* dataStruct) {
+        Node* node = findByContent(dataStruct);
+        return (node == nullptr) ? nullptr : node->dataStruct;
+    }
+
+    /**
+     * @brief Methos to compare two data structures. Needs to be overwritten in the derived class.
+     */
+    virtual boolean compareContent(T* dataStruct, T* other) { return false; }
 
     /**
      * @brief Search the nodes for given content and removes the node.
@@ -213,7 +223,6 @@ struct LinkedList3001 : virtual LinkedList3000<T> {
     void removeByContent(T* dataStruct) {
         this->_removeNode(this->findByContent(dataStruct));
     }
-
 };
 
 
@@ -359,6 +368,7 @@ struct LinkedList3100 : virtual LinkedList3000<T> {
 template <typename T>
 struct LinkedList3011 : LinkedList3001<T>, LinkedList3010<T> {
     LinkedList3011(uint16_t size) : LinkedList3001<T>(size), LinkedList3010<T>(size) { }
+    
 };
 
 template <typename T>

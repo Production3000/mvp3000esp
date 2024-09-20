@@ -32,6 +32,9 @@ Server responds with SERVER;SKILL;SKILL;SKILL
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
+#include "_Helper.h"
+extern _Helper _helper;
+
 
 void NetCom::setup() {
     // Read config and register with web interface
@@ -105,7 +108,7 @@ void NetCom::udpReceiveMessage() {
     // if (strncmp(packetBuffer, "DEVICE", 6) == 0) { return; }
     // Check for MVP3000, respond with DEVICE[ID]
     if (strncmp(packetBuffer, "MVP3000", 7) == 0) {
-        udpSendMessage((String("DEVICE") + String(ESPX.getChipId())).c_str() , udp.remoteIP());
+        udpSendMessage((String("DEVICE") + String(_helper.ESPX->getChipId())).c_str() , udp.remoteIP());
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery response sent to: %s", udp.remoteIP().toString().c_str());
         return;
     }
