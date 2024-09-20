@@ -22,22 +22,17 @@ limitations under the License.
 
 struct _Helper {
 
-// Replicates selected methods available only in ESP8266 to ESP32 to simplify code later on
-// Ensures that the ESPX object is available in the same way on both platforms
-
     _Helper() {
+
 #if defined(ESP8266)
         ESPX = &ESP;
-#endif
-    };
-
-#if defined(ESP8266)
-    EspClass* ESPX;
 #elif defined(ESP32)
-    EspClassX* ESPX = new EspClassX();
+        ESPX = new EspClassX();
 #else // Ensure architecture is correct, just for the sake of it
     #error "Unsupported platform"
 #endif
+
+    };
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -156,8 +151,12 @@ struct _Helper {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ESP32
+#if defined(ESP8266)
+    EspClass* ESPX;
+#elif defined(ESP32)
 
+    // Replicates selected methods available only in ESP8266 to ESP32 to simplify code later on
+    // Ensures that the ESPX object is available in the same way on both platforms
     class EspClassX {
         public:
 
@@ -229,6 +228,8 @@ struct _Helper {
             void reset() { ESP.restart(); };
 
     };
+
+    EspClassX* ESPX;
 
 #endif
 
