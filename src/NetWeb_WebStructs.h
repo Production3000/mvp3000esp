@@ -26,18 +26,19 @@ limitations under the License.
 
 
 typedef std::function<String(int)> WebArgKeyValue;
-typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionFunction;
+typedef std::function<bool(int, WebArgKeyValue, WebArgKeyValue)> WebActionCallback;
 
 
 // Linked list for web actions
 struct DataStructWebAction {
     uint32_t actionKeyHash;
+    
     uint8_t responseType;
     String successMessage;
-    WebActionFunction actionCallback;
+    WebActionCallback actionCallback;
 
     DataStructWebAction(const String& actionKey) : actionKeyHash(_helper.hashStringDjb2(actionKey.c_str())) { } // For comparision only
-    DataStructWebAction(const String& actionKey, uint8_t responseType, WebActionFunction actionCallback, const String& successMessage) : actionKeyHash(_helper.hashStringDjb2(actionKey.c_str())), responseType(responseType), actionCallback(actionCallback), successMessage(successMessage) { }
+    DataStructWebAction(const String& actionKey, uint8_t responseType, WebActionCallback actionCallback, const String& successMessage) : actionKeyHash(_helper.hashStringDjb2(actionKey.c_str())), responseType(responseType), actionCallback(actionCallback), successMessage(successMessage) { }
 };
 
 struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
@@ -49,7 +50,7 @@ struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
         RESTART = 2
     };
 
-    void appendUnique(const String& actionKey, ResponseType responseType, WebActionFunction actionCallback, const String& successMessage) {
+    void appendUnique(const String& actionKey, ResponseType responseType, WebActionCallback actionCallback, const String& successMessage) {
         this->appendUniqueDataStruct(new DataStructWebAction(actionKey, responseType, actionCallback, successMessage));
     }
 
@@ -106,68 +107,41 @@ struct LinkedListWebCfg : LinkedList3100<DataStructWebCfg> {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-typedef std::function<void(AsyncWebSocketClient *, AwsEventType)> WebSocketEventLog;
-typedef std::function<void(char*)> WebSocketDataCallback;
+typedef std::function<void(char*)> WebSocketCtrlCallback;
+typedef std::function<void(AsyncWebSocketClient *, AwsEventType, void*, uint8_t*, size_t, WebSocketCtrlCallback)> WebSocketEventCallbackWrapper;
 
+struct DataStructWebSocket {
+    uint32_t uriHash;
 
+    AsyncWebSocket* websocket;
+    WebSocketCtrlCallback ctrlCallback;
+    WebSocketEventCallbackWrapper webSocketEventCallbackWrapper;
 
-// Collection of websockets
-struct WebSocketColl {
-    struct Node {
-        AsyncWebSocket* websocket;
-
-        WebSocketDataCallback dataCallback;
-        WebSocketEventLog webSocketEventLog;
-
-        Node() { }
-        Node(const String& uri, WebSocketDataCallback dataCallback, WebSocketEventLog webSocketEventLog, AsyncWebServer *server) : dataCallback(dataCallback), webSocketEventLog(webSocketEventLog) {
-            websocket = new AsyncWebSocket(uri);
-            // Event log and custom handerl
-            websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-                // General event log
-                webSocketEventLog(client, type);
-                // Custom callback for data input from websocket
-                if ((type == WS_EVT_DATA) && (dataCallback != nullptr)) { // Only parse data if there is something to do
-                    AwsFrameInfo *info = (AwsFrameInfo*)arg;
-                    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-                        data[len] = 0; // Terminate string
-                        // Execute callback
-                        dataCallback((char*)data);
-                    }
-                }
-            });
-            // Attach
-            server->addHandler(websocket);
-        }
-
-        std::function<void(const String& message)> getTextAll() { return std::bind(&Node::textAll, this, std::placeholders::_1); }
-        void textAll(const String& message) {
-            websocket->textAll(message);
-        }
-    };
-
-    static const uint8_t nodesSize = 3;
-    uint8_t nodeCount = 0;
-
-    Node* nodes[nodesSize];
-
-    AsyncWebServer *server;
-    WebSocketEventLog webSocketEventLog;
-
-
-    WebSocketColl(AsyncWebServer *server, WebSocketEventLog webSocketEventLog) : server(server), webSocketEventLog(webSocketEventLog) { }
-
-
-    bool add(const String& uri, WebSocketDataCallback dataCallback) {
-        if (nodeCount >= nodesSize) {
-            return false;
-        }
-        nodes[nodeCount++] = new Node(uri, dataCallback, webSocketEventLog, server);
-        return true;
+    DataStructWebSocket(const String& uri) : uriHash(_helper.hashStringDjb2(uri.c_str())) { };
+    DataStructWebSocket(const String& uri, WebSocketCtrlCallback _ctrlCallback, WebSocketEventCallbackWrapper _webSocketEventCallbackWrapper, AsyncWebServer *server) : uriHash(_helper.hashStringDjb2(uri.c_str())), ctrlCallback(_ctrlCallback), webSocketEventCallbackWrapper(_webSocketEventCallbackWrapper) {
+        // Create websocket and attached to server
+        websocket = new AsyncWebSocket(uri);
+        websocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+            webSocketEventCallbackWrapper(client, type, arg, data, len, ctrlCallback);
+        });
+        server->addHandler(websocket);
     }
 
-    std::function<void(const String& message)> getTextAll() {
-        return (nodeCount > 0) ? nodes[nodeCount - 1]->getTextAll() : nullptr;
+    std::function<void(const String& message)> getTextAll() { return std::bind(&DataStructWebSocket::textAll, this, std::placeholders::_1); }
+    void textAll(const String& message) {
+        websocket->textAll(message);
+    }
+};
+
+struct LinkedListWebSocket : LinkedList3111<DataStructWebSocket> {
+
+    std::function<void(const String& message)> appendUnique(const String& uri, WebSocketCtrlCallback ctrlCallback, WebSocketEventCallbackWrapper webSocketEventCallbackWrapper, AsyncWebServer* server) {
+        this->appendUniqueDataStruct(new DataStructWebSocket(uri, ctrlCallback, webSocketEventCallbackWrapper, server));
+        return this->tail->dataStruct->getTextAll();
+    }
+
+    boolean compareContent(DataStructWebSocket* dataStruct, DataStructWebSocket* other) override {
+        return dataStruct->uriHash == other->uriHash;
     }
 };
 

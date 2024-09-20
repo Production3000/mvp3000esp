@@ -53,8 +53,8 @@ class NetWeb {
          * @param actionCallback The function to execute.
          * @param successMessage (optional) The message to display on success. Leave empty to not display a message. If omitted, the device will display a 'restarting'-page, but not restart itself automatically.
          */
-        void registerAction(const String& actionKey, WebActionFunction actionCallback); // One cannot overload bool with String
-        void registerAction(const String& actionKey, WebActionFunction actionCallback, const String& successMessage);
+        void registerAction(const String& actionKey, WebActionCallback actionCallback); // One cannot overload bool with String
+        void registerAction(const String& actionKey, WebActionCallback actionCallback, const String& successMessage);
 
         /**
          * @brief Register a websocket to be used with the web interface.
@@ -63,7 +63,7 @@ class NetWeb {
          * @param dataCallback (optional) The function to execute when data is received. Leave empty to not execute a function.
          * @return Returns the function to write data to the websocket.
          */
-        std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketDataCallback dataCallback = nullptr);
+        std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketCtrlCallback dataCallback = nullptr);
 
     public:
 
@@ -85,8 +85,8 @@ class NetWeb {
 
         String templateProcessorWrapper(const String& var);
 
-        void webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type);
-        WebSocketColl webSocketColl = WebSocketColl(&server, std::bind(&NetWeb::webSocketEventLog, this, std::placeholders::_1, std::placeholders::_2));
+        void webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback);
+        LinkedListWebSocket linkedListWebSocket; // Adaptive size
 
         // Handle form action (post)
         void editCfg(AsyncWebServerRequest *request);

@@ -51,11 +51,11 @@ void NetWeb::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::registerAction(const String& actionKey, WebActionFunction actionCallback) {
+void NetWeb::registerAction(const String& actionKey, WebActionCallback actionCallback) {
     linkedListWebActions.appendUnique(actionKey, LinkedListWebActions::ResponseType::RESTART, actionCallback, "");
 }
 
-void NetWeb::registerAction(const String& actionKey, WebActionFunction actionCallback, const String& successMessage) {
+void NetWeb::registerAction(const String& actionKey, WebActionCallback actionCallback, const String& successMessage) {
     linkedListWebActions.appendUnique(actionKey, LinkedListWebActions::ResponseType::MESSAGE, actionCallback, successMessage);
 };
 
@@ -78,32 +78,9 @@ void NetWeb::registerFillerPage(const String& uri, ArRequestHandlerFunction onRe
     server.on(uri.c_str(), HTTP_GET, onRequest);
 }
 
-std::function<void(const String& message)> NetWeb::registerWebSocket(const String& uri, WebSocketDataCallback dataCallback) {
-    if (!webSocketColl.add(uri, dataCallback)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Too many websockets registered, max %d", WebSocketColl::nodesSize);
-        return nullptr;
-    }
-    return webSocketColl.getTextAll();
+std::function<void(const String& message)> NetWeb::registerWebSocket(const String& uri, WebSocketCtrlCallback ctrlCallback) {
+    return linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWeb::webSocketEventCallbackWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
 };
-
-void NetWeb::webSocketEventLog(AsyncWebSocketClient *client, AwsEventType type) {
-    switch (type) {
-        case WS_EVT_CONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d connected from: %s", client->id(), client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DISCONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
-            break;
-        case WS_EVT_ERROR:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s, client %d", client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DATA:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d data from: %s", client->id(), client->remoteIP().toString().c_str());
-            break;
-        default: // WS_EVT_PONG
-            break;
-    }
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -183,6 +160,36 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+void NetWeb::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d connected from: %s", client->id(), client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
+            break;
+        case WS_EVT_ERROR:
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s, client %d", client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DATA:
+            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d data from: %s", client->id(), client->remoteIP().toString().c_str());
+            if (ctrlCallback != nullptr) { // Only parse data if there is something to do
+                AwsFrameInfo *info = (AwsFrameInfo*)arg;
+                if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                    data[len] = 0; // Terminate string
+                    // Execute callback
+                    ctrlCallback((char*)data);
+                }
+            }
+            break;
+        default: // WS_EVT_PONG
+            break;
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* message) {
     // Message to serve on next page load and set expiry time       
     postMessage = message;
@@ -197,9 +204,6 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
     // http-equiv seems to not show up in history
     request->send(200, "text/html", webPageRedirect);
 }
-
-
-///////////////////////////////////////////////////////////////////////////////////
 
 void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
     // Finde the matching module
@@ -217,6 +221,9 @@ void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
         return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebPage(), buffer, maxLen, index);
     }, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1));
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////
 
 size_t NetWeb::responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index) {
     // Head
