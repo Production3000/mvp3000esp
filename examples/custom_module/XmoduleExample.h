@@ -55,64 +55,18 @@ class XmoduleExample : public _Xmodule {
 
         CfgXmoduleExample cfgXmoduleExample;
 
-        void setup() override {
+        void setup() override;
+        void loop() override;
 
-            // Read config from SPIFFS
-            mvp.config.readCfg(cfgXmoduleExample);
-
-            // Register config
-            mvp.net.netWeb.registerCfg(&cfgXmoduleExample, std::bind(&XmoduleExample::saveCfgCallback, this));
-
-            // Register action
-            mvp.net.netWeb.registerAction("someAction", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
-                // argKey(0) is the action name
-                someAction();
-                return true;
-            }, "Some action was performed.");
-                
-            // Custom setup code here
-        }
-
-        void loop() override {
-            // Custom loop code here
-        }
-
-        void saveCfgCallback() {
-            mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
-        }
+        void saveCfgCallback();
 
         // Module custom methods
-        void someAction() {
-            mvp.logger.write(CfgLogger::INFO, "Some action performed.");
-        }
+        void someAction();
 
         // Web interface
-        String webPageProcessor(uint8_t var) override {
+        String webPageProcessor(uint8_t var) override;
 
-            String str;
-            switch (var) {
-                case 100:
-                    return description.c_str();
-
-                case 101:
-                    return String(cfgXmoduleExample.fixedNumber);
-                case 102:
-                    return String(cfgXmoduleExample.editableNumber);
-
-                default:
-                    //  Capture all
-                    // The placeholder string can hold a secondary placeholder which then is also filled, and so on.
-                    // if (var.toInt() < 50) {
-                    //     return "added a placeholder ( %" + String(var.toInt() + 1) + "% )";
-                    // } else {
-                    //     return "stop this madness!!!";
-                    // }
-                    //  Or log an unknown placeholder value
-                    // mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Unknown placeholder in template: %s", var.c_str());
-                    return str;
-            }
-        }
-
+        // We cannot override the values, but we can override this function.
         const char*  getWebPage() override { return R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
@@ -121,7 +75,7 @@ class XmoduleExample : public _Xmodule {
     <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Action</h3> <ul>
     <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
-<p>&nbsp;</body></html>)==="; }
+%9%)==="; }
 
 };
 

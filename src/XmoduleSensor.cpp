@@ -225,7 +225,7 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
         case 115:
             return String(cfgXmoduleSensor.dataValueCount);
 
-        case 120: // Split the long string into multiple rows
+        case 120: // Split the long string into multiple rows                   // TODO why not using the bookmark in the linked list ???
             webPageProcessorIndex = 0;
         case 121:
             // Sensor details: type, unit, offset, scaling, float to int exponent - placeholder for next row
