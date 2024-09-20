@@ -36,9 +36,6 @@ void XmoduleSensor::setup() {
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorTimer.restart(cfgXmoduleSensor.reportingInterval);
 
-    // Register sensor module web page
-    mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleSensor::webPageProcessor, this, std::placeholders::_1));
-
     // Register config to make it web-editable
     mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 

@@ -27,18 +27,27 @@ limitations under the License.
  * 
  * This class provides a base implementation for modules in the MVP3000 system.
  */
-class Xmodule {
+class _Xmodule {
 
     public:
 
-        Xmodule(String description) : description(description), uri("") {};
-        Xmodule(String description, String uri) : description(description), uri(uri) {};
+        _Xmodule(String description) : description(description) {};
+        _Xmodule(String description, String uri) : description(description), uri(uri) {
+            setupFramework();
+        };
 
         String description;
-        String uri; // Leave blank to only list module in web interface but not link it
+        String uri = ""; // Leave blank to only list module in web interface but not link it
 
-        virtual void setup() = 0;
-        virtual void loop() = 0;
+        virtual void setup() { };
+        virtual void loop() { };
+
+        virtual String webPageProcessor(uint8_t var) { return ""; };
+        // We cannot override the values, but we can override this function.
+        virtual const char* getWebPage() { return ""; };
+
+    private:
+        void setupFramework();
 
 };
 

@@ -39,7 +39,7 @@ class NetWeb {
          * @param responseFiller The response filler function for the page, typically used for large pages or datasets.
          * @param contentType The content type of the page, optional, Default is "text/html".
          */
-        void registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType = "text/html");
+        // void registerPage(const String& uri, const char* html, AwsTemplateProcessorInt processor, const String& contentType = "text/html");
         void registerPage(const String& uri, AwsResponseFiller responseFiller, const String& contentType = "text/html");
 
         /**
@@ -69,6 +69,12 @@ class NetWeb {
         std::function<void(const String& message)> registerWebSocket(const String& uri) { return registerWebSocket(uri, nullptr); };
         std::function<void(const String& message)> registerWebSocket(const String& uri, WebSocketDataCallback dataCallback);
 
+    public:
+
+
+        void registerModulePage(const String& uri);
+
+
     private:
 
         AsyncWebServer server = AsyncWebServer(80);
@@ -97,9 +103,11 @@ class NetWeb {
         void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
         void responseMetaRefresh(AsyncWebServerRequest *request);
 
+        int8_t requestedModuleIndex = -1; // None selected, or there is just no module
+        void moduleWebPage(AsyncWebServerRequest *request);
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
-        size_t responseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
+        size_t variableResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
 
         const char* webPageHead = R"===(<!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>

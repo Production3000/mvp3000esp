@@ -69,7 +69,7 @@ void MVP3000::loop() {
     }
 }
 
-void MVP3000::addXmodule(Xmodule *xmodule) {
+void MVP3000::addXmodule(_Xmodule *xmodule) {
     if (moduleCount >= MAX_MODULES) {
         return;
     }
@@ -150,6 +150,7 @@ String MVP3000::templateProcessor(uint8_t var) {
                 return "<li>None</li>";
             webPageProcessorIndex = 0;
         case 21:
+            // Note the ++ at the end
             if ((xmodules[webPageProcessorIndex]->uri).length() > 0) {
                 return _helper.printFormatted("<li><a href='%s'>%s</a></li> %s", xmodules[webPageProcessorIndex]->uri.c_str(), xmodules[webPageProcessorIndex]->description.c_str(), (webPageProcessorIndex++ < moduleCount - 1) ? "%21%" : "");
             } else {

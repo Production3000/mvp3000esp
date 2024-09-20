@@ -21,7 +21,7 @@ limitations under the License.
 
 #include <ArduinoJson.h>
 
-#include "Xmodule.h"
+#include "_Xmodule.h"
 
 #include "_Helper_LimitTimer.h"
 
@@ -88,7 +88,7 @@ struct CfgXmoduleSensor : CfgJsonInterface {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-class XmoduleSensor : public Xmodule {
+class XmoduleSensor : public _Xmodule {
 
     public:
 
@@ -97,7 +97,7 @@ class XmoduleSensor : public Xmodule {
          * 
          * @param valueCount The number of values simultaneously coming from the sensor(s).
          */
-        XmoduleSensor(uint8_t valueCount) : Xmodule("Sensor Module", "/sensor") {
+        XmoduleSensor(uint8_t valueCount) : _Xmodule("Sensor Module", "/sensor") {
             cfgXmoduleSensor.initValueCount(valueCount);
             dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
@@ -191,7 +191,8 @@ class XmoduleSensor : public Xmodule {
         String webPageProcessor(uint8_t var);
         uint8_t webPageProcessorIndex;
         size_t webPageCsvResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
-        const char* webPage = R"===(%0%
+
+        const char*  getWebPage() override { return R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>%101%: %102%</h3>
 <p>%103%</p>
@@ -215,7 +216,7 @@ class XmoduleSensor : public Xmodule {
 <td> <form action='/start' method='post' onsubmit='return confirm(`Reset offset?`);'> <input name='resetOffset' type='hidden'> <input type='submit' value='Reset offset'> </form> </td>
 <td> <form action='/start' method='post' onsubmit='return confirm(`Reset scaling?`);'> <input name='resetScaling' type='hidden'> <input type='submit' value='Reset scaling'> </form> </td>
 <td></td> </tr> </table>
-<p>&nbsp;</body></html>)===";
+<p>&nbsp;</body></html>)==="; }
 
 };
 

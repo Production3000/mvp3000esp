@@ -47,11 +47,11 @@ struct CfgXmoduleExample : public CfgJsonInterface {
 };
 
 
-class XmoduleExample : public Xmodule {
+class XmoduleExample : public _Xmodule {
     public:
 
-        // The module name and the uri for its web interface. Leave the uri blank to disable the web interface.
-        XmoduleExample() : Xmodule("Xmodule Example", "/example") { };
+        // The module name and the uri for its web interface. Leave the uri blank if the module has no web page.
+        XmoduleExample() : _Xmodule("Xmodule Example", "/example") { };
 
         CfgXmoduleExample cfgXmoduleExample;
 
@@ -59,9 +59,6 @@ class XmoduleExample : public Xmodule {
 
             // Read config from SPIFFS
             mvp.config.readCfg(cfgXmoduleExample);
-
-            // Define the module's web interface
-            mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleExample::webPageProcessor, this, std::placeholders::_1));
 
             // Register config
             mvp.net.netWeb.registerCfg(&cfgXmoduleExample, std::bind(&XmoduleExample::saveCfgCallback, this));
@@ -90,8 +87,7 @@ class XmoduleExample : public Xmodule {
         }
 
         // Web interface
-
-        String webPageProcessor(uint8_t var) {
+        String webPageProcessor(uint8_t var) override {
 
             String str;
             switch (var) {
@@ -117,7 +113,7 @@ class XmoduleExample : public Xmodule {
             }
         }
 
-        const char* webPage = R"===(%0%
+        const char*  getWebPage() override { return R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3> <ul>
@@ -125,8 +121,7 @@ class XmoduleExample : public Xmodule {
     <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Action</h3> <ul>
     <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
-<p>&nbsp;</body></html>         
-)===";
+<p>&nbsp;</body></html>)==="; }
 
 };
 

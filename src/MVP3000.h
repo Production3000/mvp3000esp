@@ -24,7 +24,7 @@ limitations under the License.
 #include "Config.h"
 #include "Net.h"
 
-#include "Xmodule.h"
+#include "_Xmodule.h"
 #include "XmoduleSensor.h"
 
 
@@ -40,7 +40,7 @@ class MVP3000 {
          * 
          * @param XmoduleSensor Pointer to the module to add.
          */
-        void addXmodule(Xmodule *XmoduleSensor);
+        void addXmodule(_Xmodule *XmoduleSensor);
 
         /**
          * @brief Log a message at 'user' level.
@@ -81,12 +81,13 @@ class MVP3000 {
 
         void delayedRestart(uint32_t delay_ms = 25) { delayedRestart_ms = millis() + delay_ms; };
 
-    private:
 
         // Modules
         static const uint8_t MAX_MODULES = 5;  // Maximum number of modules allowed
         uint8_t moduleCount = 0;
-        Xmodule *xmodules[MAX_MODULES];
+        _Xmodule *xmodules[MAX_MODULES];
+
+    private:
 
         void checkStatus();
 
