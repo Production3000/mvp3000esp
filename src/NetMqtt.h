@@ -41,7 +41,7 @@ struct CfgNetMqtt : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
-    boolean mqttEnabled = true;
+    boolean mqttEnabled = false;
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
     String mqttForcedBroker = ""; // test.mosquitto.org
 

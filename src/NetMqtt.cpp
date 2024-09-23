@@ -35,12 +35,10 @@ extern MVP3000 mvp;
 
 
 void NetMqtt::setup() {
-    Serial.println("setup");
     // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
     if (cfgNetMqtt.isHardDisabled) {
         mqttState = MQTT_STATE::HARDDISABLED;
         webPage = webPageHardDisabled; // Set web to display disabled html
-        return;
     }
 }
 
@@ -48,17 +46,13 @@ void NetMqtt::lateSetup() {
     // Needs to be done after all modules are added, otherwise the linkedListMqttTopic is possibly empty
     lateSetupDone = true;
 
-    Serial.println("entered lateSetup");
-
     // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
     if (linkedListMqttTopic.getSize() == 0) {
-        Serial.println("No MQTT topics defined, MQTT disabled.");
+        mvp.logger.write(CfgLogger::Level::INFO, "No MQTT topics defined, MQTT disabled.");
         mqttState = MQTT_STATE::NOTOPIC;
         webPage = webPageNoTopics; // Set web to display disabled html
         return;
     }
-
-    Serial.println("PASSED  with topics");
 
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetMqtt);
@@ -175,8 +169,6 @@ void NetMqtt::print(const String& topic, const String& message) {
     mqttClient.beginMessage(mqttTopic->getDataTopic());
     mqttClient.print(message);
     mqttClient.endMessage();
-
-    delete mqttTopic;                                                                                               // TODO this needs to be done for every LL search everywhere !!! not sure why, it is a pointer ???
 }
 
 

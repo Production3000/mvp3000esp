@@ -37,9 +37,6 @@ void NetWeb::setup() {
         request->redirect("/");
     });
 
-    // Set the save function for the config
-    linkedListWebCfg.setSaveCfgFkt([&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); });
-
     // Start server, independent of wifi status
     server.begin();
 }
@@ -90,7 +87,7 @@ void NetWeb::editCfg(AsyncWebServerRequest *request) {
         return;
     }
     // This is always a single setting that is updated at a time, try update and respond
-    if (linkedListWebCfg.updateSetting(request->getParam(0)->name(), request->getParam(0)->value())) {
+    if (linkedListWebCfg.updateSetting(request->getParam(0)->name(), request->getParam(0)->value(), [&](CfgJsonInterface &cfg) { mvp.config.writeCfg(cfg); })) {
         responseRedirect(request, "Settings saved!");
     } else {
         responseRedirect(request, "Input error!");

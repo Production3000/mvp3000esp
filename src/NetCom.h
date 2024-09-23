@@ -38,7 +38,7 @@ struct CfgNetCom : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
-    boolean udpEnabled = true;
+    boolean udpEnabled = false;
     uint16_t discoveryPort = 4211;
 
     CfgNetCom() : CfgJsonInterface("cfgNetCom") {

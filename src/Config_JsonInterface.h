@@ -187,7 +187,7 @@ struct CfgJsonInterface : public JsonInterface {
                         success &= current->settingCore.s->checkValueAndSet(jsonDoc[hashString].as<String>());
                         break;
                     default:
-                        Serial.println("NOT IMPLEMENTED TYPE!");
+                        Serial.println("TYPE NOT IMPLEMENTED!");
                         success = false;
                 }
             }

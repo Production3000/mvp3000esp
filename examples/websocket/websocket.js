@@ -28,6 +28,11 @@ function connect() {
     if (websocket)
         websocket.close();
 
+    if (keepData)
+        document.getElementById('data').value = "No data";
+    else
+        document.getElementById('data').innerHTML = "No data";
+
     let deviceIp = document.getElementById('deviceip').value;
     let wsfolder = document.getElementById('wsfolder').value;
 

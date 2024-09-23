@@ -75,23 +75,17 @@ struct DataStructWebCfg {
 };
 
 struct LinkedListWebCfg : LinkedList3100<DataStructWebCfg> {
-    // Function to save the configuration
-    std::function<void(CfgJsonInterface&)> saveCfgFkt;
-
-    void setSaveCfgFkt(std::function<void(CfgJsonInterface&)> saveCfgFkt) {
-        this->saveCfgFkt = saveCfgFkt;
-    }
-
     void append(CfgJsonInterface* cfg, std::function<void()> callback) {
         this->appendDataStruct(new DataStructWebCfg(cfg, callback));
     }
 
-    bool updateSetting(const String& key, const String& value) {
+    bool updateSetting(const String& key, const String& value, std::function<void(CfgJsonInterface&)> saveCfgFkt) {
         boolean success = false;
         this->loop([&](DataStructWebCfg* current, uint16_t i) {
             // Try to update value, if successful save Cfg and return
             if (current->cfg->updateSingleValue(key, value)) {
                 saveCfgFkt(*current->cfg);
+                // Call after-save callback, if available
                 if (current->callback != nullptr) {
                     current->callback();
                 }
