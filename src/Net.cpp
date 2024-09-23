@@ -48,31 +48,23 @@ void Net::setup() {
 }
 
 void Net::loop() {
-    switch (netState) {
-        case NET_STATE_TYPE::CLIENT:
-            // Communication only for client
-            netMqtt.loop();
-            netCom.loop();
-            break;
-        case NET_STATE_TYPE::AP:
-            // Captive portal only for AP
-            dnsServer.processNextRequest();
-            break;
-
-        default:
-            // Nothing to do without network
-            return;
-    }
-
-    // Web interface for all
-    netWeb.loop();
-
     // Check if delayed restart was set
     if (delayedRestartWifi_ms > 0) {
         if (millis() > delayedRestartWifi_ms) {
             delayedRestartWifi_ms = 0; // Clear flag
             startWifi();
         }
+    }
+
+    // Unwanted connection states need to be filltered in the respective loop() functions
+    netMqtt.loop();
+    netCom.loop();
+    // Web interface is async with empty loop()
+    netWeb.loop();
+
+    // Captive portal only for AP
+    if (netState == NET_STATE_TYPE::AP) {
+        dnsServer.processNextRequest();
     }
 }
 

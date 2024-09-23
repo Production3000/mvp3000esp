@@ -86,6 +86,7 @@ class Net {
         void cleanCfgKeepClientInfo();
 
         boolean connectedAsClient() { return (netState == NET_STATE_TYPE::CLIENT); }
+        boolean connectedAsClientOrAP() { return ((netState == NET_STATE_TYPE::CLIENT) || (netState == NET_STATE_TYPE::AP)); }
 
     private:                                        // TODO clean up
         DNSServer dnsServer;

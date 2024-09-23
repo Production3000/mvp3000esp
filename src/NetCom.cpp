@@ -37,8 +37,7 @@ extern _Helper _helper;
 
 
 void NetCom::setup() {
-    // This can be completely to allow external UDP uses, in a Xmodule or other.
-    // Also saves minimal memory, maybe 200 kB
+    // This can be completely to allow external UDP uses, in a Xmodule or other. Saves minimal 200 kB memory.
     if (cfgNetCom.isHardDisabled) {
         udpState = UDP_STATE::HARDDISABLED;
         webPage = webPageHardDisabled; // Set web to display disabled html
@@ -58,7 +57,7 @@ void NetCom::setup() {
 };
 
 void NetCom::loop() {
-    // Called from net.loop() only if wifi is up and in client mode, check again
+    // Nothing to do if not ENABLED or not connected
     if ((udpState != UDP_STATE::ENABLED) || !mvp.net.connectedAsClient())
         return;
 

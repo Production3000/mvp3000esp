@@ -63,9 +63,9 @@ class NetCom {
     private:
 
         enum class UDP_STATE: uint8_t {
-            ENABLED = 0,
+            HARDDISABLED = 0,
             DISABLEDX = 1,
-            HARDDISABLED = 2
+            ENABLED = 2
         };
         UDP_STATE udpState = UDP_STATE::ENABLED;
 
