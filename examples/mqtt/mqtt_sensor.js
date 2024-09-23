@@ -39,7 +39,8 @@ function connect() {
         websocketurl = 'ws://' + websocketurl;
     }
 
-    client = new Paho.MQTT.Client(websocketurl, "clientId");
+    // Client ID with random part to avoid AMQJS0008I Socket closed on test.mosquitto.org
+    client = new Paho.MQTT.Client(websocketurl, "clientId" + (Math.random() + 1).toString(36));
 
     client.onConnectionLost = function(e) {
         document.getElementById('coninfo').innerHTML = "Not connected: " + e.errorMessage;
