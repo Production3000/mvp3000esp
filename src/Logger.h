@@ -88,8 +88,9 @@ class Logger {
             }
         };
 
-
         CfgLogger cfgLogger;
+
+        String webSocketUri = "/wslog";
 
         uint8_t logStoreLength = 5;
         LinkedListLog linkedListLog = LinkedListLog(logStoreLength);
@@ -97,8 +98,6 @@ class Logger {
         bool checkTargetLevel(CfgLogger::Level targetLevel);
 
         void serialPrint(CfgLogger::Level targetLevel, const String& message);
-
-        std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
     public:
 

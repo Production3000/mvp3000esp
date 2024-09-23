@@ -185,7 +185,6 @@ class XmoduleSensor : public _Xmodule {
         void measureOffsetScalingFinish();
 
         void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
-        std::function<void(const String& message)> webSocketPrint; // Function to print to the websocket
 
         String webPageProcessor(uint8_t var);
         uint8_t webPageProcessorIndex;

@@ -63,6 +63,10 @@ void NetWeb::registerCfg(CfgJsonInterface *cfg, std::function<void()> callback) 
     linkedListWebCfg.append(cfg, callback);
 }
 
+void NetWeb::registerFillerPage(const String& uri, ArRequestHandlerFunction onRequest) {
+    server.on(uri.c_str(), HTTP_GET, onRequest);
+}
+
 void NetWeb::registerModulePage(const String& uri) {
     // Death of to many lambdas, no place has all info and objects get destroyed
     //  1. Bind the onRequest to NetWeb
@@ -74,12 +78,8 @@ void NetWeb::registerModulePage(const String& uri) {
     server.on(uri.c_str(), HTTP_GET, std::bind(&NetWeb::serveModulePage, this, std::placeholders::_1));
 }
 
-void NetWeb::registerFillerPage(const String& uri, ArRequestHandlerFunction onRequest) {
-    server.on(uri.c_str(), HTTP_GET, onRequest);
-}
-
-std::function<void(const String& message)> NetWeb::registerWebSocket(const String& uri, WebSocketCtrlCallback ctrlCallback) {
-    return linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWeb::webSocketEventCallbackWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
+void NetWeb::registerWebSocket(const String& uri, WebSocketCtrlCallback ctrlCallback) {
+    linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWeb::webSocketEventCallbackWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
 };
 
 
@@ -159,6 +159,10 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
+
+void NetWeb::webSocketPrint(const String& topic, const String& message) {
+    linkedListWebSocket.webSocketPrint(topic, message);
+}
 
 void NetWeb::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback) {
     switch (type) {

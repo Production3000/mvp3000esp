@@ -37,7 +37,7 @@ void Logger::setup() {
     }
 
     if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
-        webSocketPrint = mvp.net.netWeb.registerWebSocket("/wslog");
+        mvp.net.netWeb.registerWebSocket(webSocketUri);
     }
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
@@ -61,7 +61,7 @@ void Logger::write(CfgLogger::Level targetLevel, const String& message) {
     }
     // Network output, omit DATA level
     if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
-        webSocketPrint(_helper.millisToTime(millis()) + " " + message);
+        mvp.net.netWeb.webSocketPrint(webSocketUri, _helper.millisToTime(millis()) + " " + message);
     }
 }
 

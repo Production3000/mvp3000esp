@@ -28,3 +28,7 @@ void _Xmodule::setupFramework(){
 void _Xmodule::mqttPrint(const String& topic, const String& payload){
     mvp.net.netMqtt.print(topic, payload);
 }
+
+void _Xmodule::webSocketPrint(const String& topic, const String& payload){
+    mvp.net.netWeb.webSocketPrint(topic, payload);
+}

@@ -205,8 +205,15 @@ struct LinkedList3001 : virtual LinkedList3000<T> {
         return nullptr;
     }
 
-    T* findByContentData(T* dataStruct) {
-        Node* node = findByContent(dataStruct);
+    /**
+     * @brief Find the node by the given content data structure.
+     *
+     * @param dataStruct The data structure to be searched for.
+     * @return The data structure if found, otherwise nullptr.
+     */
+    T* findByContentData(T dataStruct) {
+        // Input is NOT a pointer, never call new T in a function call as it will not be deleted
+        Node* node = findByContent(&dataStruct);
         return (node == nullptr) ? nullptr : node->dataStruct;
     }
 
@@ -220,8 +227,9 @@ struct LinkedList3001 : virtual LinkedList3000<T> {
      *
      * @param dataStruct The data structure to be removed.
      */
-    void removeByContent(T* dataStruct) {
-        this->_removeNode(this->findByContent(dataStruct));
+    void removeByContent(T dataStruct) {
+        // Input is NOT a pointer, never call new T in a function call as it will not be deleted
+        this->_removeNode(this->findByContent(&dataStruct));
     }
 };
 

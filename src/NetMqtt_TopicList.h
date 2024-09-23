@@ -41,12 +41,13 @@ struct DataStructMqttTopic {
 };
 
 struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
+    
     void appendUnique(const String& baseTopic, MqttCtrlCallback ctrlCallback = nullptr) {
         this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback));
     }
 
     DataStructMqttTopic* findTopic(const String& baseTopic) {
-        return this->findByContentData(new DataStructMqttTopic(baseTopic));
+        return this->findByContentData(DataStructMqttTopic(baseTopic));
     }
 
     boolean compareContent(DataStructMqttTopic* dataStruct, DataStructMqttTopic* other) override {

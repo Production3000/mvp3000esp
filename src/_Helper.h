@@ -141,11 +141,10 @@ struct _Helper {
      * @param str String to convert
      * @param defaultValue Default value if conversion fails
      */
-    constexpr uint32_t hashStringDjb2(const char* str, uint8_t h = 0) {
+    uint32_t hashStringDjb2(const char* str, uint8_t h = 0) {
         // constexpr needs to be defined in .h file
         return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
     };
-    // uint32_t hashStringDjb2(String str) { return hashStringDjb2(str.c_str()); };
 
 
 

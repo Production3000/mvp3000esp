@@ -55,11 +55,10 @@ struct LinkedListWebActions : LinkedList3101<DataStructWebAction> {
     }
 
     DataStructWebAction* findAction(const String& argKey) {
-        return this->findByContentData(new DataStructWebAction(argKey));
+        return this->findByContentData(DataStructWebAction(argKey));
     }
 
     boolean compareContent(DataStructWebAction* dataStruct, DataStructWebAction* other) override {
-        // return dataStruct->actionKey.equals(other->actionKey);
         return dataStruct->actionKeyHash == other->actionKeyHash;
     }
 };
@@ -126,24 +125,29 @@ struct DataStructWebSocket {
         });
         server->addHandler(websocket);
     }
-
-    std::function<void(const String& message)> getTextAll() { return std::bind(&DataStructWebSocket::textAll, this, std::placeholders::_1); }
-    void textAll(const String& message) {
-        websocket->textAll(message);
-    }
 };
 
 struct LinkedListWebSocket : LinkedList3111<DataStructWebSocket> {
 
-    std::function<void(const String& message)> appendUnique(const String& uri, WebSocketCtrlCallback ctrlCallback, WebSocketEventCallbackWrapper webSocketEventCallbackWrapper, AsyncWebServer* server) {
+    void appendUnique(const String& uri, WebSocketCtrlCallback ctrlCallback, WebSocketEventCallbackWrapper webSocketEventCallbackWrapper, AsyncWebServer* server) {
         this->appendUniqueDataStruct(new DataStructWebSocket(uri, ctrlCallback, webSocketEventCallbackWrapper, server));
-        return this->tail->dataStruct->getTextAll();
+        // return this->tail->dataStruct->getTextAll();
+    }
+
+    DataStructWebSocket* findTopic(const String& uri) {
+        return this->findByContentData(DataStructWebSocket(uri));
     }
 
     boolean compareContent(DataStructWebSocket* dataStruct, DataStructWebSocket* other) override {
         return dataStruct->uriHash == other->uriHash;
     }
-};
 
+    void webSocketPrint(const String& topic, const String& message) {
+        // Find the topic in the list
+        DataStructWebSocket* mqttTopic = findTopic(topic);
+        if (mqttTopic != nullptr)
+            mqttTopic->websocket->textAll(message);
+    }
+};
 
 #endif

@@ -79,7 +79,7 @@ Timestamped log of domain visits. Duplicate entries are moved to the tail (newes
         }
 
         // void remove(const String& domain) {
-        //     this->removeByContent(new DataStructLog(domain));
+        //     this->removeByContent(DataStructLog(domain));
         // }
     };
 
