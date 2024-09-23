@@ -40,9 +40,9 @@ void NetCom::setup() {
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetCom);
 
-    // This can be completely disabled to allow external UDP uses, in a Xmodule or other.
+    // This can be completely disabled to save memory and to allow external UDP uses, in a Xmodule or other.
     if (cfgNetCom.isHardDisabled) {
-        webPage = webPageOff; // Set web to display disabled html
+        webPage = webPageHardDisabled; // Set web to display disabled html
         return;
     }
 

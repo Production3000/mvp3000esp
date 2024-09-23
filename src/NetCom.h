@@ -34,8 +34,6 @@ limitations under the License.
 
 struct CfgNetCom : public CfgJsonInterface {
 
-    // Fixed settings
-
     boolean isHardDisabled = false;
 
     // Modifiable settings saved to SPIFF
@@ -67,7 +65,7 @@ class NetCom {
         enum class UDP_STATE: uint8_t {
             ENABLED = 0,
             DISABLEDX = 1,
-            HARDDISABLED = 1
+            HARDDISABLED = 2
         };
         UDP_STATE udpState;
 
@@ -98,7 +96,7 @@ class NetCom {
 <li>Discovery: %53% </li> </ul>
 )===";
 
-        const char* webPageOff = "<h3>UDP Auto-Discovery (DISABLED)</h3>";
+        const char* webPageHardDisabled = "<h3>UDP Auto-Discovery (DISABLED)</h3>";
 
 };
 
