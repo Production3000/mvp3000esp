@@ -67,7 +67,7 @@ class NetCom {
             DISABLEDX = 1,
             HARDDISABLED = 2
         };
-        UDP_STATE udpState;
+        UDP_STATE udpState = UDP_STATE::ENABLED;
 
         CfgNetCom cfgNetCom;
         void saveCfgCallback();

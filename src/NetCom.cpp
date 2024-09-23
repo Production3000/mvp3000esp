@@ -37,27 +37,29 @@ extern _Helper _helper;
 
 
 void NetCom::setup() {
-    // Read config and register with web interface
-    mvp.config.readCfg(cfgNetCom);
-
-    // This can be completely disabled to save memory and to allow external UDP uses, in a Xmodule or other.
+    // This can be completely to allow external UDP uses, in a Xmodule or other.
+    // Also saves minimal memory, maybe 200 kB
     if (cfgNetCom.isHardDisabled) {
+        udpState = UDP_STATE::HARDDISABLED;
         webPage = webPageHardDisabled; // Set web to display disabled html
         return;
     }
 
-    // Start UDP for discovery and reverse-discovery of this ESP device
-    if (cfgNetCom.udpEnabled)
-        udp.begin(cfgNetCom.discoveryPort);
-
-    // Register config
+    // Read config and register
+    mvp.config.readCfg(cfgNetCom);
     mvp.net.netWeb.registerCfg(&cfgNetCom, std::bind(&NetCom::saveCfgCallback, this));
 
+    // Start UDP for discovery and reverse-discovery of this ESP device
+    if (cfgNetCom.udpEnabled) {
+        udpState = UDP_STATE::ENABLED;
+        udp.begin(cfgNetCom.discoveryPort);
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
+    }
 };
 
 void NetCom::loop() {
     // Called from net.loop() only if wifi is up and in client mode, check again
-    if (cfgNetCom.isHardDisabled || !cfgNetCom.udpEnabled || !mvp.net.connectedAsClient())
+    if ((udpState != UDP_STATE::ENABLED) || !mvp.net.connectedAsClient())
         return;
 
     // Check for UDP packet, in that case handle it
@@ -125,7 +127,7 @@ void NetCom::udpReceiveMessage() {
 void NetCom::udpSendMessage(const char* message, IPAddress remoteIp) {
     // Test this using netcat: nc -ul [laptopIP] [port]
 
-    if (!cfgNetCom.udpEnabled) {
+    if (udpState != UDP_STATE::ENABLED) {
         mvp.logger.write(CfgLogger::Level::WARNING, "UDP disabled.");
         return;
     }
@@ -146,9 +148,19 @@ void NetCom::udpSendMessage(const char* message, IPAddress remoteIp) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetCom::saveCfgCallback() {
+    // HARDDISABLED: nothing to do (actually this request comes from an outdated HTML form)
+    if (udpState == UDP_STATE::HARDDISABLED)
+        return;
+
+    // Stop in any case, restart only if enabled
     udp.stop();
     if (cfgNetCom.udpEnabled) {
+        udpState = UDP_STATE::ENABLED;
         udp.begin(cfgNetCom.discoveryPort);
+        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
+    } else {
+        udpState = UDP_STATE::DISABLEDX;
+        mvp.logger.write(CfgLogger::Level::INFO, "Discovery stopped");
     }
 }
 
