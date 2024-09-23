@@ -24,3 +24,7 @@ void _Xmodule::setupFramework(){
     if (uri.length() > 2)
         mvp.net.netWeb.registerModulePage(uri);
 }
+
+void _Xmodule::mqttPrint(const String& topic, const String& payload){
+    mvp.net.netMqtt.print(topic, payload);
+}

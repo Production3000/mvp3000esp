@@ -32,31 +32,17 @@ struct DataStructMqttTopic {
     String baseTopic;
     MqttCtrlCallback ctrlCallback;
 
-    MqttClient* mqttClient;
-
     DataStructMqttTopic() { }
     DataStructMqttTopic(const String& baseTopic) : baseTopic(baseTopic) { } // For comparision only
-    DataStructMqttTopic(const String& baseTopic, MqttCtrlCallback ctrlCallback, MqttClient* mqttClient) : baseTopic(baseTopic), ctrlCallback(ctrlCallback), mqttClient(mqttClient) { }
+    DataStructMqttTopic(const String& baseTopic, MqttCtrlCallback ctrlCallback) : baseTopic(baseTopic), ctrlCallback(ctrlCallback) { }
 
     String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_ctrl";  return str; }
     String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_data";  return str; }
-
-    std::function<void(const String& message)> getMqttPrint() { return std::bind(&DataStructMqttTopic::mqttPrint, this, std::placeholders::_1); }
-    void mqttPrint(const String& message) {
-        // Only write if connected
-        if (mqttClient->connected()) {
-            mqttClient->beginMessage(getDataTopic());
-            mqttClient->print(message);
-            mqttClient->endMessage();
-        }
-    }
 };
 
 struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
-
-    std::function<void(const String& message)> appendUnique(MqttClient* mqttClient, const String& baseTopic, MqttCtrlCallback ctrlCallback = nullptr) {
-        this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback, mqttClient));
-        return this->tail->dataStruct->getMqttPrint();
+    void appendUnique(const String& baseTopic, MqttCtrlCallback ctrlCallback = nullptr) {
+        this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback));
     }
 
     DataStructMqttTopic* findTopic(const String& baseTopic) {
@@ -66,8 +52,6 @@ struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
     boolean compareContent(DataStructMqttTopic* dataStruct, DataStructMqttTopic* other) override {
         return dataStruct->baseTopic.equals(other->baseTopic);
     }
-
-    boolean hasTopics() { return this->getSize(); }
 };
 
 #endif

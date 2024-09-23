@@ -37,6 +37,8 @@ limitations under the License.
 
 struct CfgNetMqtt : public CfgJsonInterface {
 
+    boolean isHardDisabled = false;
+
     // Modifiable settings saved to SPIFF
 
     boolean mqttEnabled = true;
@@ -65,18 +67,26 @@ class NetMqtt {
          * @param ctrlCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.
          */
-        std::function<void(const String& message)> registerMqtt(const String& topic, MqttCtrlCallback ctrlCallback = nullptr);
+        void registerMqtt(const String& topic, MqttCtrlCallback ctrlCallback = nullptr);
+
+        void hardDisable() { cfgNetMqtt.isHardDisabled = true; }
+        boolean isHardDisabled() { return cfgNetMqtt.isHardDisabled; }
+
+        void print(const String& topic, const String& message);
 
     private:
 
         enum class MQTT_STATE: uint8_t {
-            CONNECTED = 0,
-            CONNECTING = 1,
-            DISCONNECTED = 2,
+            HARDDISABLED = 0,
+            NOTOPIC = 1,
+            DISABLEDX = 2,
             NOBROKER = 3,
-            DISABLEDX = 4
+            FAILED = 4,
+            DISCONNECTED = 5,
+            CONNECTING = 6,
+            CONNECTED = 7,
         };
-        MQTT_STATE mqttState;
+        MQTT_STATE mqttState = MQTT_STATE::NOTOPIC;
 
         LinkedListMqttTopic linkedListMqttTopic; // Adaptive size
 
@@ -92,12 +102,14 @@ class NetMqtt {
         uint8_t connectTries = 3;
         LimitTimer connectTimer = LimitTimer(connectInterval, connectTries);
 
+        void lateSetup();
+        boolean lateSetupDone = false;
+
         void saveCfgCallback();
-        void setMqttState();
 
         void connectMqtt();
 
-        void handleMessage(int messageSize);
+        void handleMessage();
 
     public:
 
@@ -111,6 +123,9 @@ class NetMqtt {
 <li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%65%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
 <li>Topics: <ul> %70% </ul> </li> </ul>
 )===";
+
+        const char* webPageHardDisabled = "<h3>MQTT Communication (DISABLED)</h3>";
+        const char* webPageNoTopics = "<h3>MQTT Communication (No Topics)</h3>";
 
 };
 

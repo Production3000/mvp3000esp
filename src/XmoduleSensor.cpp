@@ -79,7 +79,7 @@ void XmoduleSensor::setup() {
 
     // Register websocket and MQTT
     webSocketPrint = mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
-    mqttPrint = mvp.net.netMqtt.registerMqtt("sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
+    mvp.net.netMqtt.registerMqtt("sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
 }
 
 void XmoduleSensor::loop() {
@@ -99,7 +99,7 @@ void XmoduleSensor::loop() {
         // Output data to serial, websocket, MQTT
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
         webSocketPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
-        mqttPrint(dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        mqttPrint("sensor", dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
    }
 }
 

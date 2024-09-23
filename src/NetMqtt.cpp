@@ -35,15 +35,43 @@ extern MVP3000 mvp;
 
 
 void NetMqtt::setup() {
+    Serial.println("setup");
+    // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
+    if (cfgNetMqtt.isHardDisabled) {
+        mqttState = MQTT_STATE::HARDDISABLED;
+        webPage = webPageHardDisabled; // Set web to display disabled html
+        return;
+    }
+}
+
+void NetMqtt::lateSetup() {
+    // Needs to be done after all modules are added, otherwise the linkedListMqttTopic is possibly empty
+    lateSetupDone = true;
+
+    Serial.println("entered lateSetup");
+
+    // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
+    if (linkedListMqttTopic.getSize() == 0) {
+        Serial.println("No MQTT topics defined, MQTT disabled.");
+        mqttState = MQTT_STATE::NOTOPIC;
+        webPage = webPageNoTopics; // Set web to display disabled html
+        return;
+    }
+
+    Serial.println("PASSED  with topics");
+
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetMqtt);
-    setMqttState();
+    mvp.net.netWeb.registerCfg(&cfgNetMqtt, std::bind(&NetMqtt::saveCfgCallback, this));
+    
+    if (cfgNetMqtt.mqttEnabled) {
+        mqttState = MQTT_STATE::NOBROKER;
+    } else {
+        mqttState = MQTT_STATE::DISABLEDX;
+    }
 
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
-
-    // Register config
-    mvp.net.netWeb.registerCfg(&cfgNetMqtt, std::bind(&NetMqtt::saveCfgCallback, this));
 
     // For some reason the mqttClient.onMessage() method does not work when the function is in a class ...
     // mqttClient.onMessage(handleMessage); // argument of type "void (NetMqtt::*)(int messageSize)" is incompatible with parameter of type "void (*)(int)"
@@ -53,34 +81,51 @@ void NetMqtt::setup() {
 };
 
 void NetMqtt::loop() {
-    // Called from net.loop() only if wifi is up and in client mode, check again
-
-    // Check if there is actually something to do
-    if ((mqttState == MQTT_STATE::DISABLEDX) || !linkedListMqttTopic.hasTopics() || !mvp.net.connectedAsClient())
+    // HARDDISABLED: nothing to do
+    if (mqttState == MQTT_STATE::HARDDISABLED)
         return;
 
-    int messageSize;
+    if (!lateSetupDone)
+        lateSetup();
+
+    // NOTOPIC, DISABLEDX, FAILED or no connected: nothing to do now
+    if ((mqttState == MQTT_STATE::NOTOPIC) || (mqttState == MQTT_STATE::DISABLEDX) || (mqttState == MQTT_STATE::FAILED) || !mvp.net.connectedAsClient())
+        return;
+
+    // NOBROKER, CONNECTING, CONNECTED, DISCONNECTED: handle MQTT
     switch (mqttState) {
 
         case MQTT_STATE::NOBROKER:
-            // No MQTT external or local broker known, query auto-discovery
-            localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
-            setMqttState();
+            // Forced broker is always tried first
+            if  (cfgNetMqtt.mqttForcedBroker.length() > 0) {
+                mqttState = MQTT_STATE::CONNECTING;
+            } else {
+                localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
+                if (localBrokerIp != INADDR_NONE) {
+                    mqttState = MQTT_STATE::CONNECTING;
+                }
+            }
             break;
 
         case MQTT_STATE::CONNECTING:
             // Check state change
             if (mqttClient.connected()) {
                 mqttState = MQTT_STATE::CONNECTED;
-                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics.");
-                // Subscribe to all topics with a callback
+                mvp.logger.write(CfgLogger::Level::INFO, "Connected to MQTT broker, subscribing to topics."); // IP?
+                // Subscribe to all topics with a control callback
                 linkedListMqttTopic.loop([&](DataStructMqttTopic* current, uint16_t i) {
-                    // Only subscribe if there is a callback
                     if (current->ctrlCallback != nullptr) {
                         mqttClient.subscribe(current->getCtrlTopic());
                     }
                 });
                 break;
+            }
+
+            // Reconnect tries are gone, give up
+            if (connectTimer.plusOne()) {
+                mqttState = MQTT_STATE::FAILED;
+                mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker failed, giving up.");
+                return;
             }
 
             // Try to connect to broker
@@ -90,54 +135,54 @@ void NetMqtt::loop() {
         case MQTT_STATE::CONNECTED:
             // Check state change
             if (!mqttClient.connected()) {
-                setMqttState();
+                mqttState = MQTT_STATE::DISCONNECTED;
                 mvp.logger.write(CfgLogger::Level::WARNING, "Disconnected from MQTT broker.");
                 break;
             }
 
-            // When mqttClient.onMessage() would work we could just call mqttClient.poll(); here
-            // Check if a MQTT message was received, parseMessage calls poll() itself
-            messageSize = mqttClient.parseMessage();
-            if (messageSize > 0) {
-                handleMessage(messageSize);
-            }
+            // Check if a MQTT message was received, if mqttClient.onMessage() would work just call mqttClient.poll() here
+            handleMessage();
             break;
 
-        case MQTT_STATE::DISCONNECTED: // We have given up, do we want this ??? sometimes yes, external server is down maybe? but then again, if we want MQTT we should never give up?
+        case MQTT_STATE::DISCONNECTED:
+            // Go back to NOBROKER, forced and local could have just changed
+            mqttState = MQTT_STATE::NOBROKER;
+            connectTimer.restart();
             break;
 
-        case MQTT_STATE::DISABLEDX:
-            break;
     }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-std::function<void(const String &message)> NetMqtt::registerMqtt(const String& baseTopic, MqttCtrlCallback ctrlCallback) {
-    // Store topic and callback for registering with MQTT, return the function to write to this topic
-    return linkedListMqttTopic.appendUnique(&mqttClient, baseTopic, ctrlCallback);
+void NetMqtt::registerMqtt(const String& baseTopic, MqttCtrlCallback ctrlCallback) {
+    if (mqttState == MQTT_STATE::HARDDISABLED) // mqttState needs to be set in order to not default to HARDDISABLED
+        return;
+    linkedListMqttTopic.appendUnique(baseTopic, ctrlCallback);
 }
 
-void NetMqtt::setMqttState() {
-    if (!cfgNetMqtt.mqttEnabled) {
-        mqttState = MQTT_STATE::DISABLEDX;
-    } else if ((cfgNetMqtt.mqttForcedBroker.length() > 0) || (localBrokerIp != INADDR_NONE)) {
-        mqttState = MQTT_STATE::CONNECTING;
-    } else {
-        mqttState = MQTT_STATE::NOBROKER;
-    }
-    connectTimer.restart();
+void NetMqtt::print(const String& topic, const String& message) {
+    // Only write if connected
+    if (mqttState != MQTT_STATE::CONNECTED)
+        return;
+
+    // Find the topic in the list
+    DataStructMqttTopic *mqttTopic = linkedListMqttTopic.findTopic(topic);
+    if (mqttTopic == nullptr)
+        return;
+
+    mqttClient.beginMessage(mqttTopic->getDataTopic());
+    mqttClient.print(message);
+    mqttClient.endMessage();
+
+    delete mqttTopic;                                                                                               // TODO this needs to be done for every LL search everywhere !!! not sure why, it is a pointer ???
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////
 
 void NetMqtt::connectMqtt() {
-    // Reconnect tries are gone, remove local broker as it did not work
-    if (connectTimer.plusOne()) {
-        mqttState = MQTT_STATE::DISCONNECTED;
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to MQTT broker failed, giving up.");
-        return;
-    }
-
     // Only work to do if interval not yet started or just finished
     if (!connectTimer.justFinished())
         return;
@@ -147,19 +192,19 @@ void NetMqtt::connectMqtt() {
         mqttClient.connect(cfgNetMqtt.mqttForcedBroker.c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to remote MQTT broker: %s", cfgNetMqtt.mqttForcedBroker.c_str());
     } else {
-        // Update local broker, it could have changed since it was originally queried
-        localBrokerIp = mvp.net.netCom.checkSkill("MQTT");
-        if (localBrokerIp == INADDR_NONE) {
-            setMqttState();
-            return;
-        }
+        // Connect to local broker
         // The library is broken for ESP8266, it does not accept the IPAddress-type when a port is given
         mqttClient.connect(localBrokerIp.toString().c_str(), cfgNetMqtt.mqttPort);
         mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connecting to local MQTT broker: %s", localBrokerIp.toString().c_str());
     }
 }
 
-void NetMqtt::handleMessage(int messageSize) {
+void NetMqtt::handleMessage() {
+    int messageSize;                                                            // TODO returns size_t actually
+    messageSize = mqttClient.parseMessage();
+    if (messageSize == 0) 
+        return;
+
     // Check if message is a duplicate, requires QoS 1+ and needs to be implemented by the sender and the receiver
     if (mqttClient.messageDup())
         return; // Handling of duplicates not implemented
@@ -186,9 +231,24 @@ void NetMqtt::handleMessage(int messageSize) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void NetMqtt::saveCfgCallback() {
-    mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting MQTT client.");
-    setMqttState();
-    mqttClient.stop();
+    // HARDDISABLED, NOTOPIC: nothing to do
+    // all other: check if enabled and either jus stop or go to NOBROKER
+
+    if ((mqttState == MQTT_STATE::HARDDISABLED ) || (mqttState == MQTT_STATE::NOTOPIC))
+        return;
+
+    if (cfgNetMqtt.mqttEnabled) {
+        // Setting changed or set to enabled -> stop and restart
+        mqttClient.stop();
+        mqttState = MQTT_STATE::NOBROKER;
+        connectTimer.restart();
+        mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting.");
+    } else {
+        // Setting changed or set to disabled -> stop, set to disabled again even if not needed
+        mqttClient.stop();
+        mqttState = MQTT_STATE::DISABLEDX;
+        mvp.logger.write(CfgLogger::Level::INFO, "MQTT stopped.");
+    }
 }
 
 String NetMqtt::templateProcessor(uint8_t var) {

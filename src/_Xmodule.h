@@ -46,6 +46,8 @@ class _Xmodule {
         // We cannot override the values, but we can override this function.
         virtual const char* getWebPage() { return ""; };
 
+        void mqttPrint(const String& topic, const String& payload);                                                                                   //TODO also websocket, pass in constructor, etc
+
     private:
         void setupFramework();
 

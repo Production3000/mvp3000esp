@@ -57,6 +57,11 @@ class MVP3000 {
         void logAnsiColor(boolean enable) { logger.ansiColor(enable); };
 
         /**
+         * @brief Completely disable the MQTT discovery service. Saves 
+         */
+        void mqttHardDisable() { net.netMqtt.hardDisable(); };
+
+        /**
          * @brief Completely disable the UDP discovery service.
          */
         void udpHardDisable() { net.netCom.hardDisable(); };
