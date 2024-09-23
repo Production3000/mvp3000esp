@@ -45,7 +45,7 @@ function connect() {
     }
     websocket.onmessage = function(e) {
         if (keepData)
-            document.getElementById('data').innerHTML = e.data + "\n" + document.getElementById('data').innerHTML;
+            document.getElementById('data').value = e.data + "\n" + document.getElementById('data').value;
         else
             document.getElementById('data').innerHTML = e.data;
     }
