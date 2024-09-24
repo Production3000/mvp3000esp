@@ -40,7 +40,7 @@ class MVP3000 {
          *
          * @param XmoduleSensor Pointer to the module to add.
          */
-        void addXmodule(_Xmodule *XmoduleSensor);
+        void addXmodule(_Xmodule *xmodule);
 
 
         /**
@@ -60,19 +60,21 @@ class MVP3000 {
         /** 
          * @brief Set the log level to 'info', 'data', 'control', 'user', 'warning' or 'error'.
          */
-        void logLevel(CfgLogger::Level level) { logger.setLevel(level); };
+        void logSetLevel(CfgLogger::Level level) { logger.setLevel(level); };
 
         /**
-         * @brief Set the log target to 'console', 'network' or 'both'.
+         * @brief Enable/disable the output targets of logging message.
+         *
+         * @param target The target to change.
+         * @param enable True to enable, false to disable.
          */
-        void logTarget(CfgLogger::Target target) { logger.setTarget(target); };
+        void logSetTarget(CfgLogger::OutputTarget target, boolean enable) { logger.setTarget(target, enable); };
 
-
+        
         /**
-         * @brief Completely disable the MQTT discovery service. Saves 
+         * @brief Completely disable the MQTT discovery service.
          */
         void mqttHardDisable() { net.netMqtt.hardDisable(); };
-
 
         /**
          * @brief Completely disable the UDP discovery service.

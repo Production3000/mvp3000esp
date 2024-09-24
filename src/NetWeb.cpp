@@ -25,7 +25,7 @@ extern _Helper _helper;
 
 void NetWeb::setup() {
     // IMPORTANT: /foo is matched by foo, foo/, /foo/bar, /foo?bar - but not by /foobar
-    // Module folders are registered seperately
+    // Module folders are registered separately
     server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
         request->sendChunked("text/html", std::bind(&NetWeb::responseFillerHome, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3), std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1) );
     });
@@ -207,7 +207,7 @@ void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
 }
 
 void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
-    // Finde the matching module
+    // Find the matching module
     requestedModuleIndex = -1;
     for (uint8_t i = 0; i < mvp.moduleCount; i++) {
         if (mvp.xmodules[i]->uri.equals(request->url())) {

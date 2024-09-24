@@ -29,11 +29,11 @@ void setup() {
 }
 
 void loop() {
-    // Do the work
-    mvp.loop();
-
     // Do not flood the log output
     if (timer.justFinished()) {
         mvp.log("This text will be printed every 2s to serial in purple and to the log-websocket.");
     }
+
+    // Do the work
+    mvp.loop();
 }

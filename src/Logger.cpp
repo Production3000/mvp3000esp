@@ -24,11 +24,11 @@ extern _Helper _helper;
 
 
 void Logger::setup() {
-    // Do nothing if turned off
-    if (cfgLogger.target == CfgLogger::Target::NONE)
+    // Logging is turned off, nothing to do
+    if (cfgLogger.outputSettings.isNone())
         return;
 
-    if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::CONSOLE)) {
         Serial.begin(115200);
         while (!Serial)
             yield();
@@ -36,7 +36,7 @@ void Logger::setup() {
         Serial.println("");
     }
 
-    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET)) {
         mvp.net.netWeb.registerWebSocket(webSocketUri);
     }
 
@@ -57,7 +57,7 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
     }
 
     // Logging is turned off, nothing to do
-    if (cfgLogger.target == CfgLogger::Target::NONE)
+    if (cfgLogger.outputSettings.isNone())
         return;
 
     // Message level is below logging level, nothing to do
@@ -65,14 +65,12 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
         return;
 
     // Output to serial and websocket
-    if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::CONSOLE))
         printSerial(messageLevel, message);
-    }
-    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
-        // Omit data, this should be a separate websocket
-        if (messageLevel != CfgLogger::Level::DATA) 
+        
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
+        if (messageLevel != CfgLogger::Level::DATA) // Omit data, this should be done using a separate websocket within the module
             printNetwork(messageLevel, message);
-    }
 }
 
 void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatString, ...) {

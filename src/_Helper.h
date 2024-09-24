@@ -148,6 +148,32 @@ struct _Helper {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * @brief Struct to store multiple boolean settings as bits in one variable. Initializes with all true.
+     */
+    struct MultiBoolSettings {
+        uint8_t settings = 255;
+
+        MultiBoolSettings() { } // Default initializes all to true
+        MultiBoolSettings(uint8_t settings) : settings(settings) { } // Initialize with custom settings, 0 is all false
+
+        void change(uint8_t bit, boolean value) {
+            if (value)
+                set(bit);
+            else
+                unset(bit);
+        }
+
+        void set(uint8_t bit) { settings |= 1 << bit; }
+        void unset(uint8_t bit) { settings &= ~(1 << bit); }
+
+        boolean isNone() { return settings == 0; }
+        boolean isSet(uint8_t bit) { return settings & (1 << bit); }
+    };
+
+
+///////////////////////////////////////////////////////////////////////////////////
+
 #if defined(ESP8266)
     EspClass* ESPX;
 #elif defined(ESP32)

@@ -5,6 +5,8 @@
 	* [Check String for Integer / Decimal](#CheckStringforIntegerDecimal)
 	* [Millis to Time String](#MillistoTimeString)
 	* [Formatted String](#FormattedString)
+	* [String Hashing](#StringHashing)
+	* [Multi-Bool Settings](#Multi-BoolSettings)
 * [LimitTimer](#LimitTimer)
 	* [Constructor and Functions](#ConstructorandFunctions)
 	* [Usage Example](#UsageExample)
@@ -31,7 +33,7 @@ The Helper class provides a range of functions for checking and converting strin
 
 ### <a name='CheckStringforIntegerDecimal'></a>Check String for Integer / Decimal 
 
- *  `bool isValidDecimal(const String& str)`: Check if a string is a valid decimal number.
+ *  `bool isValidDecimal(const String& str)`: Check if a string is a valid decimal number (including integer).
  *  `bool isValidInteger(const String& str)`: Check if a string is a valid integer number.
 
 ### <a name='MillistoTimeString'></a>Millis to Time String 
@@ -42,9 +44,14 @@ The Helper class provides a range of functions for checking and converting strin
 
  *  `String printFormatted(const String& formatString, ...)`: Return a formatted string, [see](https://en.cppreference.com/w/cpp/io/c/vfprintf).
 
-### <a name='FormattedString'></a>String Hashing
+### <a name='StringHashing'></a>String Hashing
 
  *  `constexpr uint32_t hashStringDjb2(const char* str)`: Quasi-unique hash of a string for easy comparing/storage (Dan Bernstein).
+
+### <a name='Multi-BoolSettings'></a>Multi-Bool Settings
+
+ *  `struct MultiBoolSettings`: Struct to store multiple boolean settings as bits in one variable. Initializes with all true.
+
 
 ## <a name='LimitTimer'></a>LimitTimer
 

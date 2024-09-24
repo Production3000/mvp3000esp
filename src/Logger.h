@@ -27,6 +27,8 @@ limitations under the License.
 struct CfgLogger {
     // Not loaded from SPIFFS, as that is not started yet.
 
+    boolean ansiColor = true;
+
     enum Level: uint8_t {
         INFO = 0,
         DATA = 1,
@@ -35,17 +37,16 @@ struct CfgLogger {
         WARNING = 4,
         ERROR = 5,
     };
+    
+    Level level = Level::INFO;
 
-    enum Target: uint8_t {
-        NONE = 0,
-        CONSOLE = 1,
-        NETWORK = 2,
-        BOTH = 3,
+    // Output to console and/or websocket, default is both
+    enum OutputTarget: uint8_t {
+        CONSOLE = 0,
+        WEBSOCKET = 1,
     };
 
-    boolean ansiColor = true;
-    Level level = Level::INFO;
-    Target target = Target::BOTH;
+    _Helper::MultiBoolSettings outputSettings;
 };
 
 
@@ -78,7 +79,10 @@ class Logger {
 
         void disableAnsiColor() { cfgLogger.ansiColor = false; }
         void setLevel(CfgLogger::Level level) { cfgLogger.level = level; }
-        void setTarget(CfgLogger::Target target) { cfgLogger.target = target; }
+
+        void setTarget(CfgLogger::OutputTarget target, boolean enable) {
+            cfgLogger.outputSettings.change(target, enable);
+        };
 
     private:
 

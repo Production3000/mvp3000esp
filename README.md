@@ -34,7 +34,7 @@ More code will be shared in the future, mainly regarding data evaluation and set
 * [Custom Implementation](#CustomImplementation)
 	* [General Functionality](#GeneralFunctionality)
 	* [No Blocking delay() on ESP](#NoBlockingdelayonESP)
-	* [Methods and Options](#MethodsandOptions)
+	* [Public Methods and Options](#PublicMethodsandOptions)
 	* [Helper Functions and Classes](#HelperFunctionsandClasses)
 	* [Custom Modules](#CustomModules)
 	* [Contribute](#Contribute)
@@ -128,7 +128,7 @@ Typical use cases are available as modules to be loaded into the framework. Firs
 
 ### <a name='GeneralFunctionality'></a>General Functionality
 
-Any implementation of the framework typically follows the sequence: user code -> module code -> framework code, as in the following.
+A bare-bone implementation of the framework looks as follows. Without a [module](#modules) its usefulness is limited.
 
     #include <MVP3000.h>
     extern MVP3000 mvp;
@@ -142,7 +142,6 @@ Any implementation of the framework typically follows the sequence: user code ->
     }
 
     void loop() {
-        // IMPORTANT: do not use blocking delay() on ESP
         // User code
         // Xmodule code
         mvp.loop();
@@ -154,41 +153,27 @@ On ESP it is important to not use the blocking delay or while anywhere in the lo
 
 Alternatives are to use the built-in [LimitTimer](/doc/helper_func.md#limittimer) or a custom method to wait using a timestamp variable.
 
-### <a name='MethodsandOptions'></a>Public Methods and Options
+### <a name='PublicMethodsandOptions'></a>Public Methods and Options
 
-##### Methods
-
-Registering a module with the framework.
-
-    XmoduleExample xmoduleExample;
-    mvp.addXmodule(&xmoduleExample);
-
-The logger can be used to send message to serial and the websocket.
-
-    mvp.log("This text will be timestamped and then printed to serial in purple and to the log-websocket.");
-
-
-##### Options
+##### Selected Methods and Options
 
 The serial output is color-coded using ANSI escape sequences. If your serial monitor does not support this feature (Arduino IDE) it can be turned off to omit the symbols. 
 
     mvp.logDisableAnsiColor();
 
-The logging level can be set. This does not affect the list of recent log entries displayed in the web interface.
+The logger can be used to send message to serial and the websocket.
 
-    mvp.logLevel(CfgLogger::Level::INFO);
+    mvp.log("This text will be timestamped and logged to serial, to websocket, and to the web interface.");
 
-The logging output destinations, serial and websocket, can be changed. This does not affect the list of recent log entries displayed in the web interface.
+##### Public Methods and Options
 
-    mvp.logTarget(CfgLogger::Target::BOTH);
-
-The framework uses UDP auto-discovery to find local servers. In case this interferes with custom UDP code it can be completely turned off.
-
-    mvp.udpHardDisable();
-
-MQTT can be completely disabled.
-
-    mvp.mqttHardDisable();
+ *  `void addXmodule(_Xmodule *xmodule)`: Add a Xmodule to the MVP3000 system.
+ *  `void log(const String& message)`: Log a message at 'user' level.
+ *  `void logDisableAnsiColor()`: Disable ANSI codes in serial output.
+ *  `void logSetLevel(CfgLogger::Level level)`: Change the logging level. This does not affect the list of recent log entries displayed in the web interface.
+ *  `void logSetTarget(CfgLogger::OutputTarget target, boolean enable)`: Enable/disable the output target to serial and/or websocket for log messages. This does not affect the list of recent log entries displayed in the web interface.
+ *  `void mqttHardDisable()`: Completely disable the MQTT discovery service.
+ *  `void udpHardDisable()`: Completely disable the UDP discovery service in case it interferes with custom UDP code.
 
 ### <a name='HelperFunctionsandClasses'></a>Helper Functions and Classes
 
