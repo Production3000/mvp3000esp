@@ -66,7 +66,7 @@ void XmoduleSensor::setup() {
 
     // Register CSV: latest, raw, scaled
     mvp.net.netWeb.registerFillerPage(uri + "data", [&](AsyncWebServerRequest *request) {
-        request->sendChunked("text/html", std::bind(&XmoduleSensor::csvLastestResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        request->sendChunked("text/html", std::bind(&XmoduleSensor::csvLatestResponseFiller, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     });
 
     mvp.net.netWeb.registerFillerPage(uri + "datasraw", [&](AsyncWebServerRequest *request) {
@@ -95,11 +95,13 @@ void XmoduleSensor::loop() {
 
     // Act only if remaining is 0: was never started or just finished
     if (sensorTimer.justFinished()) {
-
         // Output data to serial, websocket, MQTT
-        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
-        mvp.net.netWeb.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
-        mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::CONSOLE))
+            mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
+        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::WEBSOCKET))
+            mvp.net.netWeb.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::MQTT))
+            mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
    }
 }
 
@@ -238,7 +240,7 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
     }
 }
 
-size_t XmoduleSensor::csvLastestResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+size_t XmoduleSensor::csvLatestResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
     return csvExtendedResponseFiller(buffer, maxLen, index, true, [&]() -> String {
         return dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing);
     });

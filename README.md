@@ -134,6 +134,7 @@ A bare-bone implementation of the framework looks as follows. Without a [module]
     extern MVP3000 mvp;
 
     // Xmodule code
+    // User code
 
     void setup() {
         // User code

@@ -30,6 +30,14 @@ limitations under the License.
 
 struct CfgXmoduleSensor : CfgJsonInterface {
 
+    enum OutputTarget: uint8_t {
+        CONSOLE = 0,
+        WEBSOCKET = 1,
+        MQTT = 2,
+    };
+
+    _Helper::MultiBoolSettings outputTargets;
+
     // Modifiable settings saved to SPIFF
 
     uint16_t sampleAveraging = 10; // Before values are reported
@@ -105,7 +113,7 @@ class XmoduleSensor : public _Xmodule {
         };
 
         /**
-         * @brief Add a new sample array to the sensor module.
+         * @brief Add new data to the sensor module.
          *
          * @tparam T The numeric type of the sample, typically int or float.
          * @param newSample The new sample array to add.
@@ -151,10 +159,20 @@ class XmoduleSensor : public _Xmodule {
         };
 
         /**
-         * @brief Set the data collection to adaptive mode, growing depending on available memory.
+         * @brief Set data collection to adaptive mode, growing depending on available memory.
          */
         void setDataCollectionAdaptive() {
             dataCollection.linkedListSensor.enableAdaptiveGrowing();
+        };
+
+        /**
+         * @brief Enable/disable the output target to serial, WebSocket and/or MQTT for sensor data.
+         *
+         * @param target The target to change.
+         * @param enable True to enable, false to disable.
+         */
+        void setDataOutputTarget(CfgXmoduleSensor::OutputTarget target, boolean enable) {
+            cfgXmoduleSensor.outputTargets.change(target, enable);
         };
 
 
@@ -173,6 +191,8 @@ class XmoduleSensor : public _Xmodule {
         void setTare();
 
     private:
+
+
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
@@ -195,7 +215,7 @@ class XmoduleSensor : public _Xmodule {
         uint8_t webPageProcessorIndex;
 
         size_t csvRawResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
-        size_t csvLastestResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
+        size_t csvLatestResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
         size_t csvScaledResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
         size_t csvExtendedResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
 

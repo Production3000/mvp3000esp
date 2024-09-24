@@ -14,7 +14,7 @@ The sensor module receives sensor data from the user script and processes it. It
 	* [Real Sensor Breakouts](#RealSensorBreakouts)
 * [Custom Implementation](#CustomImplementation)
 	* [General Functionality](#GeneralFunctionality)
-	* [Options](#Options)
+	* [Methods and Options](#MethodsandOptions)
 * [Data Handling Details](#DataHandlingDetails)
 	* [Sample-to-Int Exponent](#Sample-to-IntExponent)
 	* [Offset, Scaling, Tare](#OffsetScalingTare)
@@ -75,37 +75,48 @@ Please also see the documentation of the framework regarding [custom implementat
 
 ### <a name='GeneralFunctionality'></a>General Functionality
 
-The sensor module is initialized with the number of values the sensor measures simultaneously/within one cycle. Also a local data array is created, of a numeric type such as `int32_t *` or `float_t *`.
+The sensor module is initialized with the number of values the sensor measures simultaneously/within one cycle. Also a local data array is created, of a numeric type such as `int32_t *` or `float_t *`. The sensor object is passed to the framework during setup, before initializing the framework.
 
+Read-out of the sensor needs to be done by the user in custom code. The data, if available, is passed to the framework as an array 
+
+    #include <MVP3000.h>
+    extern MVP3000 mvp;
+
+    // Xmodule code
     const uint8_t valueCount = 2;
     XmoduleSensor xmoduleSensor(valueCount);
 
     int32_t data[valueCount];
 
-The sensor object is passed to the framework during setup. This needs to be done before initializing the framework.
+    // User code
 
-    mvp.addXmodule(&xmoduleSensor);
+    void setup() {
+        // User code
 
-Read-out of the sensor needs to be done by the user in custom code. The data, if available, is passed to the framework as an array 
+        // Xmodule code
+        mvp.addXmodule(&xmoduleSensor);
 
-    xmoduleSensor.addSample(data);
+        mvp.setup();
+    }
 
-### <a name='Options'></a>Methods and Options
+    void loop() {
+        // User code, data = 
 
-A description of the sensor and its measurement units can be added for identification. Some special characters need to be encoded:
+        // Xmodule code
+        xmoduleSensor.addSample(data);
+
+        mvp.loop();
+    }
+
+
+### <a name='MethodsandOptions'></a>Methods and Options
+
+##### Selected Methods and Options
+
+A description of the sensor and its measurement units can be added for identification. Please refer to the [examples](#example-scripts) for use cases. Some special characters need to be encoded:
 
  *  Degree ° is non-ASCII, use `&deg;`
  *  The percent symbol % is used as deliminator by the string parser, use `&percnt;`  
-
-For a typical sensor:
-
-    xmoduleSensor.setSensorInfo("EnvSensor", "Environmental data: temperature, rel. humidity", {"T", "rH"}, {"&deg;C", "&percnt;"});
-
-For a matrix sensor the column count is set to allow formatted CSV output: -> a1,a2,a3,a4;b1,b2,b3,b4;c1,c2,c3,c4; -> a1, [...].
-
-    const uint8_t columns = 4;
-    xmoduleSensor.setSensorInfo("Matrix", "A pixel array with the size 4x3.", "pixel", "counts", columns);
-
 
 Shift the decimal point of the sample values by the given exponent, see section [Sample-to-Int Exponent](#sample-to-int-exponent) for more information. Also see the [BME680](/examples/sensor/bme680/bme680.ino) example for a use case.
 
@@ -115,6 +126,19 @@ Shift the decimal point of the sample values by the given exponent, see section 
 The number of measurements stored is limited by the available memory on the ESP. Data collection can be set to adaptive mode, growing depending on available memory. If turned on this feature could lead to stability issues, depending on other operations and memory fragmentation.
 
     xmoduleSensor.setDataCollectionAdaptive();
+
+##### Constructor
+
+ *  `XmoduleSensor(uint8_t valueCount)`: Construct a new Sensor Module object.
+
+##### Public Methods and Options
+
+ *  `void addSample(T *newSample)`: Add new data to the sensor module.
+ *  `void setSampleToIntExponent(int8_t *sampleToIntExponent)`: Shift the decimal point of the sample values by the given exponent.
+ *  `void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits)`: Set the sensor information.
+ *  `void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount)`: Set the sensor information for a matrix sensor.
+ *  `void setDataCollectionAdaptive()`: Set data collection to adaptive mode, growing depending on available memory.
+ *  `void setDataOutputTarget(CfgXmoduleSensor::OutputTarget target, boolean enable)`: Enable/disable the output target to serial, WebSocket and/or MQTT for sensor data.
 
 
 ## <a name='DataHandlingDetails'></a>Data Handling Details
