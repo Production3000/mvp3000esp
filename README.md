@@ -34,7 +34,7 @@ More code will be shared in the future, mainly regarding data evaluation and set
 * [Custom Implementation](#CustomImplementation)
 	* [General Functionality](#GeneralFunctionality)
 	* [No Blocking delay() on ESP](#NoBlockingdelayonESP)
-	* [Options](#Options)
+	* [Methods and Options](#MethodsandOptions)
 	* [Helper Functions and Classes](#HelperFunctionsandClasses)
 	* [Custom Modules](#CustomModules)
 	* [Contribute](#Contribute)
@@ -106,7 +106,7 @@ The main page prints basic system information and the most recent log entries. I
 
 #### <a name='MQTTCommunication'></a>MQTT Communication
 
-For more information on MQTT and developer resources visit [Eclipse Paho](https://projects.eclipse.org/projects/iot.paho/developer).
+For more information on MQTT and developer resources also visit [Eclipse Paho](https://projects.eclipse.org/projects/iot.paho/developer).
 
  *  Enable/disable.
  *  Connection status.
@@ -154,19 +154,41 @@ On ESP it is important to not use the blocking delay or while anywhere in the lo
 
 Alternatives are to use the built-in [LimitTimer](/doc/helper_func.md#limittimer) or a custom method to wait using a timestamp variable.
 
-### <a name='Options'></a>Options
+### <a name='MethodsandOptions'></a>Public Methods and Options
+
+##### Methods
+
+Registering a module with the framework.
+
+    XmoduleExample xmoduleExample;
+    mvp.addXmodule(&xmoduleExample);
 
 The logger can be used to send message to serial and the websocket.
 
     mvp.log("This text will be timestamped and then printed to serial in purple and to the log-websocket.");
 
+
+##### Options
+
 The serial output is color-coded using ANSI escape sequences. If your serial monitor does not support this feature (Arduino IDE) it can be turned off to omit the symbols. 
 
-    mvp.logAnsiColor(false);
+    mvp.logDisableAnsiColor();
 
-The framework uses UDP auto-discovery to find local servers. In case this interferes with your code it can be completely turned off.
+The logging level can be set. This does not affect the list of recent log entries displayed in the web interface.
+
+    mvp.logLevel(CfgLogger::Level::INFO);
+
+The logging output destinations, serial and websocket, can be changed. This does not affect the list of recent log entries displayed in the web interface.
+
+    mvp.logTarget(CfgLogger::Target::BOTH);
+
+The framework uses UDP auto-discovery to find local servers. In case this interferes with custom UDP code it can be completely turned off.
 
     mvp.udpHardDisable();
+
+MQTT can be completely disabled.
+
+    mvp.mqttHardDisable();
 
 ### <a name='HelperFunctionsandClasses'></a>Helper Functions and Classes
 

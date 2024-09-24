@@ -90,7 +90,7 @@ Read-out of the sensor needs to be done by the user in custom code. The data, if
 
     xmoduleSensor.addSample(data);
 
-### <a name='Options'></a>Options
+### <a name='Options'></a>Methods and Options
 
 A description of the sensor and its measurement units can be added for identification. Some special characters need to be encoded:
 

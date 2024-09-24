@@ -116,18 +116,17 @@ struct _Helper {
     String printFormatted(const String& formatString, ...) {
         va_list args;
         va_start(args, formatString);
+        return printFormatted(formatString, args);
+        // NOTE: va_end(args) is called in printFormatted to allow direct return
+    }
 
-        // Get length incl termination
+    String printFormatted(const String& formatString, va_list& args) {
+        // Get length including termination
         uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
         char buffer[len];
         vsnprintf(buffer, len, formatString.c_str(), args);
-
         va_end(args);
         return buffer;
-
-        // There is no try-catch in ESP, workaround
-        // __try { }
-        // __catch(int e) { } // This just continues quietly
     }
 
 
@@ -145,7 +144,6 @@ struct _Helper {
         // constexpr needs to be defined in .h file
         return !str[h] ? 5381 : (hashStringDjb2(str, h+1) * 33) ^ str[h];
     };
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////

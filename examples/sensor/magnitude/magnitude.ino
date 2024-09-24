@@ -43,9 +43,6 @@ void setup() {
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);
 
-    // Arduino IDE: Disable color-coded output to serial console
-    // mvp.logAnsiColor(false);
-
     // Start mvp framework
     mvp.setup();
 }

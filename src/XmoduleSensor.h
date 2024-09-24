@@ -98,6 +98,8 @@ class XmoduleSensor : public _Xmodule {
          * @param valueCount The number of values simultaneously coming from the sensor(s).
          */
         XmoduleSensor(uint8_t valueCount) : _Xmodule("Sensor Module", "/sensor") {
+            uriWebSocket = "/wssensor";
+            mqttTopic = "sensor";
             cfgXmoduleSensor.initValueCount(valueCount);
             dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
@@ -174,8 +176,8 @@ class XmoduleSensor : public _Xmodule {
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
-        String uriWebSocket = "/wssensor";
-        String mqttTopic = "sensor";
+        String uriWebSocket;
+        String mqttTopic;
 
         LimitTimer sensorTimer = LimitTimer(0);
 

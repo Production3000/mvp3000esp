@@ -46,103 +46,69 @@ void Logger::setup() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void Logger::write(CfgLogger::Level targetLevel, const String& message) {
+void Logger::write(CfgLogger::Level messageLevel, const String& message) {
+    // Remember if any error was reported
+    if (messageLevel == CfgLogger::Level::ERROR)
+        errorReported = true;
+
     // Store errors, warnings, usermsg for web display
-    if (targetLevel <= CfgLogger::Level::CONTROL) {
-        linkedListLog.append(targetLevel, message);
+    if ((messageLevel == CfgLogger::Level::ERROR || messageLevel == CfgLogger::Level::WARNING || messageLevel == CfgLogger::Level::USER)) {
+        linkedListLog.append(messageLevel, message);
     }
 
-    if (!checkTargetLevel(targetLevel))
+    // Logging is turned off, nothing to do
+    if (cfgLogger.target == CfgLogger::Target::NONE)
         return;
 
-    // Serial output
+    // Message level is below logging level, nothing to do
+    if (messageLevel < cfgLogger.level)
+        return;
+
+    // Output to serial and websocket
     if ((cfgLogger.target == CfgLogger::Target::CONSOLE) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
-        serialPrint(targetLevel, message);
+        printSerial(messageLevel, message);
     }
-    // Network output, omit DATA level
-    if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
-        mvp.net.netWeb.printWebSocket(webSocketUri, _helper.millisToTime(millis()) + " " + message);
+    if ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) {
+        // Omit data, this should be a separate websocket
+        if (messageLevel != CfgLogger::Level::DATA) 
+            printNetwork(messageLevel, message);
     }
 }
 
-void Logger::writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount) {
-    String message;
-    for (uint8_t i = 0; i < dataLength; i++) {
-        // Outputs:
-        //  1,2,3,4,5,6; for rowLength is max uint8/255
-        //  1,2,3;4,5,6; for rowLength is 3
-        // matrixColumnCount defaults to 255, which is the maximum length of a single row
-        message += dataArray[i];
-        message += ((i == dataLength - 1) || ((i + 1) % (matrixColumnCount) == 0) ) ? ";" : "," ;
-    }
-    write(targetLevel, message.c_str());
-}
-
-void Logger::writeFormatted(CfgLogger::Level targetLevel, const String& formatString, ...) {
-    // This is a copy from Helper::printFormatted - for some reason we cannot call it from here
+void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatString, ...) {
+    // writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hello World", 42);
     va_list args;
     va_start(args, formatString);
-
-    // Get length incl termination
-    uint8_t len = vsnprintf(nullptr, 0, formatString.c_str(), args) + 1;
-    char message[len];
-    vsnprintf(message, sizeof(message), formatString.c_str(), args);
-
-    va_end(args);
-
-    write(targetLevel, message);
+    write(messageLevel, _helper.printFormatted(formatString, args));
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////
 
-bool Logger::checkTargetLevel(CfgLogger::Level targetLevel) {
-    // Remember if any error was reported
-    if (targetLevel == CfgLogger::Level::ERROR)
-        errorReported = true;
-
-    // Logging is turned off, nothing to do
-    if (cfgLogger.target == CfgLogger::Target::NONE)
-        return false;
-
-    // Message level is below logging level, nothing to do
-    if (targetLevel > cfgLogger.level)
-        return false;
-
-    return true;
+void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) {
+    // Prefix with timestamp, add type literal
+    String str = _helper.millisToTime(millis());
+    str += levelToString(messageLevel);
+    str += message;
+    mvp.net.netWeb.printWebSocket(webSocketUri, str);
 }
 
-void Logger::serialPrint(CfgLogger::Level targetLevel, const String& message) {
-    // Prefix with timestamp
+void Logger::printSerial(CfgLogger::Level messageLevel, const String &message) {
+    // Prefix with timestamp, add type literal
     Serial.print(_helper.millisToTime(millis()));
-
-    // Add type literal
-    switch (targetLevel) {
-        case CfgLogger::Level::CONTROL: Serial.print(" [C] "); break;
-        case CfgLogger::Level::DATA: Serial.print(" [D] "); break;
-        case CfgLogger::Level::ERROR : Serial.print(" [E] "); break;
-        case CfgLogger::Level::INFO: Serial.print(" [I] "); break;
-        case CfgLogger::Level::USER: Serial.print(" [U] "); break;
-        case CfgLogger::Level::WARNING: Serial.print(" [W] "); break;
-    }
+    Serial.print(levelToString(messageLevel));
 
     // Color-code messages for easier readability
-    // ANSI escape sequences \033[XXXm where XXX is a series of semicolon-separated parameters.
-    //  red     31
-    //  green   32
-    //  yellow  33
-    //  blue    34
-    //  magenta 95
-    //  bold    1
-    // To reset: \033[0m
+    // ANSI escape sequences \033[XXXXm where XXXX is a series of semicolon-separated parameters.
+    // To reset formatting afterwards: \033[0m
     if (cfgLogger.ansiColor) {
-        switch (targetLevel) {
-            case CfgLogger::Level::CONTROL: Serial.print("\033[32m"); break; // green
-            case CfgLogger::Level::DATA: Serial.print("\033[34m"); break; // blue
-            case CfgLogger::Level::ERROR : Serial.print("\033[31;1m"); break; // red, bold
+        switch (messageLevel) {
             case CfgLogger::Level::INFO: Serial.print("\033[90m"); break; // bright black, also called dark grey by commoners
+            case CfgLogger::Level::DATA: Serial.print("\033[34m"); break; // blue
+            case CfgLogger::Level::CONTROL: Serial.print("\033[32m"); break; // green
             case CfgLogger::Level::USER: Serial.print("\033[95;1m"); break; // magenta, bold
             case CfgLogger::Level::WARNING: Serial.print("\033[33m"); break; // yellow
+            case CfgLogger::Level::ERROR : Serial.print("\033[31;1m"); break; // red, bold
         }
     }
 
@@ -156,6 +122,17 @@ void Logger::serialPrint(CfgLogger::Level targetLevel, const String& message) {
     Serial.println("");
 }
 
+String Logger::levelToString(CfgLogger::Level messageLevel) {
+    switch (messageLevel) {
+        case CfgLogger::Level::INFO: return " [I] ";
+        case CfgLogger::Level::DATA: return " [D] ";
+        case CfgLogger::Level::CONTROL: return " [C] ";
+        case CfgLogger::Level::USER: return " [U] ";
+        case CfgLogger::Level::WARNING: return " [W] ";
+        case CfgLogger::Level::ERROR : return " [E] ";
+        default: return ""; // Does not happen
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -169,7 +146,7 @@ String Logger::templateProcessor(uint8_t var) {
             // Set initial bookmark
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
-            return _helper.printFormatted("<li>%s %s %s</li>", _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(), linkedListLog.getBookmarkData()->message.c_str(), (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
+            return _helper.printFormatted("<li>%s %s %s %s</li>", _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(), levelToString(linkedListLog.getBookmarkData()->level), linkedListLog.getBookmarkData()->message.c_str(), (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
 
         default:
             return "";

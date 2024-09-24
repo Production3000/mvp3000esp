@@ -28,12 +28,12 @@ struct CfgLogger {
     // Not loaded from SPIFFS, as that is not started yet.
 
     enum Level: uint8_t {
-        ERROR = 0,
-        WARNING = 1,
-        USER = 2,
-        CONTROL = 3,
-        DATA = 4,
-        INFO = 5,
+        INFO = 0,
+        DATA = 1,
+        CONTROL = 2,
+        USER = 3,
+        WARNING = 4,
+        ERROR = 5,
     };
 
     enum Target: uint8_t {
@@ -43,11 +43,9 @@ struct CfgLogger {
         BOTH = 3,
     };
 
-    Level level = Level::INFO;
-
-    Target target = Target::BOTH;
-
     boolean ansiColor = true;
+    Level level = Level::INFO;
+    Target target = Target::BOTH;
 };
 
 
@@ -55,36 +53,47 @@ class Logger {
 
     public:
 
+        /**
+         * @brief Write a message to the log
+         * 
+         * @param messageLevel The level of the message
+         * @param message The message
+         */
+        void write(CfgLogger::Level messageLevel, const String& message);
+
+        /**
+         * @brief Write a formatted message to the log
+         * 
+         * @param messageLevel The level of the message
+         * @param formatString The format string
+         * @param ... The arguments to the format string
+         */
+        void writeFormatted(CfgLogger::Level messageLevel, const String& formatString, ...);
+
+    public:
+
         boolean errorReported = false;
 
         void setup();
 
-        void ansiColor(boolean enable) { cfgLogger.ansiColor = enable; }
-
-        // Plain test output
-        void write(CfgLogger::Level targetLevel, const String& message);
-        // Output data in CSV format
-        void writeCSV(CfgLogger::Level targetLevel, int32_t* dataArray, uint8_t dataLength, uint8_t matrixColumnCount);
-        // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hello World", 42);
-        void writeFormatted(CfgLogger::Level targetLevel, const String& formatString, ...);
-
-        void setLogLevelWarning() { cfgLogger.level = CfgLogger::Level::WARNING; }
-        void setLogLevelError() { cfgLogger.level = CfgLogger::Level::ERROR; }
+        void disableAnsiColor() { cfgLogger.ansiColor = false; }
+        void setLevel(CfgLogger::Level level) { cfgLogger.level = level; }
+        void setTarget(CfgLogger::Target target) { cfgLogger.target = target; }
 
     private:
 
         struct DataStructLog {
             uint64_t time;
-            uint8_t level;
+            CfgLogger::Level level;
             String message;
 
-            DataStructLog(const String& message, uint8_t level) : time(millis()), message(message), level(level) { }
+            DataStructLog(const String& message, CfgLogger::Level level) : time(millis()), message(message), level(level) { }
         };
 
         struct LinkedListLog : LinkedList3010<DataStructLog> {
             LinkedListLog(uint16_t size) : LinkedList3010<DataStructLog>(size) { }
 
-            void append(uint8_t level, const String& message) {
+            void append(CfgLogger::Level level, const String& message) {
                 // Create data structure and add node to linked list
                 // Using this-> as base class/function is templated
                 this->appendDataStruct(new DataStructLog(message, level));
@@ -98,9 +107,10 @@ class Logger {
         uint8_t logStoreLength = 5;
         LinkedListLog linkedListLog = LinkedListLog(logStoreLength);
 
-        bool checkTargetLevel(CfgLogger::Level targetLevel);
+        void printNetwork(CfgLogger::Level messageLevel, const String& message);
+        void printSerial(CfgLogger::Level messageLevel, const String& message);
 
-        void serialPrint(CfgLogger::Level targetLevel, const String& message);
+        String levelToString(CfgLogger::Level messageLevel);
 
     public:
 

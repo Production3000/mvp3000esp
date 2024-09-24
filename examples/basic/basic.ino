@@ -22,7 +22,7 @@ LimitTimer timer(2000);
 
 void setup() {
     // Arduino IDE: Disable color-coded output to serial console
-    // mvp.logAnsiColor(false);
+    // mvp.logDisableAnsiColor();
 
     // Start mvp framework
     mvp.setup();
@@ -34,6 +34,6 @@ void loop() {
 
     // Do not flood the log output
     if (timer.justFinished()) {
-        mvp.log("Every 2 s this text will be printed to serial in purple and to the log-websocket.");
+        mvp.log("This text will be printed every 2s to serial in purple and to the log-websocket.");
     }
 }

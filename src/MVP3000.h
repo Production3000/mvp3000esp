@@ -42,6 +42,7 @@ class MVP3000 {
          */
         void addXmodule(_Xmodule *XmoduleSensor);
 
+
         /**
          * @brief Log a message at 'user' level.
          *
@@ -54,23 +55,30 @@ class MVP3000 {
          *
          * @param enable True to enable, false to disable.
          */
-        void logAnsiColor(boolean enable) { logger.ansiColor(enable); };
+        void logDisableAnsiColor() { logger.disableAnsiColor(); };
+
+        /** 
+         * @brief Set the log level to 'info', 'data', 'control', 'user', 'warning' or 'error'.
+         */
+        void logLevel(CfgLogger::Level level) { logger.setLevel(level); };
+
+        /**
+         * @brief Set the log target to 'console', 'network' or 'both'.
+         */
+        void logTarget(CfgLogger::Target target) { logger.setTarget(target); };
+
 
         /**
          * @brief Completely disable the MQTT discovery service. Saves 
          */
         void mqttHardDisable() { net.netMqtt.hardDisable(); };
 
+
         /**
          * @brief Completely disable the UDP discovery service.
          */
         void udpHardDisable() { net.netCom.hardDisable(); };
 
-        /** 
-         * @brief Set the log level to 'warning' or 'error'.
-         */
-        void setLogLevelWarning() { logger.setLogLevelWarning(); };
-        void setLogLevelError() { logger.setLogLevelError(); };
 
     public:
 
