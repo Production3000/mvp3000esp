@@ -61,7 +61,7 @@ void Logger::write(CfgLogger::Level targetLevel, const String& message) {
     }
     // Network output, omit DATA level
     if ( ((cfgLogger.target == CfgLogger::Target::NETWORK) || (cfgLogger.target == CfgLogger::Target::BOTH)) && (targetLevel != CfgLogger::Level::DATA) ) {
-        mvp.net.netWeb.webSocketPrint(webSocketUri, _helper.millisToTime(millis()) + " " + message);
+        mvp.net.netWeb.printWebSocket(webSocketUri, _helper.millisToTime(millis()) + " " + message);
     }
 }
 

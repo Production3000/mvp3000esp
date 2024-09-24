@@ -157,8 +157,8 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::webSocketPrint(const String& topic, const String& message) {
-    linkedListWebSocket.webSocketPrint(topic, message);
+void NetWeb::printWebSocket(const String& topic, const String& message) {
+    linkedListWebSocket.printWebSocket(topic, message);
 }
 
 void NetWeb::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback) {

@@ -174,6 +174,9 @@ class XmoduleSensor : public _Xmodule {
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
+        String uriWebSocket = "/wssensor";
+        String mqttTopic = "sensor";
+
         LimitTimer sensorTimer = LimitTimer(0);
 
         // Offset and scaling

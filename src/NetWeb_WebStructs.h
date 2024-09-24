@@ -136,7 +136,7 @@ struct LinkedListWebSocket : LinkedList3111<DataStructWebSocket> {
         return dataStruct->uriHash == other->uriHash;
     }
 
-    void webSocketPrint(const String& topic, const String& message) {
+    void printWebSocket(const String& topic, const String& message) {
         // Find the topic in the list
         DataStructWebSocket* mqttTopic = findTopic(topic);
         if (mqttTopic != nullptr)

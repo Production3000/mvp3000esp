@@ -68,6 +68,9 @@ class Logger {
         // Formatted output: writeFormatted(CfgLogger::Level::INFO, "This is the string '%s' and the number %d", "Hello World", 42);
         void writeFormatted(CfgLogger::Level targetLevel, const String& formatString, ...);
 
+        void setLogLevelWarning() { cfgLogger.level = CfgLogger::Level::WARNING; }
+        void setLogLevelError() { cfgLogger.level = CfgLogger::Level::ERROR; }
+
     private:
 
         struct DataStructLog {
@@ -105,7 +108,7 @@ class Logger {
         const char* webPage = R"===(
 <h3>Log</h3> <ul>
 <li>Log websocket: ws://%2%/wslog </li>
-<li>Recent entries: <ul> %30% </ul> </li> </ul>
+<li>Recent log: <ul> %30% </ul> </li> </ul>
 )===";
 
 };

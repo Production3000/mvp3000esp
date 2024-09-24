@@ -78,8 +78,8 @@ void XmoduleSensor::setup() {
     });
 
     // Register websocket and MQTT
-    mvp.net.netWeb.registerWebSocket("/wssensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
-    mvp.net.netMqtt.registerMqtt("sensor", std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
+    mvp.net.netWeb.registerWebSocket(uriWebSocket, std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
+    mvp.net.netMqtt.registerMqtt(mqttTopic, std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
 }
 
 void XmoduleSensor::loop() {
@@ -98,8 +98,8 @@ void XmoduleSensor::loop() {
 
         // Output data to serial, websocket, MQTT
         mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
-        webSocketPrint("/wssensor", dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
-        mqttPrint("sensor", dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        mvp.net.netWeb.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
    }
 }
 

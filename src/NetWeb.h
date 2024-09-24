@@ -74,7 +74,7 @@ class NetWeb {
         void setup();
         void loop();
 
-        void webSocketPrint(const String& topic, const String& message);
+        void printWebSocket(const String& topic, const String& message);
 
     private:
 

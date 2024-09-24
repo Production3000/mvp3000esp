@@ -21,7 +21,6 @@ limitations under the License.
     <script src="websocket.js"></script>
     <script> // Action buttons
         window.addEventListener('load', () => {
-            keepData = false;
             document.getElementById('tare').addEventListener('click', () => { websocket.send('TARE'); } );
             document.getElementById('clear').addEventListener('click', () => { websocket.send('CLEAR'); } );
         });

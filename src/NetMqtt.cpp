@@ -156,7 +156,7 @@ void NetMqtt::registerMqtt(const String& baseTopic, MqttCtrlCallback ctrlCallbac
     linkedListMqttTopic.appendUnique(baseTopic, ctrlCallback);
 }
 
-void NetMqtt::print(const String& topic, const String& message) {
+void NetMqtt::printMqtt(const String& topic, const String& message) {
     // Only write if connected
     if (mqttState != MQTT_STATE::CONNECTED)
         return;

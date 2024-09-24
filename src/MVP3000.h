@@ -66,6 +66,12 @@ class MVP3000 {
          */
         void udpHardDisable() { net.netCom.hardDisable(); };
 
+        /** 
+         * @brief Set the log level to 'warning' or 'error'.
+         */
+        void setLogLevelWarning() { logger.setLogLevelWarning(); };
+        void setLogLevelError() { logger.setLogLevelError(); };
+
     public:
 
         enum class STATE_TYPE: uint8_t {

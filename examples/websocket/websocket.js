@@ -16,22 +16,16 @@ limitations under the License.
 
 var websocket;
 
-var keepData = true;
-
 window.addEventListener('load', () => {
     document.getElementById('connect').addEventListener('click', connect);
 } );
 
 function connect() {
     document.getElementById('coninfo').innerHTML = "Connecting ...";
+    writeData("");
 
     if (websocket)
         websocket.close();
-
-    if (keepData)
-        document.getElementById('data').value = "No data";
-    else
-        document.getElementById('data').innerHTML = "No data";
 
     let deviceIp = document.getElementById('deviceip').value;
     let wsfolder = document.getElementById('wsfolder').value;
@@ -49,13 +43,28 @@ function connect() {
         console.log('Connection closed');
     }
     websocket.onmessage = function(e) {
-        if (keepData)
-            document.getElementById('data').value = e.data + "\n" + document.getElementById('data').value;
-        else
+        // Check if node is span or textarea
+        // document.getElementById('data').tagName
+        if (document.getElementById('data').tagName == "SPAN") {
             document.getElementById('data').innerHTML = e.data;
+            return;
+        }
+
+        writeData(e.data);
     }
     websocket.onerror = function() {
         document.getElementById('coninfo').innerHTML = "Error";
         console.log('Connection error');
     };
+}
+
+function writeData(str) {
+    if (document.getElementById('data').tagName == "TEXTAREA") {
+        if (str.length == 0)
+            document.getElementById('data').value = str;
+        else
+            document.getElementById('data').value = str + "\n" + document.getElementById('data').value;
+    } else {
+        document.getElementById('data').innerHTML = str;
+    }
 }

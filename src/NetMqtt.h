@@ -72,7 +72,7 @@ class NetMqtt {
         void hardDisable() { cfgNetMqtt.isHardDisabled = true; }
         boolean isHardDisabled() { return cfgNetMqtt.isHardDisabled; }
 
-        void print(const String& topic, const String& message);
+        void printMqtt(const String& topic, const String& message);
 
     private:
 

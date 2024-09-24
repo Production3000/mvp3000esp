@@ -21,14 +21,6 @@ extern MVP3000 mvp;
 
 
 void _Xmodule::setupFramework(){
-    if (uri.length() > 2)
+    if (uri.length() > 1) // '/x'
         mvp.net.netWeb.registerModulePage(uri);
-}
-
-void _Xmodule::mqttPrint(const String& topic, const String& payload){
-    mvp.net.netMqtt.print(topic, payload);
-}
-
-void _Xmodule::webSocketPrint(const String& topic, const String& payload){
-    mvp.net.netWeb.webSocketPrint(topic, payload);
 }
