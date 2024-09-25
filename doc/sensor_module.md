@@ -123,9 +123,9 @@ Shift the decimal point of the sample values by the given exponent, see section 
     int8_t exponent[valueCount] = {-1, 2};
     xmoduleSensor.setSampleToIntExponent(exponent);
 
-The number of measurements stored is limited by the available memory on the ESP. Data collection can be set to adaptive mode, growing depending on available memory. If turned on this feature could lead to stability issues, depending on other operations and memory fragmentation.
+Disable data output serial. This does not affect general logging to serial. This can be very handy during development to avoid cluttering the serial console.
 
-    xmoduleSensor.setDataCollectionAdaptive();
+    xmoduleSensor.disableDataToSerial();
 
 ##### Constructor
 
@@ -134,11 +134,13 @@ The number of measurements stored is limited by the available memory on the ESP.
 ##### Public Methods and Options
 
  *  `void addSample(T *newSample)`: Add new data to the sensor module.
+ *  `void disableDataToSerial()`: Disable data output serial. This does not affect general logging to serial.
+ *  `void disableMqtt()`: Disable communication and data output via MQTT.
+ *  `void disableWebSocket()`: Disable communication and data output via WebSocket.
+ *  `void setDataCollectionAdaptive()`: Set data collection to adaptive mode, growing depending on available memory.
  *  `void setSampleToIntExponent(int8_t *sampleToIntExponent)`: Shift the decimal point of the sample values by the given exponent.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits)`: Set the sensor information.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount)`: Set the sensor information for a matrix sensor.
- *  `void setDataCollectionAdaptive()`: Set data collection to adaptive mode, growing depending on available memory.
- *  `void setDataOutputTarget(CfgXmoduleSensor::OutputTarget target, boolean enable)`: Enable/disable the output target to serial, WebSocket and/or MQTT for sensor data.
 
 
 ## <a name='DataHandlingDetails'></a>Data Handling Details

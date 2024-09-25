@@ -39,8 +39,6 @@ void setup() {
     // Set the sensor descriptions, matrix column count is used for CSV output: a1,a2,a3,a4;b1,b2,b3,b4;c1 ...
     xmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, columns);
 
-    xmoduleSensor.setDataOutputTarget(CfgXmoduleSensor::OutputTarget::CONSOLE, false);
-
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);
 

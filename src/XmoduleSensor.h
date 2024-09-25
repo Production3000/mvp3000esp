@@ -125,6 +125,32 @@ class XmoduleSensor : public _Xmodule {
         };
 
         /**
+         * @brief Disable data output serial. This does not affect general logging to serial.
+         */
+        void disableDataToSerial() { cfgXmoduleSensor.outputTargets.change(CfgXmoduleSensor::OutputTarget::CONSOLE, false); };
+
+        /**
+         * @brief Disable communication and data output via MQTT.
+         */
+        void disableMqtt() { cfgXmoduleSensor.outputTargets.change(CfgXmoduleSensor::OutputTarget::MQTT, false); };
+
+        /**
+         * @brief Disable communication and data output via WebSocket.
+         */
+        void disableWebSocket() { cfgXmoduleSensor.outputTargets.change(CfgXmoduleSensor::OutputTarget::WEBSOCKET, false); };
+
+        /**
+         * @brief Set data collection to adaptive mode, growing depending on available memory.
+         * 
+         * The number of measurements stored is limited by the available heap memory on the ESP. Data collection can be set
+         * to adaptive mode, growing depending on available memory. This feature could mask memory leaks in other parts of
+         * the program and thus lead to stability issues, particularly with fragmented memory.
+         */
+        void setDataCollectionAdaptive() {
+            dataCollection.linkedListSensor.enableAdaptiveGrowing();
+        };
+
+        /**
          * @brief Shift the decimal point of the sample values by the given exponent.
          *
          * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
@@ -157,24 +183,6 @@ class XmoduleSensor : public _Xmodule {
         void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount) {
             cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, matrixColumnCount);
         };
-
-        /**
-         * @brief Set data collection to adaptive mode, growing depending on available memory.
-         */
-        void setDataCollectionAdaptive() {
-            dataCollection.linkedListSensor.enableAdaptiveGrowing();
-        };
-
-        /**
-         * @brief Enable/disable the output target to serial, WebSocket and/or MQTT for sensor data.
-         *
-         * @param target The target to change.
-         * @param enable True to enable, false to disable.
-         */
-        void setDataOutputTarget(CfgXmoduleSensor::OutputTarget target, boolean enable) {
-            cfgXmoduleSensor.outputTargets.change(target, enable);
-        };
-
 
     public:
 
