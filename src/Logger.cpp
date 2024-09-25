@@ -141,7 +141,7 @@ String Logger::templateProcessor(uint8_t var) {
             // Set initial bookmark
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
-            return _helper.printFormatted("%s %s %s %s",
+            return _helper.printFormatted("%s%s%s %s",
                 _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),

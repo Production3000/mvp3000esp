@@ -157,10 +157,10 @@ void NetCom::saveCfgCallback() {
 
 String NetCom::templateProcessor(uint8_t var) {
     switch (var) {
+        case 51:
+            return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s (%s)", serverIp.toString().c_str(), serverSkills.c_str());
         case 52:
             return String(cfgNetCom.discoveryPort);
-        case 53:
-            return (serverIp == INADDR_NONE) ? "none" : _helper.printFormatted("%s: %s", serverIp.toString().c_str(), serverSkills.c_str());
 
         default:
             return "";

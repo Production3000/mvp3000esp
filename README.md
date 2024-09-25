@@ -27,9 +27,9 @@ More code will be shared in the future, mainly regarding data evaluation and set
 	* [First Steps](#FirstSteps)
 	* [LED Status Indication](#LEDStatusIndication)
 	* [Web Interface](#WebInterface)
-		* [Network](#Network)
-		* [UDP Discovery](#UDPDiscovery)
-		* [MQTT Communication](#MQTTCommunication)
+	* [WebSockets](#WebSockets)
+	* [MQTT Communication](#MQTTCommunication)
+	* [UDP Auto Discovery](#UDPAutoDiscovery)
 * [Modules](#Modules)
 * [Custom Implementation](#CustomImplementation)
 	* [General Functionality](#GeneralFunctionality)
@@ -90,29 +90,45 @@ The LED indicates the device status:
 
 ### <a name='WebInterface'></a>Web Interface
 
-The main page prints basic system information and the most recent log entries. It links to the configuration options, as described in the following, and also lists the loaded modules.
+The main page lists basic system information and settings and links to all loaded modules. It also lists 
 
-#### <a name='Network'></a>Network
+##### <a name='Network'></a>Network Settings
 
  *  Enter the network credentials of your local network in order to connect the ESP.
- *  Connect tries on boot before credentials are deemed wrong and an AP is opened. If the network was seen since restart but the connection was lost, the ESP will try to reconnect forever until restart.
- *  Force client mode on boot. WARNING, if the credentials are wrong, the device will be inaccessible via the network and thus require re-flashing! 
+ *  Connect tries on boot before credentials are deemed wrong and an aceess point is opened. If the network connection was lost, the ESP will try to reconnect forever until restart.
+ *  Force client mode on boot forever and do not fall back to opening an aceess point. \
+ **WARNING:** If the credentials are wrong, the device will become inaccessible via the network! It can only be reset by re-flashing it!
 
-#### <a name='UDPDiscovery'></a>UDP Discovery
+### <a name='WebSockets'></a>WebSockets
 
- *  Enable/disable. This is a soft-disable, see udpHardDisable below.
- *  Port to use. This needs to be in accordance with the server-side pendant.
- *  Discovered server, other ESP devices are not printed
+WebSockets are provided mainly for the modules. An example for [log output](/examples/websocket/websocket_log.html) is available.
 
-#### <a name='MQTTCommunication'></a>MQTT Communication
+### <a name='MQTTCommunication'></a>MQTT Communication
+
+MQTT is provided for the modules and not used by the framework itself. 
 
 For more information on MQTT and developer resources also visit [Eclipse Paho](https://projects.eclipse.org/projects/iot.paho/developer).
 
- *  Enable/disable.
+##### Web Interface
+
  *  Connection status.
  *  The external broker overrides any discoverd local broker.
  *  MQTT port.
  *  List of active (_data) and subscribed (_ctrl) topics.
+
+
+### <a name='UDPAutoDiscovery'></a>UDP Auto Discovery
+
+UDP Auto Discovery allows to easily search the local network for other devices and servers, for example a MQTT server. There is no need to know device or server IPs in advance. Example Python scripts for the [server](/examples/udpdiscovery/server.py) and for [discovery](/examples/udpdiscovery/discover.py) are available.
+
+One can also listen to UDP communication with netcat:
+
+    nc -ukl [port]
+
+##### Web Interface
+
+ *  Discovered server, other ESP devices are not printed
+ *  Port to use for discovery. This needs to be in accordance with the server-side pendant.
 
 
 ## <a name='Modules'></a>Modules

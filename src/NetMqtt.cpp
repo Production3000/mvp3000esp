@@ -235,14 +235,18 @@ String NetMqtt::templateProcessor(uint8_t var) {
     switch (var) {
         case 62:
             switch (mqttState) {
+                case MQTT_STATE::NOBROKER:
+                    return "no broker";
+                case MQTT_STATE::CONNECTING:
+                    return "connecting";
                 case MQTT_STATE::CONNECTED:
                     return "connected";
                 case MQTT_STATE::DISCONNECTED:
                     return "disconnected";
-                case MQTT_STATE::CONNECTING:
-                    return "connecting";
-                case MQTT_STATE::NOBROKER:
-                    return "no broker";
+                case MQTT_STATE::FAILED:
+                    return "failed";
+                default:
+                    return "?";
             }
         case 63:
             return (localBrokerIp != INADDR_NONE) ? localBrokerIp.toString() : "-";
