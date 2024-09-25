@@ -148,14 +148,16 @@ String MVP3000::templateProcessor(uint8_t var) {
         case 20: // Not so long, could be one string
             if (moduleCount == 0)
                 return "<li>None</li>";
-            webPageProcessorIndex = 0;
+            webPageProcessorCount = 0;
         case 21:
-            // Note the ++ at the end
-            if ((xmodules[webPageProcessorIndex]->uri).length() > 0) {
-                return _helper.printFormatted("<li><a href='%s'>%s</a></li> %s", xmodules[webPageProcessorIndex]->uri.c_str(), xmodules[webPageProcessorIndex]->description.c_str(), (webPageProcessorIndex++ < moduleCount - 1) ? "%21%" : "");
-            } else {
-                return _helper.printFormatted("<li>%s</li> %s", xmodules[webPageProcessorIndex]->description.c_str(), (webPageProcessorIndex++ < moduleCount - 1) ? "%21%" : "");
-            }
+            webPageProcessorCount++;
+            return _helper.printFormatted("<li>%s</li>%s",
+                ((xmodules[webPageProcessorCount - 1]->uri).length() > 0) ?
+                    _helper.printFormatted("<a href='%s'>%s</a>",
+                        xmodules[webPageProcessorCount - 1]->uri.c_str(),
+                        xmodules[webPageProcessorCount - 1]->description.c_str()).c_str() :
+                    xmodules[webPageProcessorCount - 1]->description.c_str(),
+                (webPageProcessorCount < moduleCount) ? "%21%" : "");
 
         default:
             return "";

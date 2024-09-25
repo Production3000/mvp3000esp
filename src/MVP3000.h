@@ -111,7 +111,7 @@ class MVP3000 {
         // Modules
         static const uint8_t MAX_MODULES = 5;  // Maximum number of modules allowed
         uint8_t moduleCount = 0;
-        _Xmodule *xmodules[MAX_MODULES];
+        _Xmodule* xmodules[MAX_MODULES];
 
     private:
 
@@ -129,7 +129,7 @@ class MVP3000 {
     public:
 
         String templateProcessor(uint8_t var);
-        uint8_t webPageProcessorIndex;
+        uint8_t webPageProcessorCount;
         const char* webPage = R"===(
 <h3>System</h3> <ul>
 <li>ID: %1%</li>

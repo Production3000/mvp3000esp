@@ -220,7 +220,7 @@ class XmoduleSensor : public _Xmodule {
         void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
 
         String webPageProcessor(uint8_t var);
-        uint8_t webPageProcessorIndex;
+        uint8_t webPageProcessorCount;
 
         size_t csvRawResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
         size_t csvLatestResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);

@@ -227,13 +227,19 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
         case 115:
             return String(cfgXmoduleSensor.dataValueCount);
 
-        case 120: // Split the long string into multiple rows                   // TODO why not using the bookmark in the linked list ???
-            webPageProcessorIndex = 0;
+        case 120: // Split the long string into multiple rows
+            webPageProcessorCount = 0;
         case 121:
+            webPageProcessorCount++;
             // Sensor details: type, unit, offset, scaling, float to int exponent - placeholder for next row
-            return _helper.printFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr> %s",
-                webPageProcessorIndex+1, cfgXmoduleSensor.sensorTypes[webPageProcessorIndex], cfgXmoduleSensor.sensorUnits[webPageProcessorIndex], dataCollection.processing.offset.values[webPageProcessorIndex], dataCollection.processing.scaling.values[webPageProcessorIndex], dataCollection.processing.sampleToIntExponent.values[webPageProcessorIndex],
-                (webPageProcessorIndex++ < cfgXmoduleSensor.dataValueCount - 1) ? "%121%" : "");
+            return _helper.printFormatted("<tr> <td>%d</td> <td>%s</td> <td>%s</td> <td>%d</td> <td>%.2f</td> <td>%d</td> </tr>%s",
+                webPageProcessorCount,
+                cfgXmoduleSensor.sensorTypes[webPageProcessorCount - 1],
+                cfgXmoduleSensor.sensorUnits[webPageProcessorCount - 1],
+                dataCollection.processing.offset.values[webPageProcessorCount - 1],
+                dataCollection.processing.scaling.values[webPageProcessorCount - 1],
+                dataCollection.processing.sampleToIntExponent.values[webPageProcessorCount - 1],
+                (webPageProcessorCount++ < cfgXmoduleSensor.dataValueCount) ? "%121%" : "");
 
         default:
             return "";
