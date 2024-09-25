@@ -39,8 +39,9 @@ void NetMqtt::setup() {
     if (cfgNetMqtt.isHardDisabled) {
         mqttState = MQTT_STATE::HARDDISABLED;
         webPage = webPageHardDisabled; // Set web to display disabled html
+    } else {
+        mqttState = MQTT_STATE::INIT;
     }
-    mqttState = MQTT_STATE::INIT;
 }
 
 void NetMqtt::lateSetup() {

@@ -24,10 +24,6 @@ extern _Helper _helper;
 
 
 void Logger::setup() {
-    // Logging is turned off, nothing to do
-    if (cfgLogger.outputSettings.isNone())
-        return;
-
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::CONSOLE)) {
         Serial.begin(115200);
         while (!Serial)
@@ -35,6 +31,9 @@ void Logger::setup() {
         Serial.println("");
         Serial.println("");
     }
+
+    if (!cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
+        webPage = webPageHardDisabled;
 
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
         mvp.net.netWeb.webSockets.registerWebSocket(webSocketUri);
@@ -62,7 +61,7 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::CONSOLE))
         printSerial(messageLevel, message);
 
-    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBPAGE))
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
         if (messageLevel != CfgLogger::Level::DATA) // Omit data
             linkedListLog.append(messageLevel, message);
         
@@ -137,19 +136,16 @@ String Logger::templateProcessor(uint8_t var) {
 
         case 30:
             if (linkedListLog.getSize() == 0) {
-                if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBPAGE))
-                    return "[No log entries]";
-                else
-                    return "[Disabled]";
+                return "[No log entries]";
             }
             // Set initial bookmark
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
-            return _helper.printFormatted("<li>%s %s %s</li>%s",
+            return _helper.printFormatted("%s %s %s %s",
                 _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),
-                (linkedListLog.moveBookmark(true)) ? "%31%" : ""); // Recursive call if there are more entries
+                (linkedListLog.moveBookmark(true)) ? "\n%31%" : ""); // Recursive call if there are more entries
 
         default:
             return "";

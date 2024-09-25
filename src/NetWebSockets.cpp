@@ -20,11 +20,6 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-void NetWebSockets::setup() {
-    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
-        webPage = webPageHardDisabled;
-}
-
 void NetWebSockets::printWebSocket(const String& uri, const String& message) {
     if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
         return;

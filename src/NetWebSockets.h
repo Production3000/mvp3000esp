@@ -50,11 +50,15 @@ class NetWebSockets {
     public:
 
         NetWebSockets(AsyncWebServer& server) : server(server) { }
+        ~NetWebSockets() { }
 
-        void setup();
-        void loop() {};
+        // void setup() { };
+        // void loop() {};
 
-        void hardDisable() { webSocketState = WEBSOCKET_STATE::HARDDISABLED; }
+        void hardDisable() {
+            webSocketState = WEBSOCKET_STATE::HARDDISABLED;
+            webPage = webPageHardDisabled; 
+        }
 
     private:
 
@@ -114,11 +118,10 @@ class NetWebSockets {
 
         String templateProcessor(uint8_t var);
         const char* webPage = R"===(
-<h3>WebSockets</h3> <ul> 
-<li> <ul> %80% </ul> </li> </ul>
+<h3>WebSockets</h3> <ul> %80% </ul>
 )===";
 
-        const char* webPageHardDisabled = "<h3>WebSocket (DISABLED)</h3>";
+        const char* webPageHardDisabled = "<h3>WebSockets (DISABLED)</h3>";
 };
 
 #endif

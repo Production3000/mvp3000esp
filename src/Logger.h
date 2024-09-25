@@ -40,10 +40,10 @@ struct CfgLogger {
     };
     Level level = Level::INFO;
 
-    // Output to console and/or websocket, default is CONSOLE and WEBPAGE
+    // Output to console and/or websocket, default is CONSOLE and WEBLOG
     enum OutputTarget: uint8_t {
         CONSOLE = 0,
-        WEBPAGE = 1,
+        WEBLOG = 1,
         WEBSOCKET = 2,
     };
     _Helper::MultiBoolSettings outputSettings = _Helper::MultiBoolSettings(1+2);
@@ -120,9 +120,11 @@ class Logger {
 
         String templateProcessor(uint8_t var);
         const char* webPage = R"===(
-<h3>Log</h3> <ul>
-<li>Recent log: <ul> %30% </ul> </li> </ul>
+<h3>Web Log</h3>
+<textarea rows="5" cols="120" readonly>%30%</textarea>
 )===";
+
+        const char* webPageHardDisabled = "<h3>Web Log (DISABLED)</h3>";
 
 };
 
