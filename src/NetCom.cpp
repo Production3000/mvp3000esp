@@ -43,22 +43,20 @@ void NetCom::setup() {
         webPage = webPageHardDisabled; // Set web to display disabled html
         return;
     }
+    udpState = UDP_STATE::ENABLED;
 
     // Read config and register
     mvp.config.readCfg(cfgNetCom);
     mvp.net.netWeb.registerCfg(&cfgNetCom, std::bind(&NetCom::saveCfgCallback, this));
 
     // Start UDP for discovery and reverse-discovery of this ESP device
-    if (cfgNetCom.udpEnabled) {
-        udpState = UDP_STATE::ENABLED;
-        udp.begin(cfgNetCom.discoveryPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
-    }
+    udp.begin(cfgNetCom.discoveryPort);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
 };
 
 void NetCom::loop() {
     // Nothing to do if not ENABLED or not connected
-    if ((udpState != UDP_STATE::ENABLED) || !mvp.net.connectedAsClient())
+    if ((udpState == UDP_STATE::HARDDISABLED) || !mvp.net.connectedAsClient())
         return;
 
     // Check for UDP packet, in that case handle it
@@ -124,12 +122,11 @@ void NetCom::udpReceiveMessage() {
 }
 
 void NetCom::udpSendMessage(const char* message, IPAddress remoteIp) {
-    // Test this using netcat: nc -ul [laptopIP] [port]
+    // Test this using netcat: nc -ukl [port]
 
-    if (udpState != UDP_STATE::ENABLED) {
-        mvp.logger.write(CfgLogger::Level::WARNING, "UDP disabled.");
+    if (udpState == UDP_STATE::HARDDISABLED)
         return;
-    }
+        
     // Send UDP packet
     if (!udp.beginPacket(remoteIp, cfgNetCom.discoveryPort)) {
         mvp.logger.write(CfgLogger::Level::WARNING, "UDP not sent, send error.");
@@ -151,23 +148,15 @@ void NetCom::saveCfgCallback() {
     if (udpState == UDP_STATE::HARDDISABLED)
         return;
 
-    // Stop in any case, restart only if enabled
+    // Stop and restart
     udp.stop();
-    if (cfgNetCom.udpEnabled) {
-        udpState = UDP_STATE::ENABLED;
-        udp.begin(cfgNetCom.discoveryPort);
-        mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
-    } else {
-        udpState = UDP_STATE::DISABLEDX;
-        mvp.logger.write(CfgLogger::Level::INFO, "Discovery stopped");
-    }
+    udp.begin(cfgNetCom.discoveryPort);
+    mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Discovery started on port: %d", cfgNetCom.discoveryPort);
 }
 
 
 String NetCom::templateProcessor(uint8_t var) {
     switch (var) {
-        case 51:
-            return (cfgNetCom.udpEnabled) ? "checked" : "";
         case 52:
             return String(cfgNetCom.discoveryPort);
         case 53:

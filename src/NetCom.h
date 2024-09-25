@@ -38,11 +38,9 @@ struct CfgNetCom : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
-    boolean udpEnabled = false;
     uint16_t discoveryPort = 4211;
 
     CfgNetCom() : CfgJsonInterface("cfgNetCom") {
-        addSetting<boolean>("udpEnabled", &udpEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("discoveryPort", &discoveryPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
     }
 };
@@ -63,11 +61,10 @@ class NetCom {
     private:
 
         enum class UDP_STATE: uint8_t {
-            HARDDISABLED = 0,
-            DISABLEDX = 1,
-            ENABLED = 2
+            HARDDISABLED = 0, // DISABLED is reserved
+            ENABLED = 1,
         };
-        UDP_STATE udpState = UDP_STATE::DISABLEDX;
+        UDP_STATE udpState;
 
         CfgNetCom cfgNetCom;
         void saveCfgCallback();
@@ -91,7 +88,6 @@ class NetCom {
         String templateProcessor(uint8_t var);
         const char* webPage = R"===(
 <h3>UDP Auto-Discovery</h3> <ul>
-<li>Enable: <form action='/save' method='post'> <input name='udpEnabled' type='checkbox' %51% value='1'> <input name='udpEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
 <li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
 <li>Discovery: %53% </li> </ul>
 )===";

@@ -41,12 +41,10 @@ struct CfgNetMqtt : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
-    boolean mqttEnabled = false;
     uint16_t mqttPort = 1883; // 1883: unencrypted, unauthenticated
     String mqttForcedBroker = ""; // test.mosquitto.org
 
     CfgNetMqtt() : CfgJsonInterface("cfgNetMqtt") {
-        addSetting<boolean>("mqttEnabled", &mqttEnabled, [](boolean _) { return true; });
         addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
         addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](const String& x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
     }
@@ -78,15 +76,15 @@ class NetMqtt {
 
         enum class MQTT_STATE: uint8_t {
             HARDDISABLED = 0,
-            NOTOPIC = 1,
-            DISABLEDX = 2,
+            INIT = 1,
+            NOTOPIC = 2,
             NOBROKER = 3,
             FAILED = 4,
             DISCONNECTED = 5,
             CONNECTING = 6,
             CONNECTED = 7,
         };
-        MQTT_STATE mqttState = MQTT_STATE::NOTOPIC;
+        MQTT_STATE mqttState;
 
         LinkedListMqttTopic linkedListMqttTopic; // Adaptive size
 
@@ -103,7 +101,6 @@ class NetMqtt {
         LimitTimer connectTimer = LimitTimer(connectInterval, connectTries);
 
         void lateSetup();
-        boolean lateSetupDone = false;
 
         void saveCfgCallback();
 
@@ -116,7 +113,6 @@ class NetMqtt {
         String templateProcessor(uint8_t var);
         const char* webPage = R"===(
 <h3>MQTT Communication</h3> <ul>
-<li>Enable: <form action='/save' method='post'> <input name='mqttEnabled' type='checkbox' %61% value='1'> <input name='mqttEnabled' type='hidden' value='0'> <input type='submit' value='Save'> </form> </li>
 <li>Status: %62% </li>
 <li>Local broker: %63% </li>
 <li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%64%'> <input type='submit' value='Save'> </form> </li>

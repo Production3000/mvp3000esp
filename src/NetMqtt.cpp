@@ -40,29 +40,24 @@ void NetMqtt::setup() {
         mqttState = MQTT_STATE::HARDDISABLED;
         webPage = webPageHardDisabled; // Set web to display disabled html
     }
+    mqttState = MQTT_STATE::INIT;
 }
 
 void NetMqtt::lateSetup() {
-    // Needs to be done after all modules are added, otherwise the linkedListMqttTopic is possibly empty
-    lateSetupDone = true;
+    // Needs to be called after all modules are added, otherwise the linkedListMqttTopic is possibly empty
 
     // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
     if (linkedListMqttTopic.getSize() == 0) {
-        mvp.logger.write(CfgLogger::Level::INFO, "No MQTT topics defined, MQTT disabled.");
         mqttState = MQTT_STATE::NOTOPIC;
-        webPage = webPageNoTopics; // Set web to display disabled html
+        webPage = webPageNoTopics; // Set web to display no-topic html
+        mvp.logger.write(CfgLogger::Level::INFO, "No MQTT topics defined, MQTT disabled.");
         return;
     }
+    mqttState = MQTT_STATE::NOBROKER;
 
     // Read config and register with web interface
     mvp.config.readCfg(cfgNetMqtt);
     mvp.net.netWeb.registerCfg(&cfgNetMqtt, std::bind(&NetMqtt::saveCfgCallback, this));
-    
-    if (cfgNetMqtt.mqttEnabled) {
-        mqttState = MQTT_STATE::NOBROKER;
-    } else {
-        mqttState = MQTT_STATE::DISABLEDX;
-    }
 
     // Redefine needed with network, otherwise mqttClient.connected() crashes
     mqttClient = MqttClient(wifiClient);
@@ -79,11 +74,11 @@ void NetMqtt::loop() {
     if (mqttState == MQTT_STATE::HARDDISABLED)
         return;
 
-    if (!lateSetupDone)
+    if (mqttState == MQTT_STATE::INIT)
         lateSetup();
 
-    // NOTOPIC, DISABLEDX, FAILED or no connected: nothing to do now
-    if ((mqttState == MQTT_STATE::NOTOPIC) || (mqttState == MQTT_STATE::DISABLEDX) || (mqttState == MQTT_STATE::FAILED) || !mvp.net.connectedAsClient())
+    // NOTOPIC, FAILED or no connected: nothing to do now
+    if ((mqttState == MQTT_STATE::NOTOPIC) || (mqttState == MQTT_STATE::FAILED) || !mvp.net.connectedAsClient())
         return;
 
     // NOBROKER, CONNECTING, CONNECTED, DISCONNECTED: handle MQTT
@@ -141,7 +136,6 @@ void NetMqtt::loop() {
         case MQTT_STATE::DISCONNECTED:
             // Go back to NOBROKER, forced and local could have just changed
             mqttState = MQTT_STATE::NOBROKER;
-            connectTimer.restart();
             break;
 
     }
@@ -229,30 +223,20 @@ void NetMqtt::saveCfgCallback() {
     if ((mqttState == MQTT_STATE::HARDDISABLED ) || (mqttState == MQTT_STATE::NOTOPIC))
         return;
 
-    if (cfgNetMqtt.mqttEnabled) {
-        // Setting changed or set to enabled -> stop and restart
-        mqttClient.stop();
-        mqttState = MQTT_STATE::NOBROKER;
-        connectTimer.restart();
-        mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting.");
-    } else {
-        // Setting changed or set to disabled -> stop, set to disabled again even if not needed
-        mqttClient.stop();
-        mqttState = MQTT_STATE::DISABLEDX;
-        mvp.logger.write(CfgLogger::Level::INFO, "MQTT stopped.");
-    }
+    // Setting changed or set to enabled -> stop and restart
+    mqttClient.stop();
+    mqttState = MQTT_STATE::NOBROKER;
+    connectTimer.restart();
+    mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting.");
 }
 
 String NetMqtt::templateProcessor(uint8_t var) {
     switch (var) {
-        case 61:
-            return (cfgNetMqtt.mqttEnabled) ? "checked" : "";
         case 62:
             switch (mqttState) {
                 case MQTT_STATE::CONNECTED:
                     return "connected";
                 case MQTT_STATE::DISCONNECTED:
-                case MQTT_STATE::DISABLEDX:
                     return "disconnected";
                 case MQTT_STATE::CONNECTING:
                     return "connecting";
