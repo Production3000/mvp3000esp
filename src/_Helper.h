@@ -164,11 +164,11 @@ struct _Helper {
                 unset(bit);
         }
 
-        void set(uint8_t bit) { settings |= 1 << bit; }
-        void unset(uint8_t bit) { settings &= ~(1 << bit); }
+        void set(uint8_t bit) { bitSet(settings, bit); }
+        void unset(uint8_t bit) { bitClear(settings, bit); }
 
         boolean isNone() { return settings == 0; }
-        boolean isSet(uint8_t bit) { return settings & (1 << bit); }
+        boolean isSet(uint8_t bit) { return bitRead(settings, bit); }
     };
 
 
