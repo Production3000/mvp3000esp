@@ -75,10 +75,6 @@ void NetWeb::registerModulePage(const String& uri) {
     server.on(uri.c_str(), HTTP_GET, std::bind(&NetWeb::serveModulePage, this, std::placeholders::_1));
 }
 
-void NetWeb::registerWebSocket(const String& uri, WebSocketCtrlCallback ctrlCallback) {
-    linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWeb::webSocketEventCallbackWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
-};
-
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -157,40 +153,6 @@ bool NetWeb::formInputCheck(AsyncWebServerRequest *request) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetWeb::printWebSocket(const String& topic, const String& message) {
-    linkedListWebSocket.printWebSocket(topic, message);
-}
-
-void NetWeb::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback) {
-    switch (type) {
-        case WS_EVT_CONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d connected from: %s", client->id(), client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DISCONNECT:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
-            break;
-        case WS_EVT_ERROR:
-            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s, client %d", client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DATA:
-            mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d data from: %s", client->id(), client->remoteIP().toString().c_str());
-            if (ctrlCallback != nullptr) { // Only parse data if there is something to do
-                AwsFrameInfo *info = (AwsFrameInfo*)arg;
-                if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-                    data[len] = 0; // Terminate string
-                    // Execute callback
-                    ctrlCallback((char*)data);
-                }
-            }
-            break;
-        default: // WS_EVT_PONG
-            break;
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////
-
 void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* message) {
     // Message to serve on next page load and set expiry time
     postMessage = message;
@@ -243,15 +205,19 @@ size_t NetWeb::responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index) 
     if (index < strlen(mvp.net.webPage))
         return extendedResponseFiller(mvp.net.webPage, buffer, maxLen, index);
     index -= strlen(mvp.net.webPage);
+    // WebSocket
+    if (index < strlen(mvp.net.netWeb.webSockets.webPage))
+        return extendedResponseFiller(mvp.net.netWeb.webSockets.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.net.netWeb.webSockets.webPage);
+    // MQTT
+    if (index < strlen(mvp.net.netMqtt.webPage))
+        return extendedResponseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
+    index -= strlen(mvp.net.netMqtt.webPage);
     // UDP
     if (index < strlen(mvp.net.netCom.webPage))
         return extendedResponseFiller(mvp.net.netCom.webPage, buffer, maxLen, index);
     index -= strlen(mvp.net.netCom.webPage);
-    // MQTT
-    if (index < strlen(mvp.net.netMqtt.webPage))
-        return extendedResponseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
     // Footer
-    index -= strlen(mvp.net.netMqtt.webPage);
     return extendedResponseFiller(webPageFoot, buffer, maxLen, index);
 }
 
@@ -301,6 +267,8 @@ String NetWeb::templateProcessorWrapper(const String& var) {
             return mvp.net.netCom.templateProcessor(varInt);
         case 60 ... 79: // MQTT
             return mvp.net.netMqtt.templateProcessor(varInt);
+        case 80 ... 89: // WebSockets
+            return mvp.net.netWeb.webSockets.templateProcessor(varInt);
 
         //  Xmodules placeholders
         case 100 ... 255:

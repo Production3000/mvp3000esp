@@ -173,8 +173,9 @@ The logger can be used to send message to serial and the websocket.
  *  `void logDisableAnsiColor()`: Disable ANSI codes in serial output.
  *  `void logSetLevel(CfgLogger::Level level)`: Change the logging level. The log level 'data' is only printed to serial and is omitted for the web page and WebSocket target.
  *  `void logSetTarget(CfgLogger::OutputTarget target, boolean enable)`: Enable/disable the output targets of logging message. Console and web interface are enabled by default, WebSocket is disabled.
- *  `void mqttHardDisable()`: Completely disable the MQTT discovery service.
+ *  `void mqttHardDisable()`: Completely disable MQTT communication.
  *  `void udpHardDisable()`: Completely disable the UDP discovery service in case it interferes with custom UDP code.
+ *  `void wsHardDisable()`: Completely disable WebSockets.
 
 ### <a name='HelperFunctionsandClasses'></a>Helper Functions and Classes
 

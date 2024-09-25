@@ -23,6 +23,7 @@ limitations under the License.
 
 #include "Config_JsonInterface.h"
 #include "NetWeb_WebStructs.h"
+#include "NetWebSockets.h"
 
 
 class NetWeb {
@@ -60,21 +61,12 @@ class NetWeb {
          */
         void registerModulePage(const String& uri);
 
-        /**
-         * @brief Register a websocket to be used with the web interface.
-         *
-         * @param uri The URI of the websocket.
-         * @param dataCallback (optional) The function to execute when data is received. Leave empty to not execute a function.
-         * @return Returns the function to write data to the websocket.
-         */
-        void registerWebSocket(const String& uri, WebSocketCtrlCallback dataCallback = nullptr);
-
     public:
 
         void setup();
         void loop();
 
-        void printWebSocket(const String& topic, const String& message);
+        NetWebSockets webSockets = NetWebSockets(server);
 
     private:
 
@@ -82,7 +74,6 @@ class NetWeb {
 
         LinkedListWebActions linkedListWebActions = LinkedListWebActions(); // Adaptive size
         LinkedListWebCfg linkedListWebCfg = LinkedListWebCfg(); // Adaptive size
-        LinkedListWebSocket linkedListWebSocket; // Adaptive size
 
         // Message to serve on next page load after form save
         const char* postMessage = "";
@@ -96,8 +87,6 @@ class NetWeb {
 
         void responseRedirect(AsyncWebServerRequest *request, const char* message = "");
         void responseMetaRefresh(AsyncWebServerRequest *request);
-
-        void webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback);
 
         int8_t requestedModuleIndex = -1; // None selected, or there is just no module
         void serveModulePage(AsyncWebServerRequest *request);

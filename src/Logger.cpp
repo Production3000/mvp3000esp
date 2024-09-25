@@ -37,7 +37,7 @@ void Logger::setup() {
     }
 
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
-        mvp.net.netWeb.registerWebSocket(webSocketUri);
+        mvp.net.netWeb.webSockets.registerWebSocket(webSocketUri);
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
 }
@@ -86,7 +86,7 @@ void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) 
     String str = _helper.millisToTime(millis());
     str += levelToString(messageLevel);
     str += message;
-    mvp.net.netWeb.printWebSocket(webSocketUri, str);
+    mvp.net.netWeb.webSockets.printWebSocket(webSocketUri, str);
 }
 
 void Logger::printSerial(CfgLogger::Level messageLevel, const String &message) {
@@ -145,11 +145,11 @@ String Logger::templateProcessor(uint8_t var) {
             // Set initial bookmark
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
-            return _helper.printFormatted("<li>%s %s %s %s</li>",
+            return _helper.printFormatted("<li>%s %s %s</li>%s",
                 _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),
-                (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
+                (linkedListLog.moveBookmark(true)) ? "%31%" : ""); // Recursive call if there are more entries
 
         default:
             return "";

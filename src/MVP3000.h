@@ -81,6 +81,11 @@ class MVP3000 {
          */
         void udpHardDisable() { net.netCom.hardDisable(); };
 
+        /**
+         * @brief Completely disable the UDP discovery service.
+         */
+        void wsHardDisable() { net.netWeb.webSockets.hardDisable(); };
+
 
     public:
 

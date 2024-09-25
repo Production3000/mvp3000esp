@@ -259,10 +259,11 @@ String NetMqtt::templateProcessor(uint8_t var) {
             // Set initial bookmark
             linkedListMqttTopic.bookmarkByIndex(0, true);
         case 71:
-            return _helper.printFormatted("<li>%s %s %s</li> %s", linkedListMqttTopic.getBookmarkData()->getDataTopic().c_str(),
+            return _helper.printFormatted("<li>%s %s %s</li>%s",
+                linkedListMqttTopic.getBookmarkData()->getDataTopic().c_str(),
                 (linkedListMqttTopic.getBookmarkData()->ctrlCallback != nullptr) ? " | " : "",
                 (linkedListMqttTopic.getBookmarkData()->ctrlCallback != nullptr) ? linkedListMqttTopic.getBookmarkData()->getCtrlTopic().c_str() : "",
-                (linkedListMqttTopic.moveBookmark()) ? "%61%" : "");
+                (linkedListMqttTopic.moveBookmark()) ? "%61%" : ""); // Recursive call if there are more entries
 
         default:
             return "";

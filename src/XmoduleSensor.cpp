@@ -78,7 +78,7 @@ void XmoduleSensor::setup() {
     });
 
     // Register websocket and MQTT
-    mvp.net.netWeb.registerWebSocket(uriWebSocket, std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
+    mvp.net.netWeb.webSockets.registerWebSocket(uriWebSocket, std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
     mvp.net.netMqtt.registerMqtt(mqttTopic, std::bind(&XmoduleSensor::networkCtrlCallback, this, std::placeholders::_1));
 }
 
@@ -99,7 +99,7 @@ void XmoduleSensor::loop() {
         if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::CONSOLE))
             mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
         if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::WEBSOCKET))
-            mvp.net.netWeb.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+            mvp.net.netWeb.webSockets.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
         if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::MQTT))
             mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
    }

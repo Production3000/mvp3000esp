@@ -92,7 +92,7 @@ class NetMqtt {
 
         WiFiClient wifiClient;
 
-        MqttClient mqttClient = NULL;
+        MqttClient mqttClient = nullptr;
 
         IPAddress localBrokerIp = INADDR_NONE; // compare with == operator, there is
 
