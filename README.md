@@ -171,8 +171,8 @@ The logger can be used to send message to serial and the websocket.
  *  `void addXmodule(_Xmodule *xmodule)`: Add a Xmodule to the MVP3000 system.
  *  `void log(const String& message)`: Log a message at 'user' level.
  *  `void logDisableAnsiColor()`: Disable ANSI codes in serial output.
- *  `void logSetLevel(CfgLogger::Level level)`: Change the logging level. This does not affect the list of recent log entries displayed in the web interface.
- *  `void logSetTarget(CfgLogger::OutputTarget target, boolean enable)`: Enable/disable the output target to serial and/or websocket for log messages. This does not affect the list of recent log entries displayed in the web interface.
+ *  `void logSetLevel(CfgLogger::Level level)`: Change the logging level. The log level 'data' is only printed to serial and is omitted for the web page and WebSocket target.
+ *  `void logSetTarget(CfgLogger::OutputTarget target, boolean enable)`: Enable/disable the output targets of logging message. Console and web interface are enabled by default, WebSocket is disabled.
  *  `void mqttHardDisable()`: Completely disable the MQTT discovery service.
  *  `void udpHardDisable()`: Completely disable the UDP discovery service in case it interferes with custom UDP code.
 

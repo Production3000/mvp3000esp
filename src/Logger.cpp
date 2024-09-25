@@ -36,9 +36,8 @@ void Logger::setup() {
         Serial.println("");
     }
 
-    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET)) {
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
         mvp.net.netWeb.registerWebSocket(webSocketUri);
-    }
 
     write(CfgLogger::Level::INFO, "Logger initialized.");
 }
@@ -51,11 +50,6 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
     if (messageLevel == CfgLogger::Level::ERROR)
         errorReported = true;
 
-    // Store errors, warnings, usermsg for web display
-    if ((messageLevel == CfgLogger::Level::ERROR || messageLevel == CfgLogger::Level::WARNING || messageLevel == CfgLogger::Level::USER)) {
-        linkedListLog.append(messageLevel, message);
-    }
-
     // Logging is turned off, nothing to do
     if (cfgLogger.outputSettings.isNone())
         return;
@@ -64,12 +58,16 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
     if (messageLevel < cfgLogger.level)
         return;
 
-    // Output to serial and websocket
+    // Output to serial, webpage, and websocket
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::CONSOLE))
         printSerial(messageLevel, message);
+
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBPAGE))
+        if (messageLevel != CfgLogger::Level::DATA) // Omit data
+            linkedListLog.append(messageLevel, message);
         
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
-        if (messageLevel != CfgLogger::Level::DATA) // Omit data, this should be done using a separate websocket within the module
+        if (messageLevel != CfgLogger::Level::DATA) // Omit data, this is to be handled within the module using a separate websocket
             printNetwork(messageLevel, message);
 }
 
@@ -139,12 +137,19 @@ String Logger::templateProcessor(uint8_t var) {
 
         case 30:
             if (linkedListLog.getSize() == 0) {
-                return "-";
+                if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBPAGE))
+                    return "[No log entries]";
+                else
+                    return "[Disabled]";
             }
             // Set initial bookmark
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
-            return _helper.printFormatted("<li>%s %s %s %s</li>", _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(), levelToString(linkedListLog.getBookmarkData()->level), linkedListLog.getBookmarkData()->message.c_str(), (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
+            return _helper.printFormatted("<li>%s %s %s %s</li>",
+                _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(),
+                levelToString(linkedListLog.getBookmarkData()->level),
+                linkedListLog.getBookmarkData()->message.c_str(),
+                (linkedListLog.moveBookmark(true)) ? "<br> %31%" : "");
 
         default:
             return "";

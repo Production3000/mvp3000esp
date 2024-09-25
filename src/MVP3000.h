@@ -63,7 +63,7 @@ class MVP3000 {
         void logSetLevel(CfgLogger::Level level) { logger.setLevel(level); };
 
         /**
-         * @brief Enable/disable the output targets of logging message.
+         * @brief Enable/disable the output targets of logging message. Console and web interface is enabled by default, websocket is disabled.
          *
          * @param target The target to change.
          * @param enable True to enable, false to disable.

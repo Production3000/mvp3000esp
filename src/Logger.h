@@ -29,6 +29,7 @@ struct CfgLogger {
 
     boolean ansiColor = true;
 
+    // Level of the message, default is INFO
     enum Level: uint8_t {
         INFO = 0,
         DATA = 1,
@@ -37,16 +38,15 @@ struct CfgLogger {
         WARNING = 4,
         ERROR = 5,
     };
-    
     Level level = Level::INFO;
 
-    // Output to console and/or websocket, default is both
+    // Output to console and/or websocket, default is CONSOLE and WEBPAGE
     enum OutputTarget: uint8_t {
         CONSOLE = 0,
-        WEBSOCKET = 1,
+        WEBPAGE = 1,
+        WEBSOCKET = 2,
     };
-
-    _Helper::MultiBoolSettings outputSettings;
+    _Helper::MultiBoolSettings outputSettings = _Helper::MultiBoolSettings(1+2);
 };
 
 
