@@ -16,7 +16,10 @@ limitations under the License.
 
 import serial
 
-port = '/dev/ttyUSB0'
+port = 'COM0' # Windows
+# port = '/dev/ttyUSB0' # ESP8266
+# port = '/dev/ttyACM0' # ESP32
+
 ser = serial.Serial(port, 115200, timeout=10)
 print(f"Listening on {ser.name} ...")
 
