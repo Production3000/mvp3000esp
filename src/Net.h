@@ -37,7 +37,7 @@ struct CfgNet : public CfgJsonInterface  {
 
     String clientSsid = ""; // IEEE 1-32 chars
     String clientPass = ""; // IEEE 8-63 chars
-    uint16_t clientConnectRetries = 3;
+    uint8_t clientConnectRetries = 3;
 
     // DANGER, forceClientMode could make the device inaccessible for the user without flashing it
     // Usefull when network settings are correct for sure but likely offline during power on
@@ -49,10 +49,10 @@ struct CfgNet : public CfgJsonInterface  {
     boolean forceClientMode = false;
 
     CfgNet() : CfgJsonInterface("cfgNet") {
-        addSetting<uint16_t>("clientConnectRetries", &clientConnectRetries, [](uint16_t x) { return (x > 100) ? false : true; }); // Limit to 100, any more is 'forever'
-        addSetting<String>("clientSsid", &clientSsid, [](const String& x) { return true; } ); // Check is in extra function
-        addSetting<String>("clientPass", &clientPass, [](const String& x) { return true; }); // Check is in extra function
-        addSetting<boolean>("forceClientMode", &forceClientMode, [](boolean _) { return true; });
+        addSetting<uint8_t>("clientConnectRetries", &clientConnectRetries, [&](const String& s) { uint8_t n = s.toInt(); if (n > 100) return false; clientConnectRetries = n; return true; } ); // Limit to 100, any more is 'forever'
+        addSetting<String>("clientSsid", &clientSsid, [&](const String& s) { clientSsid = s; return true; } ); // Check is in extra function
+        addSetting<String>("clientPass", &clientPass, [&](const String& s) { clientPass = s; return true; } ); // Check is in extra function
+        addSetting<boolean>("forceClientMode", &forceClientMode, [&](const String& s) { forceClientMode = s.toInt(); return true; } );
     }
 };
 

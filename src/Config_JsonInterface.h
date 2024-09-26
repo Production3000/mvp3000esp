@@ -35,25 +35,11 @@ extern _Helper _helper;
 struct JsonInterface {
     String cfgName;
 
-    /**
-     * @brief Export the configuration data to a JSON document.
-     *
-     * @param jsonDoc The JSON document to export the data to.
-     */
     virtual void exportToJson(JsonDocument &jsonDoc) { };
-
-    /**
-     * @brief Import the configuration data from a JSON document.
-     *
-     * @param jsonDoc The JSON document to import the data from.
-     * @return True if the import was successful, false otherwise.
-     */
     virtual bool importFromJson(JsonDocument &jsonDoc) { return true; };
 
     JsonInterface(const String& cfgName) : cfgName(cfgName) { };
-
 };
-
 
 
 /**
@@ -68,69 +54,44 @@ struct JsonInterface {
 struct CfgJsonInterface : public JsonInterface {
     CfgJsonInterface(const String& cfgName) : JsonInterface(cfgName) { };
 
-    // Type-specific core setting structure
-    template <typename T>
-    struct SettingCore {
-        T *value; // This is a pointer to the actual value
-        std::function<bool(T)> checkValue;
-
-        SettingCore(T *_value, std::function<bool(T)> _checkValue) : value(_value), checkValue(_checkValue) { };
-
-        bool checkValueAndSet(T _value) {
-            if (!checkValue(_value))
-                return false;
-            *value = _value;
-            return true;
-        }
-    };
-
-    // Main setting structure, minimalistic linked list
     struct SettingNode {
-        uint32_t hash; // Hash of the key
+        uint32_t hash; // Hash of the var name
+        void* varPtr; // Pointer to the actual value
+        std::function<String()> get;
+        std::function<boolean(const String&)> checkSet;
 
-        uint8_t type; // 0 = boolean, 1 = int, 2 = String
-        union { // Pointer to the type-specific setting core
-            SettingCore<boolean>* b;
-            SettingCore<uint16_t>* i;
-            SettingCore<String>* s;
-        } settingCore;
+        // The get function needs to be type specific, to correctly convert the void* pointer back to the original type.
+        // This cannot be templated and combined into a single linked list.
+        SettingNode(const String& varName, uint8_t* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
+            get = [&]() { return String(*((uint8_t*)varPtr)); };
+        };
+        SettingNode(const String& varName, uint16_t* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
+            get = [&]() { return String(*((uint16_t*)varPtr)); };
+        };
+        SettingNode(const String& varName, String* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
+            get = [&]() { return *((String*)varPtr); };
+        };
+        SettingNode(const String& varName, boolean* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
+            get = [&]() { return String(*((boolean*)varPtr)); };
+        };
 
         SettingNode* next = nullptr;
-
-        /**
-         * @brief Default constructor, overloaded to select the type-specific settings core based on the value type.
-         *
-         * @param _hash The hash of the key-string.
-         * @param _value The value of the setting.
-         * @param checkValue A function to check if the value is valid.
-         */
-        SettingNode() {}; // Default constructor
-        SettingNode(uint32_t _hash, boolean *_value, std::function<bool(boolean)> checkValue) : hash(_hash), type(0) {
-            settingCore.b = new SettingCore<boolean>(_value, checkValue);
-        };
-        SettingNode(uint32_t _hash, uint16_t *_value, std::function<bool(uint16_t)> checkValue) : hash(_hash), type(1) {
-            settingCore.i = new SettingCore<uint16_t>(_value, checkValue);
-        };
-        SettingNode(uint32_t _hash, String *_value, std::function<bool(const String&)> checkValue) : hash(_hash), type(2) {
-            settingCore.s = new SettingCore<String>(_value, checkValue);
-        };
     };
 
-    // Minimalistic linked list
     SettingNode* head = nullptr; // First added setting
     SettingNode* tail = nullptr;
 
     /**
      * @brief Add a setting to the configuration.
      *
-     * @tparam T The type of the setting.
-     * @param key The key of the setting.
-     * @param value The value of the setting.
-     * @param checkValue A function to check if the value is valid.
+     * @tparam T The type of the setting variable.
+     * @param varName The key of the setting.
+     * @param varPtr Pointer to the setting.
+     * @param checheckSetckValue A function to check if the value is valid.
      */
     template <typename T>
-    void addSetting(const String& key, T *value, std::function<bool(T)> checkValue) {
-        SettingNode* newSetting = new SettingNode(_helper.hashStringDjb2(key.c_str()), value, checkValue);
+    void addSetting(const String& varName, T* varPtr, std::function<bool(const String&)> checkSet) {
+        SettingNode* newSetting = new SettingNode(varName, varPtr, checkSet);
         if (head == nullptr) {
             head = newSetting;
             tail = newSetting;
@@ -140,56 +101,24 @@ struct CfgJsonInterface : public JsonInterface {
         }
     }
 
-    /**
-     * @brief Export the configuration data to a JSON document.
-     *
-     * @param jsonDoc The JSON document to export the data to.
-     */
     void exportToJson(JsonDocument &jsonDoc) {
+        // Loop through all settings and add to JSON document
         SettingNode* current = head;
         while (current != nullptr) {
-            switch (current->type) {
-                case 0:
-                    jsonDoc[String(current->hash)] = *current->settingCore.b->value; // Dereference
-                    break;
-                case 1:
-                    jsonDoc[String(current->hash)] = *current->settingCore.i->value; // Dereference
-                    break;
-                case 2:
-                    jsonDoc[String(current->hash)] = *current->settingCore.s->value; // Dereference
-                    break;
-            }
+            jsonDoc[String(current->hash)] = current->get();
             current = current->next;
         }
     }
 
-    /**
-     * @brief Import the configuration data from a JSON document.
-     *
-     * @param jsonDoc The JSON document to import the data from.
-     */
     bool importFromJson(JsonDocument &jsonDoc) {
-        // Loop through all settings and compare with hashes in JSON document
+        // Loop through all settings
         bool success = true;
         SettingNode* current = head;
         while (current != nullptr) {
             String hashString = String(current->hash);
+            // Compare hashes
             if (jsonDoc.containsKey(hashString)) {
-                // Matching hash found, switch to type and check/set the value
-                switch (current->type) {
-                    case 0: // boolean
-                        success &= current->settingCore.b->checkValueAndSet(jsonDoc[hashString].as<boolean>());
-                        break;
-                    case 1: // uint16_t
-                        success &= current->settingCore.i->checkValueAndSet(jsonDoc[hashString].as<uint16_t>());
-                        break;
-                    case 2: // String
-                        success &= current->settingCore.s->checkValueAndSet(jsonDoc[hashString].as<String>());
-                        break;
-                    default:
-                        Serial.println("TYPE NOT IMPLEMENTED!");
-                        success = false;
-                }
+                success &= current->checkSet(jsonDoc[hashString].as<String>());
             }
             current = current->next;
         }
@@ -203,25 +132,18 @@ struct CfgJsonInterface : public JsonInterface {
      * @param value The new value of the setting.
      */
     bool updateSingleValue(const String& key, const String& value) {
-        // Loop through all settings to find the correct one
+        // Loop through all settings
+        uint32_t hash = _helper.hashStringDjb2(key.c_str());
         SettingNode* current = head;
         while (current != nullptr) {
-            if (current->hash == _helper.hashStringDjb2(key.c_str())) {
-                // Found the setting, switch to its type and check/set the value
-                switch (current->type) {
-                    case 0: // boolean
-                        return current->settingCore.b->checkValueAndSet((value.toInt() != 0));
-                    case 1: // uint16_t
-                        return current->settingCore.i->checkValueAndSet(value.toInt());
-                    case 2: // String
-                        return current->settingCore.s->checkValueAndSet(value);
-                }
+            // Compare hashes
+            if (current->hash == hash) {
+                return current->checkSet(value);
             }
             current = current->next;
         }
         return false;
     }
-
 };
 
 #endif

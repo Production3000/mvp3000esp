@@ -41,7 +41,7 @@ struct CfgNetCom : public CfgJsonInterface {
     uint16_t discoveryPort = 4211;
 
     CfgNetCom() : CfgJsonInterface("cfgNetCom") {
-        addSetting<uint16_t>("discoveryPort", &discoveryPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
+        addSetting<uint16_t>("discoveryPort", &discoveryPort, [&](const String& s) { uint16_t n = s.toInt(); if (n < 1024) return false; discoveryPort = n; return true; } ); // Port above 1024
     }
 };
 

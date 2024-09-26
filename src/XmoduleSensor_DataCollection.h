@@ -83,7 +83,7 @@ struct DataCollection {
 
     // Averaging
     NumberArrayLateInit<int32_t> avgDataSum; // Temporary data storage for averaging
-    uint16_t *averagingCountPtr; // Pointer to cfgXmoduleSensor
+    uint8_t *averagingCountPtr; // Pointer to cfgXmoduleSensor
     uint8_t avgCounter = 0; // Counter for averaging
     int64_t avgStartTime = 0; // Time of first measurement in averaging cycle
     boolean avgCycleFinished = false; // Flag for new data added to dataStore
@@ -93,7 +93,7 @@ struct DataCollection {
     NumberArrayLateInit<int32_t> dataMin;
 
 
-    DataCollection(uint16_t *averagingCount) : averagingCountPtr(averagingCount) { };
+    DataCollection(uint8_t *averagingCount) : averagingCountPtr(averagingCount) { };
 
     void initDataValueSize(uint8_t dataValueSize) {
         processing.initDataValueSize(dataValueSize);
@@ -107,7 +107,7 @@ struct DataCollection {
 //////////////////////////////////////////////////////////////////////////////////
 
     // Called only when switching from normal measurement to offset/scaling measurement
-    void setAveragingCountPtr(uint16_t *_averagingCount) {
+    void setAveragingCountPtr(uint8_t *_averagingCount) {
         averagingCountPtr = _averagingCount;
         reset();
     }

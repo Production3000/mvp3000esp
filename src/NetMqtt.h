@@ -45,8 +45,8 @@ struct CfgNetMqtt : public CfgJsonInterface {
     String mqttForcedBroker = ""; // test.mosquitto.org
 
     CfgNetMqtt() : CfgJsonInterface("cfgNetMqtt") {
-        addSetting<uint16_t>("mqttPort", &mqttPort, [](uint16_t x) { return (x < 1024) ? false : true; }); // port above 1024
-        addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [](const String& x) { return ((x.length() > 0) && (x.length() < 6)) ? false : true; } ); // allow empty to remove
+        addSetting<uint16_t>("mqttPort", &mqttPort, [&](const String& s) { uint16_t n = s.toInt(); if (n < 1024) return false; mqttPort = n; return true; } ); // Port above 1024
+        addSetting<String>("mqttForcedBroker", &mqttForcedBroker, [&](const String& s) { mqttForcedBroker = s; return true; } ); // Allow empty to remove
     }
 };
 

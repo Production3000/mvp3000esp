@@ -35,19 +35,18 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         WEBSOCKET = 1,
         MQTT = 2,
     };
-
     _Helper::MultiBoolSettings<uint8_t> outputTargets = _Helper::MultiBoolSettings<uint8_t>(); // Default is all enabled
 
     // Modifiable settings saved to SPIFF
 
-    uint16_t sampleAveraging = 10; // Before values are reported
-    uint16_t averagingOffsetScaling = 25;
+    uint8_t sampleAveraging = 10; // Before values are reported
+    uint8_t averagingOffsetScaling = 25;
     uint16_t reportingInterval = 0; // [ms], set to 0 to ignore
 
     CfgXmoduleSensor() : CfgJsonInterface("cfgXmoduleSensor") {
-        addSetting<uint16_t>("sampleAveraging", &sampleAveraging, [](uint16_t x) { return (x == 0) ? false : true; }); // at least 1
-        addSetting<uint16_t>("averagingOffsetScaling", &averagingOffsetScaling, [](uint16_t x) { return (x == 0) ? false : true; }); // at least 1
-        addSetting<uint16_t>("reportingInterval", &reportingInterval, [](uint16_t _) { return true; });
+        addSetting<uint8_t>("sampleAveraging", &sampleAveraging, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; sampleAveraging = n; return true; } ); // At least 1
+        addSetting<uint8_t>("averagingOffsetScaling", &averagingOffsetScaling, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; averagingOffsetScaling = n; return true; } ); // At least 1
+        addSetting<uint16_t>("reportingInterval", &reportingInterval, [&](const String& s) { reportingInterval = s.toInt(); return true; } );
     };
 
     // Settings that are not known during creation of this config within the framework but need init before anything works
@@ -199,8 +198,6 @@ class XmoduleSensor : public _Xmodule {
         void setTare();
 
     private:
-
-
 
         DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
 
