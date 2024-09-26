@@ -36,7 +36,7 @@ struct CfgXmoduleSensor : CfgJsonInterface {
         MQTT = 2,
     };
 
-    _Helper::MultiBoolSettings outputTargets;
+    _Helper::MultiBoolSettings<uint8_t> outputTargets = _Helper::MultiBoolSettings<uint8_t>(); // Default is all enabled
 
     // Modifiable settings saved to SPIFF
 

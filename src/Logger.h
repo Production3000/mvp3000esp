@@ -46,7 +46,7 @@ struct CfgLogger {
         WEBLOG = 1,
         WEBSOCKET = 2,
     };
-    _Helper::MultiBoolSettings outputSettings = _Helper::MultiBoolSettings(1+2);
+    _Helper::MultiBoolSettings<uint8_t> outputSettings = _Helper::MultiBoolSettings<uint8_t>(1+2);
 };
 
 

@@ -149,13 +149,16 @@ struct _Helper {
 ///////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @brief Struct to store multiple boolean settings as bits in one variable. Initializes with all true.
+     * @brief Struct to store multiple boolean settings as bits in one variable. Initializes with all true. Use together with an settings-enum.
+     * 
+     * @tparam T Defines the size of the settings variable and thus the number of boolean settings. Accepts only unsigned types.
      */
+    template<typename T, typename std::enable_if<!std::is_signed<T>::value, int>::type = 0>
     struct MultiBoolSettings {
-        uint8_t settings;
+        T settings;
 
-        MultiBoolSettings() : settings(255) { } // Default initializes all to true
-        MultiBoolSettings(uint8_t settings) : settings(settings) { } // Initialize with custom settings, 0 is all false
+        MultiBoolSettings() : settings(-1) { } // Default initializes all to true
+        MultiBoolSettings(T settings) : settings(settings) { } // Initialize with custom settings, 0 is all false
 
         void change(uint8_t bit, boolean value) {
             if (value)
