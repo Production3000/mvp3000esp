@@ -19,6 +19,9 @@ limitations under the License.
 
 #include <Arduino.h>
 
+// Additional defines are in Arduino.h
+#define checkrange(amt, low, high) ( ((amt)<(low) || (amt) > (high)) ? (false) : (true) )  // Compare constrain(amt,low,high)
+
 
 struct _Helper {
 
@@ -84,24 +87,47 @@ struct _Helper {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * @brief Convert milliseconds to a time string
-     *
-     * @param total_ms Milliseconds to convert
-     *
-     * @return Time string in the format "d hh:mm:ss"
-     */
-    String millisToTime(uint64_t total_ms)  {
-        uint64_t total_s = total_ms / 1000;
-        uint16_t days = total_s / 86400; // 24*60*60
-        uint32_t remaining_s = total_s % 86400;
-        uint8_t hours = remaining_s / 3600; // 60*60
-        remaining_s = total_s % 3600;
-        uint8_t minutes = remaining_s / 60;
-        uint8_t seconds = remaining_s % 60;
-        return printFormatted("%dd %02d:%02d:%02d", days, hours, minutes, seconds);
+    uint64_t millisAtTimeinfo = 0;
+    time_t timeAtTimeinfo = 0;
+
+    // Convert millis to the NTP synced time
+    uint64_t millisSinceEpoch(uint64_t millisStamp = millis()) {
+        return timeAtTimeinfo * 1000 + millisStamp - millisAtTimeinfo;
+    }
+    
+    String msEpochToUtcString(uint64_t millisStamp) {
+        time_t seconds = millisStamp / 1000;
+        tm timeinfo;
+        localtime_r(&seconds, &timeinfo);
+        return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     }
 
+    /**
+     * @brief Get the local time in UTC string format.
+     *
+     * @return Current time in ISO format "YYYY-MM-DD hh:mm:ss"
+     */
+    String timeUtcString() {
+        // This crazy getLocalTime() in ESP time class has a default wait time of 5 seconds!!!
+        tm timeinfo;
+        time_t now = time(nullptr);
+        localtime_r(&now, &timeinfo);
+        if(timeinfo.tm_year > (1970 - 1900)){ // realtime
+            return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        } else {
+            return uptimeUtcString(); // uptime
+        }
+    }
+
+    String uptimeUtcString() {
+        time_t seconds = millis() / 1000;
+        tm timeinfo;
+        localtime_r(&seconds, &timeinfo);
+        timeinfo.tm_year -= 70; // 1970
+        // Why is the month 0 ??? !!!
+        timeinfo.tm_mday--; // 1st day is 0
+        return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    }
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -155,10 +181,10 @@ struct _Helper {
      */
     template<typename T, typename std::enable_if<!std::is_signed<T>::value, int>::type = 0>
     struct MultiBoolSettings {
-        T settings;
+        T _settings;
 
-        MultiBoolSettings() : settings(-1) { } // Default initializes all to true
-        MultiBoolSettings(T settings) : settings(settings) { } // Initialize with custom settings, 0 is all false
+        MultiBoolSettings() : _settings(-1) { } // Default initializes all to true
+        MultiBoolSettings(T settings) : _settings(settings) { } // Initialize with custom settings, 0 is all false
 
         void change(uint8_t bit, boolean value) {
             if (value)
@@ -167,11 +193,14 @@ struct _Helper {
                 unset(bit);
         }
 
-        void set(uint8_t bit) { bitSet(settings, bit); }
-        void unset(uint8_t bit) { bitClear(settings, bit); }
+        void set(uint8_t bit) { bitSet(_settings, bit); }
+        void unset(uint8_t bit) { bitClear(_settings, bit); }
 
-        boolean isNone() { return settings == 0; }
-        boolean isSet(uint8_t bit) { return bitRead(settings, bit); }
+        T* getAll() { return &_settings; }
+        void setAll(T settings) { _settings = settings; }
+
+        boolean isNone() { return _settings == 0; }
+        boolean isSet(uint8_t bit) { return bitRead(_settings, bit); }
     };
 
 

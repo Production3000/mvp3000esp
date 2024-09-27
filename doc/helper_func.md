@@ -3,21 +3,22 @@
 <!-- vscode-markdown-toc -->
 * [Helper Class](#HelperClass)
 	* [Check String for Integer / Decimal](#CheckStringforIntegerDecimal)
-	* [Millis to Time String](#MillistoTimeString)
+	* [Millis to Time String](#msToUtcStringString)
 	* [Formatted String](#FormattedString)
 	* [String Hashing](#StringHashing)
 	* [Multi-Bool Settings](#Multi-BoolSettings)
+		* [Example](#Example)
 * [LimitTimer](#LimitTimer)
-	* [Constructor and Functions](#ConstructorandFunctions)
-	* [Usage Example](#UsageExample)
+		* [Constructor and Functions](#ConstructorandFunctions)
+		* [Usage Example](#UsageExample)
 * [Linked List](#LinkedList)
 	* [Overview](#Overview)
+	* [Implementation and Examples](#ImplementationandExamples)
 	* [List Templates](#ListTemplates)
 		* [LinkedList3000](#LinkedList3000)
 		* [LinkedList3001](#LinkedList3001)
 		* [LinkedList3010](#LinkedList3010)
 		* [LinkedList3100](#LinkedList3100)
-	* [Implementation](#Implementation)
 * [License](#License)
 
 <!-- vscode-markdown-toc-config
@@ -36,9 +37,9 @@ The Helper class provides a range of functions for checking and converting strin
  *  `bool isValidDecimal(const String& str)`: Check if a string is a valid decimal number (including integer).
  *  `bool isValidInteger(const String& str)`: Check if a string is a valid integer number.
 
-### <a name='MillistoTimeString'></a>Millis to Time String 
+### <a name='msToUtcStringString'></a>Millis to Time String 
 
- *  `String millisToTime(uint64_t total_ms)`: Convert milliseconds to a time string with the format "d hh:mm:ss".
+ *  `String msToUtcString(uint64_t total_ms)`: Convert milliseconds to a time string with the format "d hh:mm:ss".
 
 ### <a name='FormattedString'></a>Formatted String
 
@@ -52,12 +53,26 @@ The Helper class provides a range of functions for checking and converting strin
 
  *  `struct MultiBoolSettings`: Struct to store multiple boolean settings as bits in one variable. Initializes with all true.
 
+#### <a name='Example'></a>Example
+
+    enum Settings: uint8_t {
+        SettingA = 0,
+        SettingB = 1,
+        SettingC = 2,
+    };
+
+    _Helper::MultiBoolSettings<uint8_t> settingList = _Helper::MultiBoolSettings<uint8_t>(0+2);
+
+	settingList.isSet(Settings::SettingA) // true
+	settingList.isSet(Settings::SettingB) // false
+	settingList.isSet(Settings::SettingC) // true
+
 
 ## <a name='LimitTimer'></a>LimitTimer
 
 The LimitTimer class provides a mechanism for creating non-blocking millisecond delays. It allows you to set an interval and optionally limit the number of intervals to run. This is particularly useful in embedded systems programming where blocking delays can disrupt the timing of other tasks.
 
-### <a name='ConstructorandFunctions'></a>Constructor and Functions
+#### <a name='ConstructorandFunctions'></a>Constructor and Functions
 
 ##### Constructor
 
@@ -74,7 +89,7 @@ The LimitTimer class provides a mechanism for creating non-blocking millisecond 
  *  `boolean runningPlusOne()`: Returns true if the PlusOne interval is running.
  *  `void stop()`: Stops the timer, but starts PlusOne.
 
-### <a name='UsageExample'></a>Usage Example
+#### <a name='UsageExample'></a>Usage Example
 
     #include <Arduino.h>
     #include "_Helper_LimitTimer.h"
@@ -109,6 +124,17 @@ In the bare flavour, the list has a maximum size limit set during initialization
  * 3010 extends bare: Bookmarking of list entries for intermittent output.
  * 3100 extends bare: Adaptive growing list size depending on memory.
  * 3xxx: Combinations of the above: 3011, 3101, 3111.
+
+
+### <a name='ImplementationandExamples'></a>Implementation and Examples
+
+Please see the [Examples](/doc/helper_func_examples.md#linked-list-examples).
+
+Any implementation of a LinkedList3xxx:
+
+ 1. Define the DataStruct that holds the data. Add an equals() method if needed.
+ 2. Define a custom LinkedList class/struct that inherits the desired flavour/combination. Create at least an append() method matching the DataStruct.
+ 3. Optionally extend the custom LinkedList class/struct with additional functionality.
 
 
 ### <a name='ListTemplates'></a>List Templates
@@ -175,18 +201,6 @@ Extends LinkedList3000 with additional functionalities: adaptive growing of the 
 * `boolean isAdaptive()`: Returns true if the list is allowed to grow, false if the list is static.
 * `void growMaxSize()`: Grows the maximum size of the linked list if enough memory is available.
 * `void appendDataStruct(T* newDataStruct)`: Appends a node to the linked list. Tries to adapt the list size limit if it is reached.
-
-
-### <a name='Implementation'></a>Implementation
-
-Please see the [Examples](/doc/helper_func_examples.md#linked-list-examples).
-
-Any implementation of a LinkedList3xxx:
-
- 1. Define the DataStruct that holds the data. Add an equals() method if needed.
- 2. Define a custom LinkedList class/struct that inherits the desired flavour/combination. Create at least an append() method matching the DataStruct.
- 3. Optionally extend the custom LinkedList class/struct with additional functionality.
-
 
 
 ## <a name='License'></a>License

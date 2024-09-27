@@ -91,7 +91,7 @@ class Logger {
             CfgLogger::Level level;
             String message;
 
-            DataStructLog(const String& message, CfgLogger::Level level) : time(millis()), message(message), level(level) { }
+            DataStructLog(const String& message, CfgLogger::Level level) : time(_helper.millisSinceEpoch()), message(message), level(level) { }
         };
 
         struct LinkedListLog : LinkedList3010<DataStructLog> {

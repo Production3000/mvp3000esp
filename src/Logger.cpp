@@ -82,7 +82,7 @@ void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatS
 
 void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    String str = _helper.millisToTime(millis());
+    String str = _helper.timeUtcString();
     str += levelToString(messageLevel);
     str += message;
     mvp.net.netWeb.webSockets.printWebSocket(webSocketUri, str);
@@ -90,7 +90,7 @@ void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) 
 
 void Logger::printSerial(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    Serial.print(_helper.millisToTime(millis()));
+    Serial.print(_helper.timeUtcString());
     Serial.print(levelToString(messageLevel));
 
     // Color-code messages for easier readability
@@ -142,7 +142,7 @@ String Logger::templateProcessor(uint8_t var) {
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
             return _helper.printFormatted("%s%s%s %s",
-                _helper.millisToTime(linkedListLog.getBookmarkData()->time).c_str(),
+                _helper.msEpochToUtcString(linkedListLog.getBookmarkData()->time).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),
                 (linkedListLog.moveBookmark(true)) ? "\n%31%" : ""); // Recursive call if there are more entries

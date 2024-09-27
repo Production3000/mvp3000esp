@@ -24,6 +24,12 @@ MVP3000 mvp;
 
 
 void MVP3000::setup() {
+    // This is called when SNTP has set the time
+    settimeofday_cb([&]() {
+        _helper.millisAtTimeinfo = millis();
+        _helper.timeAtTimeinfo = time(nullptr);
+    });
+
     // Start logging first obviously
     logger.setup();
     // Prepare flash to allow loading of saved configs
@@ -134,13 +140,15 @@ String MVP3000::templateProcessor(uint8_t var) {
         case 12:
             return _helper.printFormatted("%d / %d", ESP.getFreeHeap(), _helper.ESPX->getHeapFragmentation());
         case 13:
-            return String(_helper.millisToTime(millis()));
+            return _helper.uptimeUtcString();
         case 14:
             return _helper.ESPX->getResetReason();
         case 15:
             return String(ESP.getCpuFreqMHz());
         case 16:
             return _helper.printFormatted("%d / %d / %d", loopDurationMean_ms, loopDurationMin_ms, loopDurationMax_ms);
+        case 17:
+            return _helper.timeUtcString();
 
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";
