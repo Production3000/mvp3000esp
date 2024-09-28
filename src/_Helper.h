@@ -87,6 +87,11 @@ struct _Helper {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * @brief Convert a millisecond timestamp to a UTC date time in format "YYYY-MM-DD hh:mm:ss".
+     * 
+     * @param millisStamp Millisecond timestamp
+     */
     String msEpochToUtcString(uint64_t millisStamp) {
         time_t seconds = millisStamp / 1000;
         tm timeinfo;
@@ -94,6 +99,12 @@ struct _Helper {
         return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     }
 
+    /**
+     * @brief Convert a millisecond timestamp to a string in format "Dd hh:mm:ss".
+     * 
+     * @param millisStamp Millisecond timestamp
+     * @return String in format "Dd hh:mm:ss"
+     */
     String millisTimeString(uint64_t millisStamp) {
         millisStamp = millisStamp / 1000; // s -> ms
         uint16_t days = millisStamp / 86400; // 24*60*60
@@ -106,22 +117,23 @@ struct _Helper {
     }
 
     /**
-     * @brief Get the local time in UTC string format.
-     *
-     * @return Current time in ISO format "YYYY-MM-DD hh:mm:ss"
+     * @brief Get the device UTC date time if synced, or the device uptime.
      */
-    String timeUtcString() {
-        // This crazy getLocalTime() in ESP time class has a default wait time of 5 seconds!!!
+    String timeString() {
+        // This crazy getLocalTime() in ESP time class has a default wait delay of 5 seconds!!!
         tm timeinfo;
         time_t now = time(nullptr);
         localtime_r(&now, &timeinfo);
-        if(timeinfo.tm_year > (1970 - 1900)){ // realtime
+        if(timeinfo.tm_year > (1970 - 1900)){ // Synced time
             return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         } else {
-            return uptimeString(); // uptime
+            return uptimeString(); // Uptime
         }
     }
 
+    /**
+     * @brief Get the device uptime as "Dd hh:mm:ss"
+     */
     String uptimeString() {
         return millisTimeString(millis());
     }
@@ -190,14 +202,14 @@ struct _Helper {
                 unset(bit);
         }
 
+        boolean isNone() { return _settings == 0; }
+        boolean isSet(uint8_t bit) { return bitRead(_settings, bit); }
+
         void set(uint8_t bit) { bitSet(_settings, bit); }
         void unset(uint8_t bit) { bitClear(_settings, bit); }
 
-        T* getAll() { return &_settings; }
-        void setAll(T settings) { _settings = settings; }
-
-        boolean isNone() { return _settings == 0; }
-        boolean isSet(uint8_t bit) { return bitRead(_settings, bit); }
+        T* getAsT() { return &_settings; }
+        void setAsT(T settings) { _settings = settings; }
     };
 
 

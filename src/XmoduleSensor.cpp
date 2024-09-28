@@ -29,15 +29,13 @@ void XmoduleSensor::setup() {
         return;
     }
 
-    // Read config
+    // Read config and register config
     mvp.config.readCfg(cfgXmoduleSensor);
     mvp.config.readCfg(dataCollection.processing);
+    mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 
     if (cfgXmoduleSensor.reportingInterval > 0)
         sensorTimer.restart(cfgXmoduleSensor.reportingInterval);
-
-    // Register config to make it web-editable
-    mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 
     // Register webpage actions
     mvp.net.netWeb.registerAction("measureOffset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {

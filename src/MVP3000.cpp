@@ -142,7 +142,7 @@ String MVP3000::templateProcessor(uint8_t var) {
         case 16:
             return _helper.printFormatted("%d / %d / %d", loopDurationMean_ms, loopDurationMin_ms, loopDurationMax_ms);
         case 17:
-            return _helper.timeUtcString();
+            return _helper.timeString();
 
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";

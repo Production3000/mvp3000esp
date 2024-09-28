@@ -33,27 +33,35 @@ Please note, the values set by the user and saved to SPIFFS override the initial
 
 The constructor defines the module name and the uri for its web interface. Leave the uri blank to disable the web interface.
 
+    XmoduleExample() : _Xmodule("Xmodule Example", "/example") { };
+
 The custom module needs to overwrite the setup and loop methods:
- *  setup() ... called once during initialization
- *  loop() ... called repeatedly from the main loop of the program
+ *  `void setup() override` : called once during initialization
+ *  `void loop() override` : called repeatedly from the main loop of the program
 
 In order to provide a web interface define:
- *  webPage ... String containing the HTML template with placeholders.
- *  webPageProcessor() ... Function to return the placeholder value.
+ *  `const char* getWebPage() override { return R"..." }` : String containing the HTML template with placeholders.
+ *  `String webPageProcessor(uint8_t var) override` : Function to return the placeholder value.
 
 ### <a name='InSetup'></a>In Setup()
 
     // Read config from SPIFFS
     mvp.config.readCfg(...);
 
-    // Define the module's web interface
-    mvp.net.netWeb.registerPage(...);
-
     // Register config
     mvp.net.netWeb.registerCfg(...);
 
     // Register action
     mvp.net.netWeb.registerAction(...);
+
+    // Register WebSocket
+    mvp.net.netWeb.webSockets.registerWebSocket(...);
+
+    // Register MQTT
+    mvp.net.netMqtt.registerMqtt(...);
+
+    // Register Filler Page, for data
+    mvp.net.netWeb.registerFillerPage(...);
 
 
 ### <a name='Contribute'></a>Contribute

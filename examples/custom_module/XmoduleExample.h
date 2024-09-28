@@ -36,11 +36,11 @@ struct CfgXmoduleExample : public CfgJsonInterface {
         // Initialize settings for load/save to SPIFFS:
         //  name of the variable, to allow input from a web-form
         //  reference pointer to actual variable
-        //  function for range checks
+        //  function to check range and assign value
         addSetting<uint16_t>(
             "editableNumber",
             &editableNumber,
-            [](uint16_t _x) { return (_x < 11111) ? false : true; }
+            [&](const String& s) { uint16_t n = s.toInt(); if (n < 11111) return false; editableNumber = n; return true; }
         );
     }
 
@@ -67,7 +67,7 @@ class XmoduleExample : public _Xmodule {
         String webPageProcessor(uint8_t var) override;
 
         // We cannot override the values, but we can override this function.
-        const char*  getWebPage() override { return R"===(%0%
+        const char* getWebPage() override { return R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3> <ul>

@@ -82,7 +82,7 @@ void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatS
 
 void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    String str = _helper.timeUtcString();
+    String str = _helper.timeString();
     str += levelToString(messageLevel);
     str += message;
     mvp.net.netWeb.webSockets.printWebSocket(webSocketUri, str);
@@ -90,7 +90,7 @@ void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) 
 
 void Logger::printSerial(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    Serial.print(_helper.timeUtcString());
+    Serial.print(_helper.timeString());
     Serial.print(levelToString(messageLevel));
 
     // Color-code messages for easier readability

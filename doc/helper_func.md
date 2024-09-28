@@ -3,11 +3,10 @@
 <!-- vscode-markdown-toc -->
 * [Helper Class](#HelperClass)
 	* [Check String for Integer / Decimal](#CheckStringforIntegerDecimal)
-	* [Millis to Time String](#msToUtcStringString)
+	* [Time Strings](#TimeStrings)
 	* [Formatted String](#FormattedString)
 	* [String Hashing](#StringHashing)
 	* [Multi-Bool Settings](#Multi-BoolSettings)
-		* [Example](#Example)
 * [LimitTimer](#LimitTimer)
 		* [Constructor and Functions](#ConstructorandFunctions)
 		* [Usage Example](#UsageExample)
@@ -37,13 +36,17 @@ The Helper class provides a range of functions for checking and converting strin
  *  `bool isValidDecimal(const String& str)`: Check if a string is a valid decimal number (including integer).
  *  `bool isValidInteger(const String& str)`: Check if a string is a valid integer number.
 
-### <a name='msToUtcStringString'></a>Millis to Time String 
+### <a name='TimeStrings'></a>Time Strings 
 
- *  `String msToUtcString(uint64_t total_ms)`: Convert milliseconds to a time string with the format "d hh:mm:ss".
+ *  `String msEpochToUtcString(uint64_t millisStamp)`: Convert a millisecond timestamp to a UTC date time in format "YYYY-MM-DD hh:mm:ss".
+ *  `String millisTimeString(uint64_t millisStamp)`: Convert a millisecond timestamp to a string in format "Dd hh:mm:ss".
+ *  `String timeString()`: Get the device UTC date time if synced, or the device uptime.
+ *  `String uptimeString()`: Get the device uptime as "Dd hh:mm:ss"
 
 ### <a name='FormattedString'></a>Formatted String
 
- *  `String printFormatted(const String& formatString, ...)`: Return a formatted string, [see](https://en.cppreference.com/w/cpp/io/c/vfprintf).
+ *  `String printFormatted(const String& formatString, va_list& args)`: Return a formatted string, [see](https://en.cppreference.com/w/cpp/io/c/vfprintf).
+ *  `String printFormatted(const String& formatString, ...)`: Overload to 'forward' va_list arguments.
 
 ### <a name='StringHashing'></a>String Hashing
 
@@ -51,9 +54,24 @@ The Helper class provides a range of functions for checking and converting strin
 
 ### <a name='Multi-BoolSettings'></a>Multi-Bool Settings
 
- *  `struct MultiBoolSettings`: Struct to store multiple boolean settings as bits in one variable. Initializes with all true.
+Templated struct to store multiple boolean settings as bits in a single variable. 
 
-#### <a name='Example'></a>Example
+##### Constructor
+
+ *  `struct MultiBoolSettings`: Initializes with all settings true.
+ *  `struct MultiBoolSettings(T settings)`: Initializes with the given setting true. 0 for all false.
+
+##### Methods
+
+ *  `void change(uint8_t bit, boolean value)`: Change given Setting to true/false.
+ *  `boolean isNone()`: Check if none is true.
+ *  `boolean isSet(uint8_t bit)`: Query single setting.
+ *  `void set(uint8_t bit)`: Set single setting true.
+ *  `void unset(uint8_t bit)`: Set single setting false. 
+ *  `T* getAsT()`: Get storage variable.
+ *  `void setAsT(T settings)`: Set storage variable.
+
+##### Example
 
     enum Settings: uint8_t {
         SettingA = 0,
@@ -63,9 +81,12 @@ The Helper class provides a range of functions for checking and converting strin
 
     _Helper::MultiBoolSettings<uint8_t> settingList = _Helper::MultiBoolSettings<uint8_t>(0+2);
 
-	settingList.isSet(Settings::SettingA) // true
-	settingList.isSet(Settings::SettingB) // false
-	settingList.isSet(Settings::SettingC) // true
+	settingList.isSet(Settings::SettingA); // true
+	settingList.isSet(Settings::SettingB); // false
+	settingList.isSet(Settings::SettingC); // true
+
+	settingList.unset(Settings::SettingC);
+	settingList.isSet(Settings::SettingC); // false
 
 
 ## <a name='LimitTimer'></a>LimitTimer
