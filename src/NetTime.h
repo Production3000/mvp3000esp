@@ -32,7 +32,11 @@ class NetTime {
             return timeAtTimeinfo * 1000 + millisStamp - millisAtTimeinfo;
         }
 
+        void cbSyncTime();
+
     private:
+
+        boolean firstLoop = false;
 
         uint64_t millisAtTimeinfo = 0;
         time_t timeAtTimeinfo = 0;
@@ -40,6 +44,7 @@ class NetTime {
         uint64_t millisAtFirstTimeinfo = 0;
         time_t timeAtFirstTimeinfo = 0;
         int32_t totalDiff = 0;
+
 
     public:
 

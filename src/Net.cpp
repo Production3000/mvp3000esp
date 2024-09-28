@@ -60,8 +60,8 @@ void Net::loop() {
     // Unwanted connection states need to be filltered in the respective loop() functions
     netMqtt.loop();
     netCom.loop();
-    // Web interface is async with empty loop()
-    netWeb.loop();
+    // netWeb.loop(); // async
+    netTime.loop();
 
     // Captive portal only for AP
     if (netState == NET_STATE_TYPE::AP) {
@@ -166,8 +166,6 @@ void Net::WiFiGotIP() {
     // Reconnect endlessly to a previously successfully connected network (until reboot)
     clientConnectSuccess = true;
     clientConnectFails = 0;
-    // Query NTP server
-    configTime("GMT", "pool.ntp.org");
 
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Connection established: %s", WiFi.localIP().toString().c_str() );
 }

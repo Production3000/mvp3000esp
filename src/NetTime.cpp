@@ -21,31 +21,60 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-uint32_t sntp_update_delay_MS_rfc_not_less_than_15000 () { return 15*1000; } // 1 hour update interval       60*60             // ESP8266 only?
-// sntp_set_sync_interval(12 * 60 * 60 * 1000UL); // 12 hours ESP32?
+#if defined(ESP8266)
+    uint32_t sntp_update_delay_MS_rfc_not_less_than_15000 () { return 60*60*1000; } // 1 hour update interval
+#else 
+    #include "esp_sntp.h"                        // ESP32 only
+    void cbSyncTime32(struct timeval *tv)  {
+        mvp.net.netTime.cbSyncTime(); // timeval is with microseconds
+    }
+#endif
+
 
 void NetTime::setup() {
 
-    // TODO option to disable NTP after first time set ?
+    // TODO option to disable NTP after first time set ? 
 
+    #if defined(ESP8266)
+        settimeofday_cb(std::bind(&NetTime::cbSyncTime, this));
+    #else 
+        sntp_set_sync_interval(60*60*1000); // 1 hour update interval
+        sntp_set_time_sync_notification_cb(cbSyncTime32);
+    #endif
 
-    // This is called when SNTP has set the time
-    settimeofday_cb([&]() {
-        mvp.logger.write(CfgLogger::Level::INFO, "Time set by SNTP");
-        if (millisAtTimeinfo == 0) {
-            millisAtFirstTimeinfo = millis();
-            timeAtFirstTimeinfo = time(nullptr);
-        } else {
-            // Time was already set, calculate the difference between local clock and NTP. Sadly there is only full seconds.
-            // + means local is ahead
-            int32_t diff = (millis() - millisAtTimeinfo) / 1000 - (time(nullptr) - timeAtTimeinfo);
-            // This means small sync errors can add up to multiple seconds, which is caught here.
-            totalDiff = (millis() - millisAtFirstTimeinfo) / 1000 - (time(nullptr) - timeAtFirstTimeinfo);
-            if (diff != 0) {
-                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Resync local clock to NTP: %s%d s, total since NTP start: %s%d s (+ means local is ahead)", (diff > 0) ? "+" : "", diff, (totalDiff > 0) ? "+" : "", totalDiff);
-            }
+}
+
+void NetTime::loop() {
+    if (!mvp.net.connectedAsClient())
+        return;
+
+    if (!firstLoop) 
+        return;
+    firstLoop = true;
+
+    // Query NTP server
+    #if defined(ESP8266)
+        configTime("GMT", "pool.ntp.org");
+    #else
+        configTzTime("GMT", "pool.ntp.org");
+    #endif
+}
+
+void NetTime::cbSyncTime()  {
+    mvp.logger.write(CfgLogger::Level::INFO, "Time set by SNTP");
+    if (millisAtTimeinfo == 0) {
+        millisAtFirstTimeinfo = millis();
+        timeAtFirstTimeinfo = time(nullptr);
+    } else {
+        // Time was already set, calculate the difference between local clock and NTP. Sadly there is only full seconds.
+        // + means local is ahead
+        int32_t diff = (millis() - millisAtTimeinfo) / 1000 - (time(nullptr) - timeAtTimeinfo);
+        // This means small sync errors can add up to multiple seconds, which is caught here.
+        totalDiff = (millis() - millisAtFirstTimeinfo) / 1000 - (time(nullptr) - timeAtFirstTimeinfo);
+        if (diff != 0) {
+            mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Resync local clock to NTP: %s%d s, total since NTP start: %s%d s (+ means local is ahead)", (diff > 0) ? "+" : "", diff, (totalDiff > 0) ? "+" : "", totalDiff);
         }
-        millisAtTimeinfo = millis();
-        timeAtTimeinfo = time(nullptr);
-    });
+    }
+    millisAtTimeinfo = millis();
+    timeAtTimeinfo = time(nullptr);
 }
