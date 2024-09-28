@@ -97,7 +97,10 @@ class NetWeb {
 
         const char* webPageHead = R"===(<!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Device ID %1%</title>
-<script>function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }</script>
+<script>
+function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }
+function cboxSum(e) { let sum = 0; for (var i = 0; i < e.length; i++) { if (e[i].type == 'checkbox') { sum += (e[i].checked) ? parseInt(e[i].value) : 0; } }; e['setFilter'].value = sum; }
+</script>
 <style>body { font-family: sans-serif; } table { border-collapse: collapse; border-style: hidden; } td { border: 1px solid black; vertical-align:top; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
 <body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%3%</h3>)===";
 

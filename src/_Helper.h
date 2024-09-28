@@ -94,6 +94,17 @@ struct _Helper {
         return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     }
 
+    String millisTimeString(uint64_t millisStamp) {
+        millisStamp = millisStamp / 1000; // s -> ms
+        uint16_t days = millisStamp / 86400; // 24*60*60
+        millisStamp = millisStamp % 86400;
+        uint8_t hours = millisStamp / 3600; // 60*60
+        millisStamp = millisStamp % 3600;
+        uint8_t minutes = millisStamp / 60;
+        uint8_t seconds = millisStamp % 60;
+        return printFormatted("D%d %02d:%02d:%02d", days, hours, minutes, seconds);
+    }
+
     /**
      * @brief Get the local time in UTC string format.
      *
@@ -112,14 +123,7 @@ struct _Helper {
     }
 
     String uptimeString() {
-        uint64_t ms = millis() / 1000; // s -> ms
-        uint16_t days = ms / 86400; // 24*60*60
-        ms = ms % 86400;
-        uint8_t hours = ms / 3600; // 60*60
-        ms = ms % 3600;
-        uint8_t minutes = ms / 60;
-        uint8_t seconds = ms % 60;
-        return printFormatted("D%d %02d:%02d:%02d", days, hours, minutes, seconds);
+        return millisTimeString(millis());
     }
 
 ///////////////////////////////////////////////////////////////////////////////////

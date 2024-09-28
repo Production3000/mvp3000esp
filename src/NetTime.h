@@ -39,7 +39,7 @@ class NetTime {
 
         uint64_t millisAtFirstTimeinfo = 0;
         time_t timeAtFirstTimeinfo = 0;
-        uint32_t totalDiff = 0;
+        int32_t totalDiff = 0;
 
     public:
 

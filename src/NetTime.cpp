@@ -20,16 +20,13 @@ limitations under the License.
 #include "MVP3000.h"
 extern MVP3000 mvp;
 
-const uint32_t asd = 15000;
 
-
+uint32_t sntp_update_delay_MS_rfc_not_less_than_15000 () { return 15*1000; } // 1 hour update interval       60*60             // ESP8266 only?
+// sntp_set_sync_interval(12 * 60 * 60 * 1000UL); // 12 hours ESP32?
 
 void NetTime::setup() {
 
-    // TODO every hour?
-    // no network
-    // first ok then no network?
-
+    // TODO option to disable NTP after first time set ?
 
 
     // This is called when SNTP has set the time
@@ -39,15 +36,14 @@ void NetTime::setup() {
             millisAtFirstTimeinfo = millis();
             timeAtFirstTimeinfo = time(nullptr);
         } else {
-            // Time was already set, calculate the difference between local clock and NTP
-            // Sadly we can only detect full seconds. This means small sync errors can add up to multiple seconds without notice here
-            uint8_t diff = (millis() - millisAtTimeinfo) / 1000 - (time(nullptr) - timeAtTimeinfo); // + means local is ahead
-            if (diff != 0)
-                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Resync local clock to NTP: %s%d s (local was %s)", (diff > 0) ? "+" : "", diff, (diff > 0) ? "ahead" : "behind");
-            // This means small sync errors can add up to multiple seconds without notice here.
-            totalDiff += (millis() - millisAtFirstTimeinfo) / 1000 - (time(nullptr) - timeAtFirstTimeinfo);
-            if (totalDiff != 0)
-                mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Total clock error since NTP start: %s%d s (local was %s)", (totalDiff > 0) ? "+" : "", totalDiff, (totalDiff > 0) ? "ahead" : "behind");
+            // Time was already set, calculate the difference between local clock and NTP. Sadly there is only full seconds.
+            // + means local is ahead
+            int32_t diff = (millis() - millisAtTimeinfo) / 1000 - (time(nullptr) - timeAtTimeinfo);
+            // This means small sync errors can add up to multiple seconds, which is caught here.
+            totalDiff = (millis() - millisAtFirstTimeinfo) / 1000 - (time(nullptr) - timeAtFirstTimeinfo);
+            if (diff != 0) {
+                mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Resync local clock to NTP: %s%d s, total since NTP start: %s%d s (+ means local is ahead)", (diff > 0) ? "+" : "", diff, (totalDiff > 0) ? "+" : "", totalDiff);
+            }
         }
         millisAtTimeinfo = millis();
         timeAtTimeinfo = time(nullptr);
