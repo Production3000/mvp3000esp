@@ -36,7 +36,7 @@ void NetTime::setup() {
     // TODO option to disable NTP after first time set ? 
 
     #if defined(ESP8266)
-        settimeofday_cb(std::bind(&NetTime::cbSyncTime, this));
+        settimeofday_cb([&]() { cbSyncTime(); });
     #else 
         sntp_set_sync_interval(60*60*1000); // 1 hour update interval
         sntp_set_time_sync_notification_cb(cbSyncTime32);
@@ -45,19 +45,27 @@ void NetTime::setup() {
 }
 
 void NetTime::loop() {
+    if (ntpRequested) 
+        return;
+
     if (!mvp.net.connectedAsClient())
         return;
 
-    if (!firstLoop) 
-        return;
-    firstLoop = true;
+    if (waitBeforeRequest == 0) {
+        waitBeforeRequest = millis() + 500; // At least on ESP8266 there is a pause on conenct, so maybe wait a little
+    }
+    
+    if (millis() > waitBeforeRequest) {
+        // Query NTP server
+        ntpRequested = true;
+            
+        #if defined(ESP8266)
+            configTime("GMT", "pool.ntp.org");
+        #else
+            configTzTime("GMT", "pool.ntp.org");
+        #endif
 
-    // Query NTP server
-    #if defined(ESP8266)
-        configTime("GMT", "pool.ntp.org");
-    #else
-        configTzTime("GMT", "pool.ntp.org");
-    #endif
+    }
 }
 
 void NetTime::cbSyncTime()  {

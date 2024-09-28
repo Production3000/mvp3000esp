@@ -36,7 +36,8 @@ class NetTime {
 
     private:
 
-        boolean firstLoop = false;
+        boolean ntpRequested = false;
+        uint64_t waitBeforeRequest = 0;
 
         uint64_t millisAtTimeinfo = 0;
         time_t timeAtTimeinfo = 0;
