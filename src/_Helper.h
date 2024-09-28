@@ -87,14 +87,6 @@ struct _Helper {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-    uint64_t millisAtTimeinfo = 0;
-    time_t timeAtTimeinfo = 0;
-
-    // Convert millis to the NTP synced time
-    uint64_t millisSinceEpoch(uint64_t millisStamp = millis()) {
-        return timeAtTimeinfo * 1000 + millisStamp - millisAtTimeinfo;
-    }
-    
     String msEpochToUtcString(uint64_t millisStamp) {
         time_t seconds = millisStamp / 1000;
         tm timeinfo;
@@ -115,18 +107,19 @@ struct _Helper {
         if(timeinfo.tm_year > (1970 - 1900)){ // realtime
             return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         } else {
-            return uptimeUtcString(); // uptime
+            return uptimeString(); // uptime
         }
     }
 
-    String uptimeUtcString() {
-        time_t seconds = millis() / 1000;
-        tm timeinfo;
-        localtime_r(&seconds, &timeinfo);
-        timeinfo.tm_year -= 70; // 1970
-        // Why is the month 0 ??? !!!
-        timeinfo.tm_mday--; // 1st day is 0
-        return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    String uptimeString() {
+        uint64_t ms = millis() / 1000; // s -> ms
+        uint16_t days = ms / 86400; // 24*60*60
+        ms = ms % 86400;
+        uint8_t hours = ms / 3600; // 60*60
+        ms = ms % 3600;
+        uint8_t minutes = ms / 60;
+        uint8_t seconds = ms % 60;
+        return printFormatted("D%d %02d:%02d:%02d", days, hours, minutes, seconds);
     }
 
 ///////////////////////////////////////////////////////////////////////////////////

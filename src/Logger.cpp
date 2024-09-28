@@ -63,7 +63,7 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
 
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
         if (messageLevel != CfgLogger::Level::DATA) // Omit data
-            linkedListLog.append(messageLevel, message);
+            linkedListLog.append(mvp.net.netTime.millisSinceEpoch(), messageLevel, message);
         
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
         if (messageLevel != CfgLogger::Level::DATA) // Omit data, this is to be handled within the module using a separate websocket
@@ -142,7 +142,7 @@ String Logger::templateProcessor(uint8_t var) {
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
             return _helper.printFormatted("%s%s%s %s",
-                _helper.msEpochToUtcString(linkedListLog.getBookmarkData()->time).c_str(),
+                _helper.msEpochToUtcString(linkedListLog.getBookmarkData()->millisStamp).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),
                 (linkedListLog.moveBookmark(true)) ? "\n%31%" : ""); // Recursive call if there are more entries

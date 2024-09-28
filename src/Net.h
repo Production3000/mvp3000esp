@@ -26,8 +26,9 @@ limitations under the License.
 #include <DNSServer.h> // for captive portal
 
 #include "Config.h"
-#include "NetMqtt.h"
 #include "NetCom.h"
+#include "NetMqtt.h"
+#include "NetTime.h"
 #include "NetWeb.h"
 
 
@@ -71,9 +72,10 @@ class Net {
 
         CfgNet cfgNet;
 
-        NetWeb netWeb;
         NetCom netCom;
         NetMqtt netMqtt;
+        NetTime netTime;
+        NetWeb netWeb;
 
         String apSsid = "device" + String(_helper.ESPX->getChipId());
 

@@ -24,12 +24,6 @@ MVP3000 mvp;
 
 
 void MVP3000::setup() {
-    // This is called when SNTP has set the time
-    settimeofday_cb([&]() {
-        _helper.millisAtTimeinfo = millis();
-        _helper.timeAtTimeinfo = time(nullptr);
-    });
-
     // Start logging first obviously
     logger.setup();
     // Prepare flash to allow loading of saved configs
@@ -140,7 +134,7 @@ String MVP3000::templateProcessor(uint8_t var) {
         case 12:
             return _helper.printFormatted("%d / %d", ESP.getFreeHeap(), _helper.ESPX->getHeapFragmentation());
         case 13:
-            return _helper.uptimeUtcString();
+            return _helper.uptimeString();
         case 14:
             return _helper.ESPX->getResetReason();
         case 15:

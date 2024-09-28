@@ -31,6 +31,7 @@ void Net::setup() {
     netWeb.setup();
     netCom.setup();
     netMqtt.setup();
+    netTime.setup();
 
     // Register config
     netWeb.registerCfg(&cfgNet);
@@ -165,7 +166,6 @@ void Net::WiFiGotIP() {
     // Reconnect endlessly to a previously successfully connected network (until reboot)
     clientConnectSuccess = true;
     clientConnectFails = 0;
-
     // Query NTP server
     configTime("GMT", "pool.ntp.org");
 
