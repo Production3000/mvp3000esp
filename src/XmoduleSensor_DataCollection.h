@@ -128,19 +128,19 @@ struct DataCollection {
     }
 
     template <typename T>
-    void addSampleNEW(T *newSample)  {
+    void addSample(T* newSample)  {
         int32_t* decimalShiftedSample = processing.applySampleToIntExponent(newSample);
-        addSample(decimalShiftedSample);
-        delete[] decimalShiftedSample; // IMPORTANT
-    };
+    //     addSample(decimalShiftedSample);
+    //     delete[] decimalShiftedSample; // IMPORTANT to delete the array                                                 // TODO this is puffy, make it better
+    // };
 
-    void addSample(int32_t *newSample) {
+    // void addSample(int32_t *newSample) {
         // This is the function to do most of the work
 
         // Add new values to existing sums, remember max/min extremes
-        avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value += newSample[i]; } ); // Add new value for later averaging
-        dataMax.loopArray([&](int32_t& value, uint8_t i) { value = max(value, newSample[i]); } ); // All-time max
-        dataMin.loopArray([&](int32_t& value, uint8_t i) { value = min(value, newSample[i]); } ); // All-time min
+        avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value += decimalShiftedSample[i]; } ); // Add new value for later averaging
+        dataMax.loopArray([&](int32_t& value, uint8_t i) { value = max(value, decimalShiftedSample[i]); } ); // All-time max
+        dataMin.loopArray([&](int32_t& value, uint8_t i) { value = min(value, decimalShiftedSample[i]); } ); // All-time min
 
         // Averaging cycle restarted, init
         if (avgCounter == 0) {
@@ -165,6 +165,8 @@ struct DataCollection {
             // Flag new data added for further actions in loop()
             avgCycleFinished = true;
         }
+
+        delete[] decimalShiftedSample; // IMPORTANT to delete the array
     }
 };
 

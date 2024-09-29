@@ -18,6 +18,7 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
+// https://github.com/adafruit/Adafruit_BME680
 #include <Adafruit_BME680.h>
 Adafruit_BME680 bme680; // I2C
 // WARNING: BME680 is blocking when used directly with performReading(), which will delay the loop execution

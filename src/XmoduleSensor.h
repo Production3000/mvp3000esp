@@ -120,7 +120,7 @@ class XmoduleSensor : public _Xmodule {
         template <typename T>
         void addSample(T *newSample)  {
             // This just adds the sample to the data collection for averaging, once count is done further work is done in the Loop()
-            dataCollection.addSampleNEW(newSample);
+            dataCollection.addSample(newSample);
         };
 
         /**
