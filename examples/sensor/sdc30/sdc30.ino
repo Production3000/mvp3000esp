@@ -18,11 +18,14 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// For I2C devices
+// Sensirion I2C SCD30 https://github.com/Sensirion/arduino-i2c-scd30
+// This is a very nice library that returns actually usefull error codes, which we mostly ignore here.
+#include <SensirionI2cScd30.h>
 #include <Wire.h>
-// https://github.com/sparkfun/SparkFun_SCD30_Arduino_Library
-#include <SparkFun_SCD30_Arduino_Library.h>
-SCD30 sdc30;
+SensirionI2cScd30 sdc30;
+uint16_t sdcDataReady = 0;
+int16_t sdcError;
+
 
 const uint8_t valueCount = 3;
 
@@ -48,30 +51,41 @@ void setup() {
     // Init the sensor module and add it to the mvp framework
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
     xmoduleSensor.setSampleToIntExponent(exponent);
-    xmoduleSensor.setSampleAveraging(1); // Initial value to not require the user to set it on the web page
+    xmoduleSensor.setSampleAveraging(1); // The SCD30 has already averaged data ready every 1.5 s. Averaging in the framwwork can be set to a low value.
     mvp.addXmodule(&xmoduleSensor);
 
     // Start mvp framework
     mvp.setup();
+    delay(2000);
 
     // I2C
     Wire.begin();
 
     // Init SCD30 sensor
-    if (sdc30.begin() == false) {
-        mvp.log("Sensor not detected. Please check wiring.");
+    sdc30.begin(Wire, SCD30_I2C_ADDR_61);
+    sdc30.stopPeriodicMeasurement();
+    sdc30.softReset();
+    delay(2000); // This is in the demo code, not sure it is needed and why
+    
+    sdcError = sdc30.startPeriodicMeasurement(0);
+    if (sdcError != NO_ERROR) {
+        static char errorMessage[128];
+        errorToString(sdcError, errorMessage, sizeof errorMessage);
+        mvp.logFormatted("Error trying to execute startPeriodicMeasurement(): %s", errorMessage);
     }
 }
 
 void loop() {
-    //The SCD30 has data ready every two seconds. Averaging in the sensor module can be set to a low value.
-    if (sdc30.dataAvailable()) {
-        data[0] = (float_t)sdc30.getCO2();
-        data[1] = sdc30.getTemperature();
-        data[2] = sdc30.getHumidity();
-
-        // Add data to the sensor module
-        xmoduleSensor.addSample(data);
+    sdc30.getDataReady(sdcDataReady);
+    if (sdcDataReady) {
+        sdcError = sdc30.readMeasurementData(data[0], data[1], data[2]);
+        if (sdcError == NO_ERROR) {
+            // Add data to the sensor module
+            if (data[0] > 1) // First measurement is always 0 CO2, probalby some averaging thing
+                xmoduleSensor.addSample(data);
+        } else {
+            mvp.logFormatted("Error trying to execute readMeasurementData()");
+        }
     }
 
     // Do the work

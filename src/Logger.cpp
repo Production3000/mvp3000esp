@@ -77,6 +77,10 @@ void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatS
     write(messageLevel, _helper.printFormatted(formatString, args));
 }
 
+void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatString, va_list& args) {
+    write(messageLevel, _helper.printFormatted(formatString, args));
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////
 

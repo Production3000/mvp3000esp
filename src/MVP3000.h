@@ -51,6 +51,18 @@ class MVP3000 {
         void log(const String& message) { logger.write(CfgLogger::Level::USER, message); };
 
         /**
+         * @brief Log a formatted message at 'user' level.
+         *
+         * @param message The message to log with arguments following.
+         */
+        void logFormatted(const String& message, ...) {
+            va_list args;
+            va_start(args, message);
+            // NOTE: va_end(args) is called in printFormatted to allow direct return
+            logger.writeFormatted(CfgLogger::Level::USER, message, args);
+        };
+
+        /**
          * @brief Enable or disable ANSI encoding of serial output.
          *
          * @param enable True to enable, false to disable.

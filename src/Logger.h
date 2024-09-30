@@ -70,6 +70,7 @@ class Logger {
          * @param ... The arguments to the format string
          */
         void writeFormatted(CfgLogger::Level messageLevel, const String& formatString, ...);
+        void writeFormatted(CfgLogger::Level messageLevel, const String& formatString, va_list& args);
 
     public:
 

@@ -18,10 +18,10 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// https://github.com/adafruit/Adafruit_BME680
-#include <Adafruit_BME680.h>
-Adafruit_BME680 bme680; // I2C
-// IMPORTANT: bme680.performReading() is blocking, which will impair the performance of the ESP and the framework
+// https://github.com/boschsensortec/Bosch-BME68x-Library
+#include "bme68xLibrary.h"
+Bme68x bme;
+
 
 const uint8_t valueCount = 4;
 
@@ -45,10 +45,13 @@ int8_t exponent[valueCount] = {1, 1, -2, 0};
 XmoduleSensor xmoduleSensor(valueCount);
 
 void setup() {
-    // Init BME680 sensor
-    bme680.begin();
-    // Start the asyncronous reading
-    bme680.beginReading();
+
+    // SPI.begin();
+
+    // // Init BME680 sensor
+    // bme680.begin();
+    // // Start the asyncronous reading
+    // bme680.beginReading();
 
     // Init the sensor module and add it to the mvp framework
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
@@ -61,19 +64,19 @@ void setup() {
 
 void loop() {
     // Check if the sensor read-out is complete
-    if (bme680.remainingReadingMillis() == 0) {
-        bme680.endReading(); // will not block now
+    // if (bme680.remainingReadingMillis() == 0) {
+    //     bme680.endReading(); // will not block now
 
-        data[0] = bme680.temperature;
-        data[1] = bme680.humidity;
-        data[2] = bme680.pressure;
-        data[3] = bme680.gas_resistance;
-        // bme.readAltitude(SEALEVELPRESSURE_HPA) // The absolute altitude is way off, it can be used for relative altitude changes only
-        xmoduleSensor.addSample(data);
+    //     data[0] = bme680.temperature;
+    //     data[1] = bme680.humidity;
+    //     data[2] = bme680.pressure;
+    //     data[3] = bme680.gas_resistance;
+    //     // bme.readAltitude(SEALEVELPRESSURE_HPA) // The absolute altitude is way off, it can be used for relative altitude changes only
+    //     xmoduleSensor.addSample(data);
 
-        // Start the next asyncronous reading
-        bme680.beginReading();
-    }
+    //     // Start the next asyncronous reading
+    //     bme680.beginReading();
+    // }
 
     // Do the work
     mvp.loop();
