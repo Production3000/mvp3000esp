@@ -1,12 +1,24 @@
 name: Compile ESP8266
-on: [push]
+
+
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+      - dev_auto_compile
+
 jobs:
   check-bats-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: arduino/compile-sketches@v1
         with:
-          node-version: '20'
-      - run: npm install -g bats
-      - run: bats -v
+          fqbn: "arduino:avr:uno"
+          libraries: |
+            - name: Servo
+            - name: Stepper
+              version: 1.1.3
+          sketch-paths: |
+            - examples/aaa/
