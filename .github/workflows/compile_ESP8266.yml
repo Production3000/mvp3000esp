@@ -10,7 +10,7 @@ on:
       - dev_auto_compile
 
 jobs:
-  check-bats-version:
+  compile-sketch:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,10 +19,25 @@ jobs:
       - name: Compile ESP8266
         uses: arduino/compile-sketches@v1
         with:
-          fqbn: "arduino:avr:uno"
+          fqbn: "esp8266:esp8266:d1_mini"
+          platforms: |
+            - name: esp8266:esp8266
+              source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+              version: 3.1.2
           libraries: |
             - name: Servo
             - name: Stepper
               version: 1.1.3
+          sketch-paths: |
+            - examples/aaa
+
+      - name: Compile ESP32
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: "esp32:esp32:d1_mini32"
+          platforms: |
+            - name: esp32:esp32
+              source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+              version: 3.0.2
           sketch-paths: |
             - examples/aaa
