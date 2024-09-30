@@ -47,8 +47,8 @@ jobs:
           libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
             - name: ArduinoJson
             - name: ArduinoMqttClient
-            - name: ESP AsyncTCP
-              source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
+            - name: AsyncTCP
+              source-url: https://github.com/me-no-dev/AsyncTCP.git
             - name: ESP Async WebServer
               source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
             - name: MVP3000esp
