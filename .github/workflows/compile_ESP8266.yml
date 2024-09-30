@@ -26,6 +26,8 @@ jobs:
             - name: ArduinoJson
             - name: ArduinoMqttClient
             - name: ESPAsyncWebServer
+            - name: MVP3000esp
+              source-url: https://github.com/Production3000/mvp3000esp.git
           sketch-paths: |
             - examples/basic
 
@@ -43,3 +45,6 @@ jobs:
             - name: ArduinoMqttClient
             - name: ArduinoJson
             - name: ESPAsyncWebServer
+            - name: MVP3000esp
+              source-url: https://github.com/Production3000/mvp3000esp.git
+            
