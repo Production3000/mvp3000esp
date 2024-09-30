@@ -25,32 +25,18 @@ jobs:
           libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
             - name: ArduinoJson
             - name: ArduinoMqttClient
+
+            - name: ESP Async WebServer
+              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
+
             - name: ESP AsyncTCP
               source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
-            - name: ESP Async WebServer
-              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
-            - name: MVP3000esp
-              source-url: https://github.com/Production3000/mvp3000esp.git
-          sketch-paths: |
-            - examples/basic
 
-      - name: Compile ESP32
-        uses: arduino/compile-sketches@v1
-        with:
-          fqbn: "esp32:esp32:d1_mini32"
-          platforms: |
-            - name: esp32:esp32
-              source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
-              version: 3.0.2
-          sketch-paths: |
-            - examples/basic
-          libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
-            - name: ArduinoJson
-            - name: ArduinoMqttClient
-            - name: AsyncTCP
-              source-url: https://github.com/me-no-dev/AsyncTCP.git
-            - name: ESP Async WebServer
-              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
-            
+
+          sketch-paths: |
+            - examples/basic
+            - examples/aaa
+
+
