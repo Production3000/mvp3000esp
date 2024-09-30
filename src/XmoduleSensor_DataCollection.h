@@ -129,13 +129,10 @@ struct DataCollection {
 
     template <typename T>
     void addSample(T* newSample)  {
-        int32_t* decimalShiftedSample = processing.applySampleToIntExponent(newSample);
-    //     addSample(decimalShiftedSample);
-    //     delete[] decimalShiftedSample; // IMPORTANT to delete the array                                                 // TODO this is puffy, make it better
-    // };
-
-    // void addSample(int32_t *newSample) {
         // This is the function to do most of the work
+
+        // Chift decimal point and convert to int
+        int32_t* decimalShiftedSample = processing.applySampleToIntExponent(newSample); // IMPORTANT: delete array after use
 
         // Add new values to existing sums, remember max/min extremes
         avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value += decimalShiftedSample[i]; } ); // Add new value for later averaging
@@ -166,7 +163,7 @@ struct DataCollection {
             avgCycleFinished = true;
         }
 
-        delete[] decimalShiftedSample; // IMPORTANT to delete the array
+        delete[] decimalShiftedSample; // IMPORTANT: delete the array
     }
 };
 

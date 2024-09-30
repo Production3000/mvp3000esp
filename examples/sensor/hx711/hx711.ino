@@ -60,7 +60,7 @@ void loop() {
     // Measurement and Processing
     if (hx711.is_ready()) {
         // Add new data to the sensor module
-        data[0] = hx711.read()
+        data[0] = hx711.read();
         xmoduleSensor.addSample(data);
     }
 

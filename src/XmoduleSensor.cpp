@@ -237,7 +237,7 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
                 dataCollection.processing.offset.values[webPageProcessorCount - 1],
                 dataCollection.processing.scaling.values[webPageProcessorCount - 1],
                 dataCollection.processing.sampleToIntExponent.values[webPageProcessorCount - 1],
-                (webPageProcessorCount++ < cfgXmoduleSensor.dataValueCount) ? "%121%" : "");
+                (webPageProcessorCount < cfgXmoduleSensor.dataValueCount) ? "%121%" : "");
 
         default:
             return "";

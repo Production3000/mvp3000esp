@@ -153,9 +153,10 @@ A bare-bone implementation of the framework looks as follows. Without a [module]
     // User code
 
     void setup() {
-        // User code
         // Xmodule code
         mvp.setup();
+
+        // User code, mvp logging functionality is available
     }
 
     void loop() {

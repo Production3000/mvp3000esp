@@ -23,8 +23,8 @@ const uint8_t valueCount = 2;
 
 // Add a description of the sensor for the web interface
 String infoName = "PULSE";
-String infoDescription = "The PULSE is a dummy sensor for testing. It generates boring random 'data' and 'data-burst' with high peak intensity at random intervals.";
-String sensorTypes[valueCount] = {"PEAK", "TODO"};
+String infoDescription = "The PULSE is a dummy sensor for testing. It generates a) random pulsed 'data' and b) random stepping 'data'.";
+String sensorTypes[valueCount] = {"Pulses", "Steps"};
 String sensorUnits[valueCount] = {"a.u.", "a.u."};
 
 // Local data variable
@@ -35,6 +35,14 @@ XmoduleSensor xmoduleSensor(valueCount);
 
 // IMPORTANT: Do not ever use blocking delay() in the loop as it will impair web performance of the ESP and thus the framework.
 LimitTimer timer(50);
+
+// Pulse/step 'data' values
+int16_t range = 10;
+int16_t pulse = 100;
+int16_t level = 10;
+
+uint8_t counter = 0;
+
 
 void setup() {
     // Optional: Set the sensor descriptions
@@ -53,13 +61,23 @@ void loop() {
 
     // Simulate a real-world sensor delay of 50 ms
     if (timer.justFinished()) {
-        // Create random data: 10..20, -100..-200, 1000..2000, -10..-20, 100..200, -1000..-2000
-        for (uint8_t i = 0; i < valueCount; i++) {
-            int32_t mag = 10 * pow(10, i % 3);
-            data[i] = (i % 2 == 0) ? random(mag, mag * 2) : random(-mag * 2, -mag);
+        // Pulse data
+        if (counter < 10) {
+            data[0] = random(pulse - range, pulse + range);
+        } else {
+            data[0] = random(-range, range);
         }
+        
+        // Step data
+        if (counter == 0) {
+            level = random(-pulse, pulse);
+            mvp.log("New step/pulse");
+        }
+        data[1] = random(level - range, level + range);
 
-        // Add new data. The values are averaged by default, expected output is close to 15, -150, 1500, -15, ...
+        counter++;
+
+        // Add new data. The values are averaged by default, which will arbitrarily overlap with the pulses/steps.
         xmoduleSensor.addSample(data);
     }
 }

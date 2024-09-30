@@ -18,61 +18,60 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// https://github.com/adafruit/Adafruit_BME680
-#include <Adafruit_BME680.h>
-Adafruit_BME680 bme680; // I2C
-// IMPORTANT: bme680.performReading() is blocking, which will impair the performance of the ESP and the framework
+// For I2C devices
+#include <Wire.h>
+// https://github.com/sparkfun/SparkFun_SCD30_Arduino_Library
+#include <SparkFun_SCD30_Arduino_Library.h>
+SCD30 sdc30;
 
-const uint8_t valueCount = 4;
+const uint8_t valueCount = 3;
 
 // Add a description of the sensor for the web interface
-String infoName = "BME680";
-String infoDescription = "Environmental sensor measuring temperature, humidity, pressure, and air resistance.";
-String sensorTypes[valueCount] = {"T", "rH", "P", "Gas R"};
-String sensorUnits[valueCount] = {"0.1 &deg;C", "0.1 &percnt;", "hPa", "Ohm"};
+String infoName = "Sensirion SDC30";
+String infoDescription = "Sensirion SDC30 ambient CO2 sensor module, measures also temperature and relative humidity.";
+String sensorTypes[valueCount] = {"CO2", "T", "rH"};
+String sensorUnits[valueCount] = {"ppm", "0.1 &deg;C", "0.1 &percnt;"};
 
 // Local data variable
 float_t data[valueCount];
 
 // Convert native sensor units to the desired units
+//  ppm
 //  °C -> 0.1 °C
 //  % -> 0.1 %
-//  Pa -> hPa
-//  Ohm
-int8_t exponent[valueCount] = {1, 1, -2, 0};
+int8_t exponent[valueCount] = {0, 1, 1};
 
 // Init sensor module
 XmoduleSensor xmoduleSensor(valueCount);
 
 void setup() {
-    // Init BME680 sensor
-    bme680.begin();
-    // Start the asyncronous reading
-    bme680.beginReading();
-
     // Init the sensor module and add it to the mvp framework
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
     xmoduleSensor.setSampleToIntExponent(exponent);
+    xmoduleSensor.setSampleAveraging(1); // Initial value to not require the user to set it on the web page
     mvp.addXmodule(&xmoduleSensor);
 
     // Start mvp framework
     mvp.setup();
+
+    // I2C
+    Wire.begin();
+
+    // Init SCD30 sensor
+    if (sdc30.begin() == false) {
+        mvp.log("Sensor not detected. Please check wiring.");
+    }
 }
 
 void loop() {
-    // Check if the sensor read-out is complete
-    if (bme680.remainingReadingMillis() == 0) {
-        bme680.endReading(); // will not block now
+    //The SCD30 has data ready every two seconds. Averaging in the sensor module can be set to a low value.
+    if (sdc30.dataAvailable()) {
+        data[0] = (float_t)sdc30.getCO2();
+        data[1] = sdc30.getTemperature();
+        data[2] = sdc30.getHumidity();
 
-        data[0] = bme680.temperature;
-        data[1] = bme680.humidity;
-        data[2] = bme680.pressure;
-        data[3] = bme680.gas_resistance;
-        // bme.readAltitude(SEALEVELPRESSURE_HPA) // The absolute altitude is way off, it can be used for relative altitude changes only
+        // Add data to the sensor module
         xmoduleSensor.addSample(data);
-
-        // Start the next asyncronous reading
-        bme680.beginReading();
     }
 
     // Do the work

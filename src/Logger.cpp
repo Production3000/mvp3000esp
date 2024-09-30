@@ -62,7 +62,7 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
         printSerial(messageLevel, message);
 
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
-        if (messageLevel >= CfgLogger::Level::WARNING) // Only warnings and errors are stored
+        if (messageLevel >= CfgLogger::Level::USER) // USER, WARNING, ERROR are stored
             linkedListLog.append(mvp.net.netTime.millisSinceEpoch(), messageLevel, message);
         
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))

@@ -58,15 +58,17 @@ To use MQTT obviously both the ESP device and the receiving device need to be ab
 The dummy sensor scripts generate 'data'. They can be used for testing evaluation scripts and developing display options.
 
  *  [magnitude.ino](/examples/sensor/magnitude/magnitude.ino): Outputs sensor 'data' with values of vastly different orders of magnitude.
- *  [matrix.ino](/examples/sensor/matrix/matrix.ino): Outputs sensor 'data' of a typical matrix-sensor with somewhat similar values for all pixels. 
- *  [noise.ino](/examples/sensor/noise/noise.ino): The generated 'data' has more or less deterministic noise patterns. It can be used to better understand the noisy output of a real sensor. 
+ *  [matrix.ino](/examples/sensor/matrix/matrix.ino): Outputs sensor 'data' of a typical matrix-sensor with somewhat similar values for all pixels.
+ *  [noise.ino](/examples/sensor/noise/noise.ino): The generated 'data' has more or less deterministic noise patterns. It can be used to better understand the noisy output of a real sensor.
+ *  [pulse.ino](/examples/sensor/pulse/pulse.ino): Flat signal with random 'data' and events: pulses and steps.
 
 ### <a name='RealSensorBreakouts'></a>Real Sensor Breakouts
 
 The real world examples are demonstrating implementations only. Please know what you do before using the data output.
 
- *  [BME680](/examples/sensor/bme680/bme680.ino): Environmental sensor measuring temperature, humidity, pressure, and air resistance.
- *  HX711 load cell amplifier: weight. (planned)
+ *  [BME680](/examples/sensor/bme680/bme680.ino): Environmental sensor measuring temperature, relative humidity, pressure, and air resistance. ([Product link](https://www.bosch-sensortec.com/products/environmental-sensors/gas-sensors/bme680/))
+ *  [HX711](/examples/sensor/hx711/hx711.ino): HX711 load cell amplifier for weight measurements.
+ *  [SDC30](/examples/sensor/sdc30/sdc30.ino): Sensirion SDC30 ambient CO2 sensor module, measures also temperature and relative humidity. ([Product link](https://sensirion.com/products/catalog/SCD30))
 
 
 ## <a name='CustomImplementation'></a>Custom Implementation
@@ -118,6 +120,11 @@ A description of the sensor and its measurement units can be added for identific
  *  Degree ° is non-ASCII, use `&deg;`
  *  The percent symbol % is used as deliminator by the string parser, use `&percnt;`  
 
+Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
+
+    uint8_t sampleAveraging = 10;
+    xmoduleSensor.setSampleAveraging(1);
+
 Shift the decimal point of the sample values by the given exponent, see section [Sample-to-Int Exponent](#sample-to-int-exponent) for more information. Also see the [BME680](/examples/sensor/bme680/bme680.ino) example for a use case.
 
     int8_t exponent[valueCount] = {-1, 2};
@@ -138,6 +145,7 @@ Disable data output serial. This does not affect general logging to serial. This
  *  `void disableMqtt()`: Disable communication and data output via MQTT.
  *  `void disableWebSocket()`: Disable communication and data output via WebSocket.
  *  `void setDataCollectionAdaptive()`: Set data collection to adaptive mode, growing depending on available memory.
+ *  `void setSampleAveraging(uint8_t sampleAveraging)`: Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
  *  `void setSampleToIntExponent(int8_t *sampleToIntExponent)`: Shift the decimal point of the sample values by the given exponent.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits)`: Set the sensor information.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount)`: Set the sensor information for a matrix sensor.

@@ -111,6 +111,7 @@ class XmoduleSensor : public _Xmodule {
             dataCollection.initDataValueSize(valueCount); // Averaging can change during operation
         };
 
+
         /**
          * @brief Add new data to the sensor module.
          *
@@ -122,6 +123,7 @@ class XmoduleSensor : public _Xmodule {
             // This just adds the sample to the data collection for averaging, once count is done further work is done in the Loop()
             dataCollection.addSample(newSample);
         };
+
 
         /**
          * @brief Disable data output serial. This does not affect general logging to serial.
@@ -138,6 +140,7 @@ class XmoduleSensor : public _Xmodule {
          */
         void disableWebSocket() { cfgXmoduleSensor.outputTargets.change(CfgXmoduleSensor::OutputTarget::WEBSOCKET, false); };
 
+
         /**
          * @brief Set data collection to adaptive mode, growing depending on available memory.
          * 
@@ -150,6 +153,13 @@ class XmoduleSensor : public _Xmodule {
         };
 
         /**
+         * @brief Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
+         * 
+         * @param sampleAveraging The number of samples to average before reporting.
+         */
+        void setSampleAveraging(uint8_t sampleAveraging) { cfgXmoduleSensor.sampleAveraging = sampleAveraging; };
+
+        /**
          * @brief Shift the decimal point of the sample values by the given exponent.
          *
          * @param _sampleToIntExponent The exponent array to shift the decimal point of the sample values.
@@ -157,6 +167,7 @@ class XmoduleSensor : public _Xmodule {
         void setSampleToIntExponent(int8_t *sampleToIntExponent) {
             dataCollection.processing.setSampleToIntExponent(sampleToIntExponent);
         };
+
 
         /**
          * @brief Set the sensor information.
