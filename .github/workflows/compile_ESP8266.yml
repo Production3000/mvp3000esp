@@ -26,7 +26,9 @@ jobs:
             - name: ArduinoJson
             - name: ArduinoMqttClient
             - name: ESP AsyncTCP
+              source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
             - name: ESP Async WebServer
+              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
           sketch-paths: |
@@ -43,10 +45,12 @@ jobs:
           sketch-paths: |
             - examples/basic
           libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
-            - name: ArduinoMqttClient
             - name: ArduinoJson
+            - name: ArduinoMqttClient
             - name: ESP AsyncTCP
-            - name: ESPAsyncWebServer
+              source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
+            - name: ESP Async WebServer
+              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
             
