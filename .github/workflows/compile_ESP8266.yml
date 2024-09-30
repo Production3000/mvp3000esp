@@ -8,9 +8,7 @@ on:
       - dev_auto_compile
 
 env:
-  SKETCHES:
-    - examples/basic
-    - examples/custom_module
+  sketch-paths: [examples/basic, examples/custom_module] # Paths to the sketches to compile
 
 jobs:
   compile-sketch:
@@ -40,7 +38,7 @@ jobs:
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
 
-          sketch-paths: ${{ env.SKETCHES }}
+          sketch-paths: ${{ env.sketch-paths }}
 
       - name: Compile ESP32
         uses: arduino/compile-sketches@v1
@@ -50,7 +48,7 @@ jobs:
             - name: esp32:esp32
               source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
               version: 3.0.2
-          sketch-paths: ${{ env.SKETCHES }}
+          sketch-paths: ${{ env.sketch-paths }}
           libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
             - name: ArduinoJson
             - name: ArduinoMqttClient

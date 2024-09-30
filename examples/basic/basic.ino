@@ -20,6 +20,7 @@ extern MVP3000 mvp;
 // IMPORTANT: Do not ever use blocking delay() in the loop as it will impair web performance of the ESP and thus the framework.
 LimitTimer timer(2000);
 
+
 void setup() {
     // Arduino IDE: Disable color-coded output to serial console
     // mvp.logDisableAnsiColor();
