@@ -18,10 +18,12 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// https://github.com/boschsensortec/Bosch-BME68x-Library
-#include "bme68xLibrary.h"
+// BME68x Sensor library https://github.com/boschsensortec/Bosch-BME68x-Library
+#include <Wire.h>
+#include <bme68xLibrary.h>
+#define MEAS_DUR 140
+#define NEW_GAS_MEAS (BME68X_GASM_VALID_MSK | BME68X_HEAT_STAB_MSK | BME68X_NEW_DATA_MSK)
 Bme68x bme;
-
 
 const uint8_t valueCount = 4;
 
@@ -45,14 +47,6 @@ int8_t exponent[valueCount] = {1, 1, -2, 0};
 XmoduleSensor xmoduleSensor(valueCount);
 
 void setup() {
-
-    // SPI.begin();
-
-    // // Init BME680 sensor
-    // bme680.begin();
-    // // Start the asyncronous reading
-    // bme680.beginReading();
-
     // Init the sensor module and add it to the mvp framework
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
     xmoduleSensor.setSampleToIntExponent(exponent);
@@ -60,23 +54,47 @@ void setup() {
 
     // Start mvp framework
     mvp.setup();
+
+    // I2C
+    Wire.begin();
+
+    // Init BME680 sensor
+    bme.begin(BME68X_I2C_ADDR_HIGH, Wire);
+    if(bme.checkStatus())
+        mvp.logFormatted("Sensor %s: %s", (bme.checkStatus() == BME68X_ERROR)? "error" : "warning", bme.statusString().c_str());
+
+    // The following is taken from the example code of the library
+	/* Set the default configuration for temperature, pressure and humidity */
+	bme.setTPH();
+
+	/* Heater temperature in degree Celsius */
+	uint16_t tempProf[10] = { 320, 100, 100, 100, 200, 200, 200, 320, 320, 320 };
+	/* Multiplier to the shared heater duration */
+	uint16_t mulProf[10] = { 5, 2, 10, 30, 5, 5, 5, 5, 5, 5 };
+	/* Shared heating duration in milliseconds */
+	uint16_t sharedHeatrDur = MEAS_DUR - (bme.getMeasDur(BME68X_PARALLEL_MODE) / 1000);
+
+	bme.setHeaterProf(tempProf, mulProf, sharedHeatrDur, 10);
+	bme.setOpMode(BME68X_PARALLEL_MODE);
 }
 
 void loop() {
     // Check if the sensor read-out is complete
-    // if (bme680.remainingReadingMillis() == 0) {
-    //     bme680.endReading(); // will not block now
-
-    //     data[0] = bme680.temperature;
-    //     data[1] = bme680.humidity;
-    //     data[2] = bme680.pressure;
-    //     data[3] = bme680.gas_resistance;
-    //     // bme.readAltitude(SEALEVELPRESSURE_HPA) // The absolute altitude is way off, it can be used for relative altitude changes only
-    //     xmoduleSensor.addSample(data);
-
-    //     // Start the next asyncronous reading
-    //     bme680.beginReading();
-    // }
+	if (bme.fetchData()) {
+        bme68xData bmeData;
+        uint8_t nFieldsLeft = 1;
+        while (nFieldsLeft) {
+			nFieldsLeft = bme.getData(bmeData);
+			if (bmeData.status == NEW_GAS_MEAS) {
+                data[0] = bmeData.temperature;
+                data[1] = bmeData.humidity;
+                data[2] = bmeData.pressure;
+                data[3] = bmeData.gas_resistance;
+                // Add data to the sensor module
+                xmoduleSensor.addSample(data);
+			}
+		}
+	}
 
     // Do the work
     mvp.loop();
