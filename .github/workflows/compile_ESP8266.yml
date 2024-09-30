@@ -22,9 +22,10 @@ jobs:
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
               version: 3.1.2
-          libraries: | # Only those not installed by default
+          libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
             - name: ArduinoJson
             - name: ArduinoMqttClient
+            - name: ESP AsyncTCP
             - name: ESP Async WebServer
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
@@ -41,9 +42,10 @@ jobs:
               version: 3.0.2
           sketch-paths: |
             - examples/basic
-          libraries: | # Only those not installed by default
+          libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
             - name: ArduinoMqttClient
             - name: ArduinoJson
+            - name: ESP AsyncTCP
             - name: ESPAsyncWebServer
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
