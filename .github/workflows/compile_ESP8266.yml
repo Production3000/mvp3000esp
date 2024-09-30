@@ -25,8 +25,9 @@ jobs:
           libraries: | # only those not installed by default
             - name: ArduinoJson
             - name: ArduinoMqttClient
+            - name: ESPAsyncWebServer
           sketch-paths: |
-            - examples/aaa
+            - examples/basic
 
       - name: Compile ESP32
         uses: arduino/compile-sketches@v1
@@ -37,7 +38,8 @@ jobs:
               source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
               version: 3.0.2
           sketch-paths: |
-            - examples/aaa
+            - examples/basic
           libraries: | # only those not installed by default
             - name: ArduinoMqttClient
             - name: ArduinoJson
+            - name: ESPAsyncWebServer
