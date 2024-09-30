@@ -7,6 +7,11 @@ on:
       - dev
       - dev_auto_compile
 
+env:
+  SKETCHES:
+    - examples/basic
+    - examples/custom_module
+
 jobs:
   compile-sketch:
     runs-on: ubuntu-latest
@@ -35,8 +40,26 @@ jobs:
             - name: MVP3000esp
               source-url: https://github.com/Production3000/mvp3000esp.git
 
-          sketch-paths: |
-            - examples/basic
-            - examples/aaa
+          sketch-paths: ${{ env.SKETCHES }}
 
+      - name: Compile ESP32
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: "esp32:esp32:d1_mini32"
+          platforms: |
+            - name: esp32:esp32
+              source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+              version: 3.0.2
+          sketch-paths: ${{ env.SKETCHES }}
+          libraries: | # Only those not installed by default, name needs to be exactly as in library.properties
+            - name: ArduinoJson
+            - name: ArduinoMqttClient
+            - name: ESP Async WebServer
+              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
 
+            - name: AsyncTCP
+              source-url: https://github.com/me-no-dev/AsyncTCP.git
+
+            - name: MVP3000esp
+              source-url: https://github.com/Production3000/mvp3000esp.git
+            
