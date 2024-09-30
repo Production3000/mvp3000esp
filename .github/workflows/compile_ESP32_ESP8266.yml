@@ -3,9 +3,8 @@ name: Compile sketches on ESP32/ESP8266
 on:
   push:
     branches:
-      - master
-      - dev
-      - dev_auto_compile
+      - master # https://github.com/Production3000/mvp3000esp.git
+      - dev # https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip
 
 jobs:
   compile-sketch:
@@ -31,7 +30,7 @@ jobs:
               source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
 
             - name: MVP3000esp
-              source-url: https://github.com/Production3000/mvp3000esp.git
+              source-url: https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip
 
             - name: BME68x Sensor library
             - name: Sensirion I2C SCD30
@@ -55,7 +54,7 @@ jobs:
               source-url: https://github.com/me-no-dev/AsyncTCP.git
 
             - name: MVP3000esp
-              source-url: https://github.com/Production3000/mvp3000esp.git
+              source-url: https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip
 
             - name: BME68x Sensor library
             - name: Sensirion I2C SCD30
