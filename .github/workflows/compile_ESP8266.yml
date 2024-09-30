@@ -22,11 +22,9 @@ jobs:
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
               version: 3.1.2
-          libraries: |
+          libraries: | # only those not installed by default
+            - name: ArduinoJson
             - name: ArduinoMqttClient
-            - name: ESPAsyncWebServer
-            
-            - name: ESP8266WiFi
           sketch-paths: |
             - examples/aaa
 
@@ -40,9 +38,6 @@ jobs:
               version: 3.0.2
           sketch-paths: |
             - examples/aaa
-          libraries: |
+          libraries: | # only those not installed by default
             - name: ArduinoMqttClient
-            - name: ESPAsyncWebServer
-
-            - name: WiFi
-            - name: IPAddress
+            - name: ArduinoJson
