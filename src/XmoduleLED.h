@@ -99,6 +99,10 @@ class XmoduleLED : public _Xmodule {
         // Activate onDemand call
         void demandLedUpdate();
 
+        void adaptiveBrightness(uint8_t analogPin) { this->analogPin = analogPin; }
+        void setBrightness(uint8_t brightness);
+
+
         void setOnce(CallbackSingleSetter setOnceInfo);
         void setOnce(CallbackArraySetter setOnceInfo);
 
@@ -140,9 +144,14 @@ class XmoduleLED : public _Xmodule {
         FxSingleSetter effectSingleSetter;
         FxArraySetter effectArraySetter;
    
+        uint8_t analogPin;
+        int16_t analogReadValue = -1;
+        LimitTimer brightnessTimer = LimitTimer(250);
+        void measureBrightness();
+
+
         LimitTimer fxTimer = LimitTimer(50);
         uint8_t position = 0;
-
 
         void executeEffect();
 

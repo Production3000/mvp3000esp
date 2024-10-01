@@ -32,6 +32,10 @@ void XmoduleLED::setup() {
 }
 
 void XmoduleLED::loop() {
+    if ((analogPin) && (brightnessTimer.justFinished())) {
+        measureBrightness();
+    }
+
     if (xledState == XLED_STATE::ONDEMAND)
         return;
 
@@ -39,6 +43,23 @@ void XmoduleLED::loop() {
         executeEffect();
         position++;
     }
+}
+
+
+void XmoduleLED::measureBrightness() {
+    if (analogReadValue == -1) {
+        analogReadValue = analogRead(analogPin);
+    } else {
+        analogReadValue = (2*analogReadValue + analogRead(analogPin)) / 3;
+    }
+    pixels->setBrightness(analogReadValue*255/1024);
+    pixels->show();
+}
+
+void XmoduleLED::setBrightness(uint8_t brightness) {
+    analogPin = 0;
+    pixels->setBrightness(brightness);
+    pixels->show();
 }
 
 
@@ -74,9 +95,10 @@ void XmoduleLED::setOnce(CallbackArraySetter setOnceInfo) {
 }
 
 
-void XmoduleLED::executeEffect() {
+void XmoduleLED::executeEffect()
+{
     pixels->clear();
-    
+
     if (effectSingleSetter != nullptr) {
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
             pixels->setPixelColor(i, effectSingleSetter(i, position));
@@ -93,9 +115,6 @@ void XmoduleLED::executeEffect() {
     }
     pixels->show();
 }
-
-
-
 
 void XmoduleLED::saveCfgCallback() {
     // mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
