@@ -1,14 +1,10 @@
-name: Compile sketches on ESP32/ESP8266
+name: Compile all sensor sketches on ESP32/ESP8266
+# https://docs.github.com/en/actions/writing-workflows
 
-on:
-  push:
-    branches:
-      - master # https://github.com/Production3000/mvp3000esp.git
-      - dev # https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip
+# Manually run action to test all sensors.
 
-env:
+env: # Any new development needs to be fully tested before merging to main.
   MVP_URL: ${{ github.ref == 'refs/heads/main' && 'https://github.com/Production3000/mvp3000esp.git' || 'https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip' }}
-
 
 jobs:
   compile-sketch:
@@ -24,6 +20,8 @@ jobs:
           platforms: |
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          sketch-paths: |
+            - examples/sensor
           libraries: | # Only those not installed by default. Name needs to be exactly as in library.properties and ESP Aync Web is still wrong. Source url does not auto-install requirements.
             - name: ArduinoJson
             - name: ArduinoMqttClient
@@ -48,6 +46,8 @@ jobs:
           platforms: |
             - name: esp32:esp32
               source-url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          sketch-paths: |
+            - examples/sensor
           libraries: | # Only those not installed by default. Name needs to be exactly as in library.properties and ESP Aync Web is still wrong. Source url does not auto-install requirements.
             - name: ArduinoJson
             - name: ArduinoMqttClient
