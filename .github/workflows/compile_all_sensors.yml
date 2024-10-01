@@ -1,7 +1,10 @@
 name: Compile all sensor sketches on ESP32/ESP8266
 # https://docs.github.com/en/actions/writing-workflows
 
-# Manually run action to test all sensors.
+on:
+  push:
+    branches:
+      - dev_sensors
 
 env: # Any new development needs to be fully tested before merging to main.
   MVP_URL: ${{ github.ref == 'refs/heads/main' && 'https://github.com/Production3000/mvp3000esp.git' || 'https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip' }}
