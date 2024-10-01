@@ -26,16 +26,37 @@ extern MVP3000 mvp;
 #include <Adafruit_NeoPixel.h> // Better, get effects in other way
 
 
+// struct PixelGroup {
+//     PixelGroup(uint8_t ledCount, uint8_t start, uint8_t end) : ledCount(ledCount) {
+//         bitarray[0] = 0;
+//         bitarray[1] = 0;
+//         bitarray[2] = 0;
+//         bitarray[3] = 0;
 
-// char bitarray[4]; // since 4*8 this array actually contains 32 bits
+//         for (uint8_t i = start; i <= end; i++) {
+//             setBit(i, 1);
+//         }
+//     }
 
-// char getBit(int index) {
-//     return (bitarray[index/8] >> 7-(index & 0x7)) & 0x1;
-// }
+//     uint8_t ledCount;
 
-// void setBit(int index, int value) {
-//     bitarray[index/8] = bitarray[index/8] | (value & 0x1) << 7-(index & 0x7);
-// }
+//     char bitarray[4]; // since 4*8 this array actually contains 32 bits
+
+//     char getBit(int index) {
+//         return (bitarray[index/8] >> 7-(index & 0x7)) & 0x1;
+//     }
+
+//     void setBit(int index, int value) {
+//         bitarray[index/8] = bitarray[index/8] | (value & 0x1) << 7-(index & 0x7);
+//     }
+// };
+
+
+typedef std::function<uint32_t(uint8_t)> CallbackSingleSetter;
+typedef std::function<void(uint32_t*)> CallbackArraySetter;
+
+typedef std::function<uint32_t(uint8_t, uint8_t)> FxSingleSetter;
+typedef std::function<void(uint32_t*, uint8_t)> FxArraySetter;
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
@@ -62,9 +83,8 @@ class XmoduleLED : public _Xmodule {
     public:
 
         enum class XLED_STATE: uint8_t {
-            INTEFFECT = 0,
-            EXTEFFECT = 1,
-            ONDEMAND = 2,
+            EFFECT = 0,
+            ONDEMAND = 1,
         };
         XLED_STATE xledState = XLED_STATE::ONDEMAND;
 
@@ -74,29 +94,38 @@ class XmoduleLED : public _Xmodule {
             cfgXmoduleLED.ledCount = ledCount;
         }
 
-
-
         void setup() override;
         void loop() override;
 
-        void setLed();
-        void externalEffect();
+        // Activate onDemand call
+        void demandLedUpdate();
 
-        std::function<uint32_t(uint8_t)> onDemandSetter;
-        std::function<uint32_t(uint8_t, uint8_t)> effectCallback;
-        boolean effect = false;
+        void setOnce(CallbackSingleSetter setOnceInfo);
+        void setOnce(CallbackArraySetter setOnceInfo);
 
-        void setOnDemandSetter(std::function<uint32_t(uint8_t)> onDemandSetter) {
+        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { _setOnDemandSetter(onDemandSingleSetter, nullptr); }
+        void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { _setOnDemandSetter(nullptr, onDemandArraySetter); }
+        void _setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter = nullptr, CallbackArraySetter onDemandArraySetter = nullptr) {
             xledState = XLED_STATE::ONDEMAND;
-            this->onDemandSetter = onDemandSetter;
+            this->onDemandSingleSetter = onDemandSingleSetter;
+            this->onDemandArraySetter = onDemandArraySetter;
         }
-        void setEffectCallback(std::function<uint32_t(uint8_t, uint8_t)> effectCallback) {
-            xledState = XLED_STATE::EXTEFFECT;
-            this->effectCallback = effectCallback;
+
+        void setEffectSetter(FxSingleSetter effectCallback) { _setEffectSetter(effectCallback, nullptr); }
+        void setEffectSetter(FxArraySetter effectCallback) { _setEffectSetter(nullptr, effectCallback); }
+        void _setEffectSetter(FxSingleSetter effectSingleSetter = nullptr, FxArraySetter effectArraySetter = nullptr) {
+            xledState = XLED_STATE::EFFECT;
+            this->effectSingleSetter = effectSingleSetter;
+            this->effectArraySetter = effectArraySetter;
         }
+
         void setEffect(uint8_t effect) {
-            xledState = XLED_STATE::INTEFFECT;
-            this->effect = true;
+            xledState = XLED_STATE::EFFECT;
+            effectSingleSetter = nullptr;
+            if (effect == 1) 
+                effectArraySetter = std::bind(&XmoduleLED::intEffect1, this, std::placeholders::_1, std::placeholders::_2);
+            else
+                effectArraySetter = std::bind(&XmoduleLED::intEffect2, this, std::placeholders::_1, std::placeholders::_2);
         }
 
     private:
@@ -105,9 +134,23 @@ class XmoduleLED : public _Xmodule {
 
         Adafruit_NeoPixel* pixels;
 
-        void runFx();
-        uint8_t position = 0;
+        // PixelGroup* pixelGroup;
+
+        CallbackSingleSetter onDemandSingleSetter;
+        CallbackArraySetter onDemandArraySetter;
+        
+        FxSingleSetter effectSingleSetter;
+        FxArraySetter effectArraySetter;
+   
         LimitTimer fxTimer = LimitTimer(50);
+        uint8_t position = 0;
+
+
+        void intEffect1(uint32_t* ledArray, uint8_t position);
+        void intEffect2(uint32_t* ledArray, uint8_t position);
+
+
+        void executeEffect();
 
         void saveCfgCallback();
 
