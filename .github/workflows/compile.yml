@@ -38,8 +38,8 @@ jobs:
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
           sketch-paths: ${{ env.SKETCHES }}
-          libraries:  | # and ESP8266 specific libraries
-            ${{ env.LIBRARIES }}
+          libraries: ${{ env.LIBRARIES }} | # and ESP8266 specific libraries
+            
             - name: ESP AsyncTCP
               source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
 
