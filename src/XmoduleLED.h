@@ -23,7 +23,9 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-#include <Adafruit_NeoPixel.h> // Better, get effects in other way
+#include <Adafruit_NeoPixel.h>
+
+#include "XmoduleLED_effects.h"
 
 
 // struct PixelGroup {
@@ -53,10 +55,7 @@ extern MVP3000 mvp;
 
 
 typedef std::function<uint32_t(uint8_t)> CallbackSingleSetter;
-typedef std::function<void(uint32_t*)> CallbackArraySetter;
-
-typedef std::function<uint32_t(uint8_t, uint8_t)> FxSingleSetter;
-typedef std::function<void(uint32_t*, uint8_t)> FxArraySetter;
+typedef std::function<void(uint32_t*, uint8_t)> CallbackArraySetter;
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
@@ -122,10 +121,7 @@ class XmoduleLED : public _Xmodule {
         void setEffect(uint8_t effect) {
             xledState = XLED_STATE::EFFECT;
             effectSingleSetter = nullptr;
-            if (effect == 1) 
-                effectArraySetter = std::bind(&XmoduleLED::intEffect1, this, std::placeholders::_1, std::placeholders::_2);
-            else
-                effectArraySetter = std::bind(&XmoduleLED::intEffect2, this, std::placeholders::_1, std::placeholders::_2);
+            effectArraySetter = xledFx.getEffect(effect);
         }
 
     private:
@@ -133,6 +129,8 @@ class XmoduleLED : public _Xmodule {
         CfgXmoduleLED cfgXmoduleLED;
 
         Adafruit_NeoPixel* pixels;
+
+        XledFx xledFx;
 
         // PixelGroup* pixelGroup;
 
@@ -144,10 +142,6 @@ class XmoduleLED : public _Xmodule {
    
         LimitTimer fxTimer = LimitTimer(50);
         uint8_t position = 0;
-
-
-        void intEffect1(uint32_t* ledArray, uint8_t position);
-        void intEffect2(uint32_t* ledArray, uint8_t position);
 
 
         void executeEffect();

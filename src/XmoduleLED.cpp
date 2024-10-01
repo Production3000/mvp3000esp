@@ -59,26 +59,24 @@ void XmoduleLED::setOnce(CallbackSingleSetter setOnceInfo) {
 }
 
 void XmoduleLED::setOnce(CallbackArraySetter setOnceInfo) {
+    pixels->clear();
 
     uint32_t* ledArray = new uint32_t[cfgXmoduleLED.ledCount]; // IMPORTANT: Free the memory
     memset(ledArray, 0, cfgXmoduleLED.ledCount * sizeof(uint32_t)); // set zero
-    setOnceInfo(ledArray);
-
-    pixels->clear();
+    setOnceInfo(ledArray, cfgXmoduleLED.ledCount);
 
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
         pixels->setPixelColor(i, ledArray[i]);
     }
+    delete[] ledArray; // IMPORTANT: Free the memory
 
     pixels->show();
-
-    delete[] ledArray; // IMPORTANT: Free the memory
 }
-
 
 
 void XmoduleLED::executeEffect() {
     pixels->clear();
+    
     if (effectSingleSetter != nullptr) {
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
             pixels->setPixelColor(i, effectSingleSetter(i, position));
@@ -86,44 +84,16 @@ void XmoduleLED::executeEffect() {
     } else {
         uint32_t* ledArray = new uint32_t[cfgXmoduleLED.ledCount]; // IMPORTANT: Free the memory
         memset(ledArray, 0, cfgXmoduleLED.ledCount * sizeof(uint32_t)); // set zero
-        effectArraySetter(ledArray, position);
+        effectArraySetter(ledArray, cfgXmoduleLED.ledCount, position);
 
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
             pixels->setPixelColor(i, ledArray[i]);
         }
-
         delete[] ledArray; // IMPORTANT: Free the memory
     }
     pixels->show();
 }
 
-
-
-void XmoduleLED::intEffect1(uint32_t* ledArray, uint8_t position) {
-    uint8_t steps = 255;
-
-    float_t phase = TWO_PI * position / steps;
-    uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
-    uint8_t g = ( sin(phase + TWO_PI/3) + 1 ) * 255 / 2;
-    uint8_t b = ( sin(phase + TWO_PI/3*2) + 1 ) * 255 / 2;
-
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(r, g, b);
-    }
-}
-
-void XmoduleLED::intEffect2(uint32_t* ledArray, uint8_t position) {
-    uint8_t steps = 255;
-
-    float_t phase = TWO_PI * position / steps;
-    uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
-    uint8_t g = 0;
-    uint8_t b = 0;
-
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(r, g, b);
-    }
-}
 
 
 

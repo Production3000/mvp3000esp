@@ -17,17 +17,14 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// LED PIN
+#include "XmoduleLED.h"
 #define LED_PIN D8
 // #define LED_PIN D6 // 'upper' J4 on the PCB
 // #define LED_PIN D5 // 'lower' J5 on the PCB
-
-// Declare our NeoPixel strip
-
 uint8_t ledCount = 12;
 
-#include "XmoduleLED.h"
 XmoduleLED xmoduleLED(LED_PIN, ledCount);
+
 
 LimitTimer timer(50);
 
@@ -38,27 +35,38 @@ void setup() {
     // Start mvp framework
     mvp.setup();
 
-    xmoduleLED.setOnce(std::bind(&onceSingleSetter, std::placeholders::_1));
-    xmoduleLED.setOnDemandSetter(std::bind(&onDemandArraySetter, std::placeholders::_1));
-    
-    delay(1000);
+    xmoduleLED.setOnce(std::bind(&arraySetter, std::placeholders::_1, std::placeholders::_2));
+    xmoduleLED.setOnDemandSetter(std::bind(&singleSetter, std::placeholders::_1));
+
+    // Delay to see the initial LED colors
+    delay(5000); 
 }
 
 void loop() {
-    // For the onDemand option, eg data changes the LED color
+    // Change LED to based on status/data/events/...
     if (timer.justFinished())
         xmoduleLED.demandLedUpdate();
 
     mvp.loop();
 }
 
+// Callbacks
 
-void onDemandArraySetter(uint32_t* ledArray) {
+void arraySetter(uint32_t* ledArray, uint8_t ledCount) {
     for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(random(255), random(255), random(255));
+        ledArray[i] = Adafruit_NeoPixel::Color(127, i * (255/ledCount - 1), 255 - (i * (255/ledCount - 1)));
     }
 }
 
-uint32_t onceSingleSetter(uint8_t led) {
-    return Adafruit_NeoPixel::Color(0, 255, 0);
+uint32_t singleSetter(uint8_t led) {
+    switch ((millis() / 1000) % 3) {
+        case 0:
+            return Adafruit_NeoPixel::Color(255, 0, 0);
+        case 1:
+            return Adafruit_NeoPixel::Color(0, 255, 0);
+        case 2:
+            return Adafruit_NeoPixel::Color(0, 0, 255);
+        default:
+            return 0;
+    }
 }

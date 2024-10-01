@@ -17,19 +17,14 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-// LED PIN
+#include "XmoduleLED.h"
 #define LED_PIN D8
 // #define LED_PIN D6 // 'upper' J4 on the PCB
 // #define LED_PIN D5 // 'lower' J5 on the PCB
-
-// Declare our NeoPixel strip
-
 uint8_t ledCount = 12;
 
-#include "XmoduleLED.h"
 XmoduleLED xmoduleLED(LED_PIN, ledCount);
 
-LimitTimer timer(50);
 
 void setup() {
     // Add the custom module to the mvp framework
@@ -38,10 +33,8 @@ void setup() {
     // Start mvp framework
     mvp.setup();
 
-    xmoduleLED.setEffect(1);
-    // xmoduleLED.setEffect(2);
-    // xmoduleLED.setOnce(std::bind(&onceArraySetter, std::placeholders::_1));
-    // xmoduleLED.setOnce(std::bind(&onceSingleSetter, std::placeholders::_1));
+    // xmoduleLED.setEffect(1);
+    xmoduleLED.setEffect(2);
     // xmoduleLED.setEffectSetter(std::bind(&effectSingleSetter, std::placeholders::_1, std::placeholders::_2));
     // xmoduleLED.setEffectSetter(std::bind(&effectArraySetter, std::placeholders::_1, std::placeholders::_2));
 }
@@ -51,19 +44,9 @@ void loop() {
 }
 
 
-void onceArraySetter(uint32_t* ledArray) {
+void effectArraySetter(uint32_t* ledArray, uint8_t ledCount, uint8_t position) {
     for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(255, 0, 0);
-    }
-}
-
-uint32_t onceSingleSetter(uint8_t led) {
-    return Adafruit_NeoPixel::Color(0, 255, 0);
-}
-
-void effectArraySetter(uint32_t* ledArray, uint8_t position) {
-    for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(position, 255-position, 127);
+        ledArray[i] = Adafruit_NeoPixel::Color(random(255), random(255), random(255));
     }
 }
 
