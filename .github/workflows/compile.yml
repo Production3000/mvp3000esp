@@ -21,7 +21,7 @@ env: # Any new development is fully tested before merging to main.
     - name: ESP Async WebServer
       source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
     - name: MVP3000esp
-      source-url: $MVPURL
+      source-url: ${{ github.ref == 'refs/heads/main' && 'https://github.com/Production3000/mvp3000esp.git' || 'https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip' }}
 
 jobs:
   compile-sketch:
@@ -39,7 +39,7 @@ jobs:
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
           sketch-paths: ${{ env.SKETCHES }}
           libraries: | # and ESP8266 specific libraries
-            echo ${{ env.LIBRARIES }}
+            ${{ env.LIBRARIES }}
             - name: ESP AsyncTCP
               source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
 
