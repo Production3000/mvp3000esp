@@ -1,21 +1,18 @@
-name: Compile main sketches on ESP32/ESP8266
+name: Compile sensor sketches on ESP32/ESP8266
 # https://docs.github.com/en/actions/writing-workflows
 
-# Main action to be run every time on push to dev or main branch.
-# Compile the main example sketches but omit (hardware) specific module examples.
+# Action to be run on sensor module development.
+# Compile sensor example sketches including real hardware sensors.
 # Liraries are always latest version. This may break things remotely.
 
 on:
   push:
     branches: # Repository is installed as library during the job. The correct branch is selected in env.LIBRARIES.
-      - master # using: https://github.com/Production3000/mvp3000esp.git
-      - dev # using: https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip
+      - dev_sensor
 
-env: 
+env: # Any new development needs to be fully tested before merging to main.
   SKETCHES: |
-    - examples/basic
-    - examples/custom_module
-    - examples/sensor/matrix
+    - examples/sensor
   LIBRARIES: | # Only those not installed by default. Name needs to be exactly as in library.properties and ESP Aync Web is still wrong. Source url does not auto-install requirements.
     - name: ArduinoJson
     - name: ArduinoMqttClient
@@ -23,6 +20,11 @@ env:
       source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
     - name: MVP3000esp
       source-url: ${{ github.ref == 'refs/heads/main' && 'https://github.com/Production3000/mvp3000esp.git' || 'https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip' }}
+
+    - name: BME68x Sensor library
+    - name: Sensirion I2C SCD30
+    - name: HX711 Arduino Library
+      source-url: https://github.com/bogde/HX711.git
 
 jobs:
   compile-sketch:
