@@ -21,7 +21,7 @@ env: # Any new development is fully tested before merging to main.
     - name: ESP Async WebServer
       source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
     - name: MVP3000esp
-      source-url: ${{ env.MVP_URL }}
+      source-url: $MVP_URL
 
 jobs:
   compile-sketch:
