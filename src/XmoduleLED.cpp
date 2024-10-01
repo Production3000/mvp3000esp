@@ -1,13 +1,8 @@
 #include "XmoduleLED.h"
 
 void XmoduleLED::setup() {
-    // Read config
+    // Read and register config
     mvp.config.readCfg(cfgXmoduleLED);
-
-    // Define the module's web interface
-    mvp.net.netWeb.registerPage(uri, webPage, std::bind(&XmoduleLED::webPageProcessor, this, std::placeholders::_1));
-
-    // Register config
     mvp.net.netWeb.registerCfg(&cfgXmoduleLED, std::bind(&XmoduleLED::saveCfgCallback, this));
 
     ws2812fx = new WS2812FX(led_count, led_pin, NEO_GRB + NEO_KHZ800);
