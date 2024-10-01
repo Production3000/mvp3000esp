@@ -42,17 +42,11 @@ void setup() {
     // xmoduleLED.setEffect(2);
     // xmoduleLED.setOnce(std::bind(&onceArraySetter, std::placeholders::_1));
     // xmoduleLED.setOnce(std::bind(&onceSingleSetter, std::placeholders::_1));
-    // xmoduleLED.setOnDemandSetter(std::bind(&onDemandSingleSetter, std::placeholders::_1));
-    // xmoduleLED.setOnDemandSetter(std::bind(&onDemandArraySetter, std::placeholders::_1));
     // xmoduleLED.setEffectSetter(std::bind(&effectSingleSetter, std::placeholders::_1, std::placeholders::_2));
     // xmoduleLED.setEffectSetter(std::bind(&effectArraySetter, std::placeholders::_1, std::placeholders::_2));
 }
 
 void loop() {
-    // For the onDemand option, eg data changes the LED color
-    // if (timer.justFinished())
-    //     xmoduleLED.demandLedUpdate();
-
     mvp.loop();
 }
 
@@ -65,16 +59,6 @@ void onceArraySetter(uint32_t* ledArray) {
 
 uint32_t onceSingleSetter(uint8_t led) {
     return Adafruit_NeoPixel::Color(0, 255, 0);
-}
-
-void onDemandArraySetter(uint32_t* ledArray) {
-    for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(random(255), random(255), random(255));
-    }
-}
-
-uint32_t onDemandSingleSetter(uint8_t led) {
-    return Adafruit_NeoPixel::Color(random(255), random(255), random(255));
 }
 
 void effectArraySetter(uint32_t* ledArray, uint8_t position) {
