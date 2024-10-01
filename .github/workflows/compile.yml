@@ -15,6 +15,13 @@ env: # Any new development is fully tested before merging to main.
   SKETCHES: |
     - examples/basic
     - examples/custom_module
+  LIBRARIES: | # Only those not installed by default. Name needs to be exactly as in library.properties and ESP Aync Web is still wrong. Source url does not auto-install requirements.
+    - name: ArduinoJson
+    - name: ArduinoMqttClient
+    - name: ESP Async WebServer
+      source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
+    - name: MVP3000esp
+      source-url: ${{ env.MVP_URL }}
 
 jobs:
   compile-sketch:
@@ -31,15 +38,10 @@ jobs:
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
           sketch-paths: ${{ env.SKETCHES }}
-          libraries: | # Only those not installed by default. Name needs to be exactly as in library.properties and ESP Aync Web is still wrong. Source url does not auto-install requirements.
-            - name: ArduinoJson
-            - name: ArduinoMqttClient
-
-            - name: ESP Async WebServer
-              source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
+          libraries:  | # and ESP8266 specific libraries
+            ${{ env.LIBRARIES }}
             - name: ESP AsyncTCP
               source-url: https://github.com/me-no-dev/ESPAsyncTCP.git
 
-            - name: MVP3000esp
-              source-url: ${{ env.MVP_URL }}
+
 
