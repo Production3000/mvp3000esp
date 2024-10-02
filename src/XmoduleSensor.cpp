@@ -200,7 +200,14 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
         clearTare();
         mvp.logger.write(CfgLogger::Level::CONTROL, "Clear Tare.");
     } else {
-        mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown command '%s' received.", data);
+        // Check if there is a custom callback defined and try whether it accepts the command
+        boolean success = false;
+        if (networkCtrlUserCallback != nullptr) {
+            success = networkCtrlUserCallback(data);
+        }
+        if (!success) {
+            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown command '%s' received.", data);
+        }
     }
 }
 

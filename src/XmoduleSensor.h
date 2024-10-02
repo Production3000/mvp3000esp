@@ -194,6 +194,13 @@ class XmoduleSensor : public _Xmodule {
             cfgXmoduleSensor.setSensorInfo(infoName, infoDescription, pixelType, pixelUnit, matrixColumnCount);
         };
 
+        /**
+         * @brief Set a custom network control callback function to receive control commands from MQTT and WebSocket
+         *
+         * @param callback The callback function.
+         */
+        void setNetworkCtrlCallback(std::function<boolean(char*)> callback) { networkCtrlUserCallback = callback; };
+
     public:
 
         CfgXmoduleSensor cfgXmoduleSensor;
@@ -225,6 +232,7 @@ class XmoduleSensor : public _Xmodule {
 
         void measureOffsetScalingFinish();
 
+        std::function<boolean(char*)> networkCtrlUserCallback = nullptr;
         void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
 
         String webPageProcessor(uint8_t var);

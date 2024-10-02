@@ -149,7 +149,7 @@ Disable data output serial. This does not affect general logging to serial. This
  *  `void setSampleToIntExponent(int8_t *sampleToIntExponent)`: Shift the decimal point of the sample values by the given exponent.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits)`: Set the sensor information.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount)`: Set the sensor information for a matrix sensor.
-
+ *  `void setNetworkCtrlCallback(std::function<boolean(char*)> callback)`: Set a custom network control callback function to receive control commands from MQTT and WebSocket.
 
 ## <a name='DataHandlingDetails'></a>Data Handling Details
 

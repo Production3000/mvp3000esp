@@ -19,13 +19,9 @@ limitations under the License.
 extern MVP3000 mvp;
 
 // Sensirion I2C SCD30 https://github.com/Sensirion/arduino-i2c-scd30
-// This is a very nice library that returns actually usefull error codes, which we mostly ignore here.
 #include <SensirionI2cScd30.h>
 #include <Wire.h>
 SensirionI2cScd30 sdc30;
-uint16_t sdcDataReady = 0;
-int16_t sdcError;
-
 
 const uint8_t valueCount = 3;
 
@@ -54,9 +50,10 @@ void setup() {
     xmoduleSensor.setSampleToIntExponent(exponent);
     mvp.addXmodule(&xmoduleSensor);
 
+    xmoduleSensor.setNetworkCtrlCallback(networkCtrlCallback);
+
     // Start mvp framework
     mvp.setup();
-    delay(2000);
 
     // I2C
     Wire.begin();
@@ -64,24 +61,39 @@ void setup() {
     // Init SCD30 sensor
     sdc30.begin(Wire, SCD30_I2C_ADDR_61);
     sdc30.stopPeriodicMeasurement();
-    sdc30.softReset();
-    delay(2000); // This is in the demo code, not sure it is needed and why
-    
-    sdcError = sdc30.startPeriodicMeasurement(0);
+    int16_t sdcError = sdc30.softReset(); // Blocking 2000 ms
     if (sdcError != NO_ERROR) {
         static char errorMessage[128];
-        errorToString(sdcError, errorMessage, sizeof errorMessage);
-        mvp.logFormatted("Error trying to execute startPeriodicMeasurement(): %s", errorMessage);
+        errorToString(sdcError, errorMessage, sizeof errorMessage); // not sure if this works for the combined error codes
+        mvp.logFormatted("Error starting sensor: %s", errorMessage);
     }
+
+    // Get and print sensor information
+    uint8_t major = 0;
+    uint8_t minor = 0;
+    sdc30.readFirmwareVersion(major, minor);
+    uint16_t altitude;
+    sdc30.getAltitudeCompensation(altitude);
+    uint16_t temperatureOffset;
+    sdc30.getTemperatureOffset(temperatureOffset);
+    uint16_t co2RefConcentration;
+    sdc30.getForceRecalibrationStatus(co2RefConcentration);
+    uint16_t isActive;
+    sdc30.getAutoCalibrationStatus(isActive);
+    mvp.logFormatted("SDC30: Firmware version %d.%d, altitude %d m, temp offset %d C, sensor CO2 ambient %d ppm, auto calibration %s", major, minor, altitude, temperatureOffset, co2RefConcentration, (isActive) ? "active" : "disabled");
+
+    // Start periodic measurement
+    sdc30.startPeriodicMeasurement(0);
 }
 
 void loop() {
+    uint16_t sdcDataReady;
     sdc30.getDataReady(sdcDataReady);
     if (sdcDataReady) {
-        sdcError = sdc30.readMeasurementData(data[0], data[1], data[2]);
+        int16_t sdcError = sdc30.readMeasurementData(data[0], data[1], data[2]);
         if (sdcError == NO_ERROR) {
             // Add data to the sensor module
-            if (data[0] > 1) // First measurement is always 0 CO2, probalby some averaging thing
+            if (data[0] > 1) // First CO2 measurement is always 0, probably some running median thing
                 xmoduleSensor.addSample(data);
         } else {
             mvp.logFormatted("Error trying to execute readMeasurementData()");
@@ -90,4 +102,33 @@ void loop() {
 
     // Do the work
     mvp.loop();
+}
+
+
+boolean networkCtrlCallback(char* data) {
+    if (strcmp(data, "CALIBRATE") == 0) {
+        calibrateSensor();
+        return true;
+    }
+    return false;
+}
+
+void calibrateSensor() {
+    // Following the forced re-calibration (FRC) as described in the datasheet white paper.
+    mvp.log("The device needs to be OPERATING at FRESH air for AT LEAST 5 minutes before calibration!");
+
+    // Datasheet states 2 minutes. 
+    if (millis() < 5*60*1000) {
+        mvp.log("Calibration failed. Uptime less than 5 minutes.");
+        return;
+    }
+
+    // Set calibration, this offsets essentially the current measurement
+    sdc30.forceRecalibration(420);
+
+    mvp.log("Calibration successfull. Restarting measurements");
+    // Restart sensor
+    sdc30.stopPeriodicMeasurement();
+    sdc30.softReset(); // Blocking 2000 ms
+    sdc30.startPeriodicMeasurement(0);
 }
