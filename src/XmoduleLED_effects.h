@@ -21,46 +21,43 @@ limitations under the License.
 
 #include <Adafruit_NeoPixel.h>
 
-typedef std::function<uint32_t(uint8_t, uint8_t)> FxSingleSetter;
-typedef std::function<void(uint32_t*, uint8_t, uint8_t)> FxArraySetter;
+
+typedef std::function<uint32_t(uint8_t, uint16_t)> FxSingleSetter; // Each LED with own color
+typedef std::function<uint32_t(uint16_t)> FxSyncSetter; // All LED in syncronuous mode
+
+struct FxContainer {
+    FxSingleSetter singleSetter;
+    FxSyncSetter syncSetter;
+    uint16_t timingPosition = 0;
+    uint16_t duration_ms;
+    boolean onlyOnNewCycle;
+
+    FxContainer() {}
+    FxContainer(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle = false) : singleSetter(singleSetter), syncSetter(syncSetter), duration_ms(duration_ms), onlyOnNewCycle(onlyOnNewCycle) {}
+
+    void settt(FxSyncSetter syncSetter) {}
+};
 
 
 struct XledFx {
 
-    FxArraySetter getEffect(uint8_t effect) {
+    FxContainer getFxContainer(uint8_t effect) {
         if (effect == 1) {
-            return std::bind(&XledFx::intEffect1, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            return FxContainer(nullptr, std::bind(&XledFx::fxSync, this, std::placeholders::_1), fxDurationFast_ms);
         } else {
-            return std::bind(&XledFx::intEffect2, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+            return FxContainer(nullptr, std::bind(&XledFx::fxSync, this, std::placeholders::_1), fxDurationSlow_ms);
         }
     }
 
-    void intEffect1(uint32_t* ledArray, uint8_t ledCount, uint8_t position) {
-        uint8_t steps = 255;
-
-        float_t phase = TWO_PI * position / steps;
+    uint16_t fxDurationFast_ms = 500;
+    uint16_t fxDurationSlow_ms = 5000;
+    uint32_t fxSync(uint16_t position) {
+        float_t phase = TWO_PI * position / std::numeric_limits<uint16_t>::max();
         uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
         uint8_t g = ( sin(phase + TWO_PI/3) + 1 ) * 255 / 2;
         uint8_t b = ( sin(phase + TWO_PI/3*2) + 1 ) * 255 / 2;
-
-        for (uint8_t i = 0; i < ledCount; i++) {
-            ledArray[i] = Adafruit_NeoPixel::Color(r, g, b);
-        }
+        return Adafruit_NeoPixel::Color(r, g, b);
     }
-
-    void intEffect2(uint32_t* ledArray, uint8_t ledCount, uint8_t position) {
-        uint8_t steps = 255;
-
-        float_t phase = TWO_PI * position / steps;
-        uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
-        uint8_t g = 0;
-        uint8_t b = 0;
-
-        for (uint8_t i = 0; i < ledCount; i++) {
-            ledArray[i] = Adafruit_NeoPixel::Color(r, g, b);
-        }
-    }
-
 };
 
 #endif

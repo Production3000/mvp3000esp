@@ -55,24 +55,23 @@ extern MVP3000 mvp;
 
 
 typedef std::function<uint32_t(uint8_t)> CallbackSingleSetter;
-typedef std::function<void(uint32_t*, uint8_t)> CallbackArraySetter;
+typedef std::function<void(uint32_t*, uint8_t)> CallbackSyncSetter;
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
 
     uint8_t ledPin;
+    uint8_t fxRefreshRate_Hz = 40; // 40 Hz -> 25 ms
 
     // Modifiable settings saved to SPIFFS
     uint8_t ledCount = 1;
-    uint8_t brightness = 25;
-    uint16_t duration = 10000;
+    uint8_t brightness = 75;
 
     // The config name is used as SPIFFS file name
     CfgXmoduleLED() : CfgJsonInterface("XmoduleLED") {
         // Initialize settings for load/save to SPIFFS:
         addSetting<uint8_t>("ledCount", &ledCount, [&](const String& s) { ledCount = s.toInt(); return true; } );
         addSetting<uint8_t>("brightness", &brightness, [&](const String& s) { brightness = s.toInt(); return true; } );
-        addSetting<uint16_t>("duration", &duration, [&](const String& s) { duration = s.toInt(); return true; } );
     }
 };
 
@@ -81,54 +80,40 @@ class XmoduleLED : public _Xmodule {
 
     public:
 
-        enum class XLED_STATE: uint8_t {
-            EFFECT = 0,
-            ONDEMAND = 1,
-        };
-        XLED_STATE xledState = XLED_STATE::ONDEMAND;
-
         XmoduleLED() : _Xmodule("LED-Xmodule", "/led") { }
         XmoduleLED(uint8_t ledPin, uint8_t ledCount) : _Xmodule("LED-Xmodule", "/led") {
             cfgXmoduleLED.ledPin = ledPin;
             cfgXmoduleLED.ledCount = ledCount;
         }
 
-        void setup() override;
-        void loop() override;
-
-        // Activate onDemand call
-        void demandLedUpdate();
-
         void adaptiveBrightness(uint8_t analogPin) { this->analogPin = analogPin; }
         void setBrightness(uint8_t brightness);
 
-
         void setOnce(CallbackSingleSetter setOnceInfo);
-        void setOnce(CallbackArraySetter setOnceInfo);
+        void setOnce(CallbackSyncSetter setOnceInfo);
 
-        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { _setOnDemandSetter(onDemandSingleSetter, nullptr); }
-        void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { _setOnDemandSetter(nullptr, onDemandArraySetter); }
-        void _setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter = nullptr, CallbackArraySetter onDemandArraySetter = nullptr) {
-            xledState = XLED_STATE::ONDEMAND;
-            this->onDemandSingleSetter = onDemandSingleSetter;
-            this->onDemandArraySetter = onDemandArraySetter;
-        }
+        void demandLedUpdate();
+        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { setOnDemandCallback(onDemandSingleSetter, nullptr); }
+        void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(nullptr, onDemandSyncSetter); }
 
-        void setEffectSetter(FxSingleSetter effectCallback) { _setEffectSetter(effectCallback, nullptr); }
-        void setEffectSetter(FxArraySetter effectCallback) { _setEffectSetter(nullptr, effectCallback); }
-        void _setEffectSetter(FxSingleSetter effectSingleSetter = nullptr, FxArraySetter effectArraySetter = nullptr) {
-            xledState = XLED_STATE::EFFECT;
-            this->effectSingleSetter = effectSingleSetter;
-            this->effectArraySetter = effectArraySetter;
-        }
+        void setEffect(uint8_t effect);
+        void setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
+        void setEffectSetter(FxSyncSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) { setEffect(nullptr, fxCallback, duration_ms, onlyOnNewCycle); }
 
-        void setEffect(uint8_t effect) {
-            xledState = XLED_STATE::EFFECT;
-            effectSingleSetter = nullptr;
-            effectArraySetter = xledFx.getEffect(effect);
-        }
+    public:
+
+
+        void setup() override;
+        void loop() override;
+
 
     private:
+
+        enum class XLED_STATE: uint8_t {
+            EFFECT = 0,
+            ONDEMAND = 1,
+        };
+        XLED_STATE xledState = XLED_STATE::ONDEMAND;
 
         CfgXmoduleLED cfgXmoduleLED;
 
@@ -138,21 +123,19 @@ class XmoduleLED : public _Xmodule {
 
         // PixelGroup* pixelGroup;
 
-        CallbackSingleSetter onDemandSingleSetter;
-        CallbackArraySetter onDemandArraySetter;
-        
-        FxSingleSetter effectSingleSetter;
-        FxArraySetter effectArraySetter;
    
         uint8_t analogPin;
         int16_t analogReadValue = -1;
         LimitTimer brightnessTimer = LimitTimer(250);
         void measureBrightness();
 
+        CallbackSingleSetter onDemandSingleSetter;
+        CallbackSyncSetter onDemandArraySetter;
+        void setOnDemandCallback(CallbackSingleSetter onDemandSingleSetter = nullptr, CallbackSyncSetter onDemandArraySetter = nullptr);
 
-        LimitTimer fxTimer = LimitTimer(50);
-        uint8_t position = 0;
-
+        LimitTimer fxTimer = LimitTimer(1000/cfgXmoduleLED.fxRefreshRate_Hz);
+        FxContainer fxContainer;
+        void setEffect(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle);
         void executeEffect();
 
         void saveCfgCallback();

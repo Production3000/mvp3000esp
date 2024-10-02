@@ -41,9 +41,9 @@ void XmoduleLED::loop() {
 
     if (fxTimer.justFinished()) {
         executeEffect();
-        position++;
     }
 }
+
 
 
 void XmoduleLED::measureBrightness() {
@@ -63,14 +63,6 @@ void XmoduleLED::setBrightness(uint8_t brightness) {
 }
 
 
-void XmoduleLED::demandLedUpdate() {
-    if (onDemandSingleSetter != nullptr) {
-        setOnce(onDemandSingleSetter);
-    } else {
-        setOnce(onDemandArraySetter);
-    }
-}
-
 void XmoduleLED::setOnce(CallbackSingleSetter setOnceInfo) {
     pixels->clear();
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
@@ -79,7 +71,7 @@ void XmoduleLED::setOnce(CallbackSingleSetter setOnceInfo) {
     pixels->show();
 }
 
-void XmoduleLED::setOnce(CallbackArraySetter setOnceInfo) {
+void XmoduleLED::setOnce(CallbackSyncSetter setOnceInfo) {
     pixels->clear();
 
     uint32_t* ledArray = new uint32_t[cfgXmoduleLED.ledCount]; // IMPORTANT: Free the memory
@@ -95,26 +87,61 @@ void XmoduleLED::setOnce(CallbackArraySetter setOnceInfo) {
 }
 
 
-void XmoduleLED::executeEffect()
-{
-    pixels->clear();
+void XmoduleLED::setOnDemandCallback(CallbackSingleSetter onDemandSingleSetter, CallbackSyncSetter onDemandArraySetter) {
+    xledState = XLED_STATE::ONDEMAND;
+    this->onDemandSingleSetter = onDemandSingleSetter;
+    this->onDemandArraySetter = onDemandArraySetter;
+}
 
-    if (effectSingleSetter != nullptr) {
+void XmoduleLED::demandLedUpdate() {
+    if (onDemandSingleSetter != nullptr) {
+        setOnce(onDemandSingleSetter);
+    } else {
+        setOnce(onDemandArraySetter);
+    }
+}
+
+
+void XmoduleLED::setEffect(uint8_t effect) {
+    xledState = XLED_STATE::EFFECT;
+    fxContainer = xledFx.getFxContainer(effect);
+}
+
+void XmoduleLED::setEffect(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle) {
+    xledState = XLED_STATE::EFFECT;
+    fxContainer = FxContainer(singleSetter, syncSetter, duration_ms, onlyOnNewCycle);
+}
+
+void XmoduleLED::executeEffect() {
+    // The timer is expected to be slower than anticipated, thus round up the timing calculation.
+    // step = MAX / (rate * duration) + 1
+    uint16_t nextTimingStep = (std::numeric_limits<uint16_t>::max() * 1000) / (cfgXmoduleLED.fxRefreshRate_Hz * fxContainer.duration_ms) + 1;
+
+    // There are two types of effect: gradual change per cycle like a color wheel, or single change per cycle like blinking.
+    if (fxContainer.onlyOnNewCycle) {
+        if (fxContainer.timingPosition > nextTimingStep) {
+            fxContainer.timingPosition += nextTimingStep;
+            return;
+        }
+    }
+
+    pixels->clear();
+    if (fxContainer.syncSetter != nullptr) {
+        uint32_t color = fxContainer.syncSetter(fxContainer.timingPosition);
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-            pixels->setPixelColor(i, effectSingleSetter(i, position));
+            pixels->setPixelColor(i, color);
         }
     } else {
-        uint32_t* ledArray = new uint32_t[cfgXmoduleLED.ledCount]; // IMPORTANT: Free the memory
-        memset(ledArray, 0, cfgXmoduleLED.ledCount * sizeof(uint32_t)); // set zero
-        effectArraySetter(ledArray, cfgXmoduleLED.ledCount, position);
-
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-            pixels->setPixelColor(i, ledArray[i]);
+            pixels->setPixelColor(i, fxContainer.singleSetter(i, fxContainer.timingPosition));
         }
-        delete[] ledArray; // IMPORTANT: Free the memory
     }
     pixels->show();
+
+    fxContainer.timingPosition += nextTimingStep;
 }
+
+
 
 void XmoduleLED::saveCfgCallback() {
     // mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
@@ -130,7 +157,7 @@ String XmoduleLED::webPageProcessor(uint8_t var) {
         case 101:
             return String(cfgXmoduleLED.brightness);
         case 102:
-            return String(cfgXmoduleLED.duration);
+            return "asdasd";
 
         case 110: // The fx modes
             // for (uint8_t i = 0; i < MODE_COUNT; i++) {
