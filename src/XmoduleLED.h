@@ -54,8 +54,9 @@ extern MVP3000 mvp;
 // };
 
 
+typedef std::function<uint32_t()> CallbackSyncSetter;
 typedef std::function<uint32_t(uint8_t)> CallbackSingleSetter;
-typedef std::function<void(uint32_t*, uint8_t)> CallbackSyncSetter;
+typedef std::function<void(uint32_t*, uint8_t)> CallbackArraySetter;
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
@@ -86,15 +87,17 @@ class XmoduleLED : public _Xmodule {
             cfgXmoduleLED.ledCount = ledCount;
         }
 
-        void adaptiveBrightness(uint8_t analogPin) { this->analogPin = analogPin; }
+        void adaptiveBrightness(uint8_t analogPin, uint8_t analogBits = 0);
         void setBrightness(uint8_t brightness);
 
-        void setOnce(CallbackSingleSetter setOnceInfo);
-        void setOnce(CallbackSyncSetter setOnceInfo);
+        void setLed(CallbackSyncSetter setOnceSyncSetter);
+        void setLed(CallbackSingleSetter setOnceSingleSetter);
+        void setLed(CallbackArraySetter setOnceArraySetter);
 
         void demandLedUpdate();
-        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { setOnDemandCallback(onDemandSingleSetter, nullptr); }
-        void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(nullptr, onDemandSyncSetter); }
+        void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { setOnDemandCallback(nullptr, nullptr, onDemandArraySetter); }
+        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { setOnDemandCallback(nullptr, onDemandSingleSetter, nullptr); }
+        void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(onDemandSyncSetter, nullptr, nullptr); }
 
         void setEffect(uint8_t effect);
         void setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
@@ -102,10 +105,8 @@ class XmoduleLED : public _Xmodule {
 
     public:
 
-
         void setup() override;
         void loop() override;
-
 
     private:
 
@@ -123,15 +124,16 @@ class XmoduleLED : public _Xmodule {
 
         // PixelGroup* pixelGroup;
 
-   
-        uint8_t analogPin;
-        int16_t analogReadValue = -1;
+        uint8_t adcPin;
+        uint16_t adcBits;
+        int16_t analogReading = -1;
         LimitTimer brightnessTimer = LimitTimer(250);
         void measureBrightness();
 
+        CallbackSyncSetter onDemandSyncSetter;
         CallbackSingleSetter onDemandSingleSetter;
-        CallbackSyncSetter onDemandArraySetter;
-        void setOnDemandCallback(CallbackSingleSetter onDemandSingleSetter = nullptr, CallbackSyncSetter onDemandArraySetter = nullptr);
+        CallbackArraySetter onDemandArraySetter;
+        void setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSingleSetter singleSetter, CallbackArraySetter arraySetter);
 
         LimitTimer fxTimer = LimitTimer(1000/cfgXmoduleLED.fxRefreshRate_Hz);
         FxContainer fxContainer;

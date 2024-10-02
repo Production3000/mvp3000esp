@@ -16,6 +16,10 @@ limitations under the License.
 
 #include "XmoduleLED.h"
 
+#include "_Helper.h"
+extern _Helper _helper;
+
+
 void XmoduleLED::setup() {
     // Read and register config
     mvp.config.readCfg(cfgXmoduleLED);
@@ -32,7 +36,7 @@ void XmoduleLED::setup() {
 }
 
 void XmoduleLED::loop() {
-    if ((analogPin) && (brightnessTimer.justFinished())) {
+    if ((adcPin) && (brightnessTimer.justFinished())) {
         measureBrightness();
     }
 
@@ -45,62 +49,78 @@ void XmoduleLED::loop() {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
+
+void XmoduleLED::adaptiveBrightness(uint8_t analogPin, uint8_t analogBits) {
+    adcBits = analogBits;
+    if (adcBits == 0)
+        _helper.adcBits;
+    adcPin = analogPin;
+}
 
 void XmoduleLED::measureBrightness() {
-    if (analogReadValue == -1) {
-        analogReadValue = analogRead(analogPin);
+    if (analogReading == -1) {
+        analogReading = analogRead(adcPin);
     } else {
-        analogReadValue = (2*analogReadValue + analogRead(analogPin)) / 3;
+        analogReading = (2 * analogReading + analogRead(adcPin)) / 3; // Moving average over 3 measurements
     }
-    pixels->setBrightness(analogReadValue*255/1024);
+    pixels->setBrightness(analogReading*255/(1 << adcBits));
     pixels->show();
 }
 
 void XmoduleLED::setBrightness(uint8_t brightness) {
-    analogPin = 0;
+    adcPin = 0;
     pixels->setBrightness(brightness);
     pixels->show();
 }
 
 
-void XmoduleLED::setOnce(CallbackSingleSetter setOnceInfo) {
+///////////////////////////////////////////////////////////////////////////////////
+
+void XmoduleLED::setLed(CallbackSyncSetter setOnceSyncSetter) {
+    uint32_t color = setOnceSyncSetter();
+    setLed([color](uint8_t i) { return color; });
+}
+
+void XmoduleLED::setLed(CallbackSingleSetter setOnceSingleSetter) {
     pixels->clear();
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        pixels->setPixelColor(i, setOnceInfo(i));
+        pixels->setPixelColor(i, setOnceSingleSetter(i));
     }
     pixels->show();
 }
 
-void XmoduleLED::setOnce(CallbackSyncSetter setOnceInfo) {
-    pixels->clear();
-
+void XmoduleLED::setLed(CallbackArraySetter setOnceArraySetter) {
     uint32_t* ledArray = new uint32_t[cfgXmoduleLED.ledCount]; // IMPORTANT: Free the memory
     memset(ledArray, 0, cfgXmoduleLED.ledCount * sizeof(uint32_t)); // set zero
-    setOnceInfo(ledArray, cfgXmoduleLED.ledCount);
+    setOnceArraySetter(ledArray, cfgXmoduleLED.ledCount);
 
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        pixels->setPixelColor(i, ledArray[i]);
-    }
+    setLed([ledArray](uint8_t i) { return ledArray[i]; });
     delete[] ledArray; // IMPORTANT: Free the memory
-
-    pixels->show();
 }
 
 
-void XmoduleLED::setOnDemandCallback(CallbackSingleSetter onDemandSingleSetter, CallbackSyncSetter onDemandArraySetter) {
+///////////////////////////////////////////////////////////////////////////////////
+
+void XmoduleLED::setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSingleSetter singleSetter, CallbackArraySetter arraySetter) {
     xledState = XLED_STATE::ONDEMAND;
-    this->onDemandSingleSetter = onDemandSingleSetter;
-    this->onDemandArraySetter = onDemandArraySetter;
+    onDemandSyncSetter = syncSetter;
+    onDemandSingleSetter = singleSetter;
+    onDemandArraySetter = arraySetter;
 }
 
 void XmoduleLED::demandLedUpdate() {
-    if (onDemandSingleSetter != nullptr) {
-        setOnce(onDemandSingleSetter);
+    if (onDemandSyncSetter != nullptr) {
+        setLed(onDemandSyncSetter);
+    } else if (onDemandSingleSetter != nullptr) {
+        setLed(onDemandSingleSetter);
     } else {
-        setOnce(onDemandArraySetter);
+        setLed(onDemandArraySetter);
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleLED::setEffect(uint8_t effect) {
     xledState = XLED_STATE::EFFECT;
@@ -142,6 +162,7 @@ void XmoduleLED::executeEffect() {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleLED::saveCfgCallback() {
     // mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");

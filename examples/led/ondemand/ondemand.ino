@@ -35,8 +35,10 @@ void setup() {
     // Start mvp framework
     mvp.setup();
 
-    xmoduleLED.setOnce(std::bind(&arraySetter, std::placeholders::_1, std::placeholders::_2));
-    xmoduleLED.setOnDemandSetter(std::bind(&singleSetter, std::placeholders::_1));
+    // Some gradient to light all pixels before the actual LED data is available
+    xmoduleLED.setLed(arraySetter);
+    // All pixels in sync alternating color depending on uptime.
+    xmoduleLED.setOnDemandSetter(syncSetter);
 
     // Delay to see the initial LED colors
     delay(5000); 
@@ -50,15 +52,16 @@ void loop() {
     mvp.loop();
 }
 
+
 // Callbacks
 
 void arraySetter(uint32_t* ledArray, uint8_t ledCount) {
     for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(127, i * (255/ledCount - 1), 255 - (i * (255/ledCount - 1)));
+        ledArray[i] = Adafruit_NeoPixel::Color(127, i * (255/(ledCount - 1)), 255 - (i * (255/(ledCount - 1))));
     }
 }
 
-uint32_t singleSetter(uint8_t led) {
+uint32_t syncSetter() {
     switch ((millis() / 1000) % 3) {
         case 0:
             return Adafruit_NeoPixel::Color(255, 0, 0);
