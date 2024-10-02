@@ -34,8 +34,6 @@ struct FxContainer {
 
     FxContainer() {}
     FxContainer(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle = false) : singleSetter(singleSetter), syncSetter(syncSetter), duration_ms(duration_ms), onlyOnNewCycle(onlyOnNewCycle) {}
-
-    void settt(FxSyncSetter syncSetter) {}
 };
 
 

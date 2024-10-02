@@ -81,26 +81,72 @@ class XmoduleLED : public _Xmodule {
 
     public:
 
-        XmoduleLED() : _Xmodule("LED-Xmodule", "/led") { }
         XmoduleLED(uint8_t ledPin, uint8_t ledCount) : _Xmodule("LED-Xmodule", "/led") {
             cfgXmoduleLED.ledPin = ledPin;
             cfgXmoduleLED.ledCount = ledCount;
         }
 
+        /**
+         * @brief Use a photoresistor to automatically adapt the brightness of the LED strip.
+         * 
+         * @param analogPin The analog pin to read the ambient light from.
+         * @param analogBits (optional) The resolution of the ADC. If 0, the resolution of internal ADC of the ESP is used.
+         */
         void adaptiveBrightness(uint8_t analogPin, uint8_t analogBits = 0);
+
+        /**
+         * @brief Set the brightness of the LED strip. This turns adaptive brightness off.
+         * 
+         * @param brightness Brightness value between 0 and 255.
+         */
         void setBrightness(uint8_t brightness);
 
-        void setLed(CallbackSyncSetter setOnceSyncSetter);
+
+
+        void setLed(CallbackSyncSetter setOnceSyncSetter); // single color, why ??? here this is stupid
         void setLed(CallbackSingleSetter setOnceSingleSetter);
         void setLed(CallbackArraySetter setOnceArraySetter);
 
+        /**
+         * @brief Demand an update of the LED strip. This is necessary if the LED display depends on the status of the script.
+         */
         void demandLedUpdate();
+
+        /**
+         * 
+         */
         void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { setOnDemandCallback(nullptr, nullptr, onDemandArraySetter); }
+
+
         void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { setOnDemandCallback(nullptr, onDemandSingleSetter, nullptr); }
+
+
         void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(onDemandSyncSetter, nullptr, nullptr); }
 
+
+        /**
+         * @brief Display a pre-defined effect.
+         * 
+         * @param effect The effect to set.
+         */
         void setEffect(uint8_t effect);
+
+        /**
+         * @brief Set a custom effect. Each LED is set individually.
+         * 
+         * @param fxCallback The setter function defining the current color of each LED.
+         * @param duration_ms The duration of the effect in milliseconds.
+         * @param onlyOnNewCycle (optional) If true, the callback is only executed on start of a new cycle.
+         */
         void setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
+
+        /**
+         * @brief Set a custom effect. All LED are synchronized to display the same color.
+         * 
+         * @param fxCallback The setter function defining the current color of all LED.
+         * @param duration_ms The duration of the effect in milliseconds.
+         * @param onlyOnNewCycle (optional) If true, the callback is only executed on start of a new cycle.
+         */
         void setEffectSetter(FxSyncSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) { setEffect(nullptr, fxCallback, duration_ms, onlyOnNewCycle); }
 
     public:

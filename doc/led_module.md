@@ -32,15 +32,16 @@ The sensor module receives sensor data from the user script and processes it. It
 
 ### <a name='WebInterface'></a>Web Interface
 
- *  
+ *  Set brightness
+ * 	Change the number of LED in the strip 
 
 
 ## <a name='ExampleScripts'></a>Example Scripts
 
 Obviously the hardware needs to be available for testing.
 
- *  [effect.ino](/examples/led/effect/effect.ino): Simple custom effect script.
- *  [ondemand.ino](/examples/led/ondemand/ondemand.ino): Implementation of using the LEDs as indication of status based on script status/data/events/...
+ *  [effect.ino](/examples/led/effect/effect.ino): Demo script implementing a custom effect.
+ *  [ondemand.ino](/examples/led/ondemand/ondemand.ino): Using the on demand functionality to display script status/data/events/...
 
 ## <a name='Implementation'></a>Implementation
 
@@ -54,20 +55,29 @@ Please also see the documentation of the framework regarding [custom implementat
 
 ##### Selected Methods and Options
 
-Using a photosensor Brigtness can be adaptided 
+Use a photoresistor connected to the internal ADC to automatically adapt the LED brightness depending on ambient light conditions.
 
     uint8_t analogPin = A0
     xmoduleLed.adaptiveBrightness(analogPin);
 
 ##### Constructor
 
- *  `XmoduleLED(uint8_t )`: Construct a new LED Module object.
+ *  `XmoduleLED(uint8_t ledPin, uint8_t ledCount)`: Construct a new LED Module object. 
 
 ##### Public Methods and Options
 
- *  `void (T *newSample)`:
-
-
+ *  `void adaptiveBrightness(uint8_t analogPin, uint8_t analogBits = 0)`: Use a photoresistor to automatically adapt the brightness of the LED strip.
+ *  `void setBrightness(uint8_t brightness)`: Set the brightness of the LED strip. This turns adaptive brightness off.
+ *  `void setLed(CallbackSyncSetter setOnceSyncSetter)`:
+ *  `void setLed(CallbackSingleSetter setOnceSingleSetter)`:
+ *  `void setLed(CallbackArraySetter setOnceArraySetter)`:
+ *  `void demandLedUpdate()`: Demand an update of the LED strip. This is necessary if the LED display depends on the status of the script.
+ *  `void setOnDemandSetter(CallbackArraySetter onDemandArraySetter)`:
+ *  `void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter)`:
+ *  `void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter)`:
+ *  `void setEffect(uint8_t effect)`: Display a pre-defined effect.
+ *  `setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false)`: Set a custom effect. Each LED is set individually.
+ *  `setEffectSetter(FxSyncSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false)`: Set a custom effect. All LED are synchronized to display the same color.
 
 
 ## <a name='Troubleshooting'></a>Troubleshooting
