@@ -182,11 +182,13 @@ The serial output is color-coded using ANSI escape sequences. If your serial mon
 The logger can be used to send message to serial and the websocket.
 
     mvp.log("This text will be timestamped and logged to serial, to websocket, and to the web interface.");
+    mvp.logFormatted("This is a number: %d", 123);
 
 ##### Public Methods and Options
 
  *  `void addXmodule(_Xmodule *xmodule)`: Add a Xmodule to the MVP3000 system.
  *  `void log(const String& message)`: Log a message at 'user' level.
+ *  `void logFormatted(const String& message, ...)`: Log a formatted message at 'user' level.
  *  `void logDisableAnsiColor()`: Disable ANSI codes in serial output.
  *  `void logSetLevel(CfgLogger::Level level)`: Change the logging level. The log level 'data' is only printed to serial and is omitted for the web page and WebSocket target.
  *  `void logSetTarget(CfgLogger::OutputTarget target, boolean enable)`: Enable/disable the output targets of logging message. Console and web interface are enabled by default, WebSocket is disabled.

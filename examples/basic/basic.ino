@@ -24,6 +24,9 @@ void setup() {
     // Arduino IDE: Disable color-coded output to serial console
     // mvp.logDisableAnsiColor();
 
+    // Enable the WebSocket log, open it using: examples/websocket/websocket_log.html
+    mvp.logSetTarget(CfgLogger::OutputTarget::WEBLOG, true);
+
     // Start mvp framework
     mvp.setup();
 }
