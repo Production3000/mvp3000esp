@@ -116,7 +116,7 @@ class NetWebSockets {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         const char* webPage = R"===(
 <h3>WebSockets</h3> <ul> %80% </ul>
 )===";

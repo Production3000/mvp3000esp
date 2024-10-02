@@ -135,7 +135,7 @@ String Logger::levelToString(CfgLogger::Level messageLevel) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String Logger::templateProcessor(uint8_t var) {
+String Logger::templateProcessor(uint16_t var) {
     switch (var) {
 
         case 30:

@@ -119,7 +119,7 @@ class Logger {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         const char* webPage = R"===(
 <h3>Web Log</h3>
 <textarea rows="5" cols="120" readonly>%30%</textarea>

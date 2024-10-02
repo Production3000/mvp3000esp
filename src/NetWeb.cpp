@@ -34,7 +34,7 @@ void NetWeb::setup() {
     // Set alternate root page if set
     if (!rootUri.equals("/")) {
         server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
-            request->sendChunked("text/html", altResponseFiller, altTemplateProcessor);
+            request->sendChunked("text/html", altResponseFiller, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1) );
         });
     }
 
@@ -250,7 +250,7 @@ String NetWeb::templateProcessorWrapper(const String& var) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return "[" + var + "]";
     }
-    int32_t varInt = var.toInt();
+    int32_t varInt = var.toInt();               // TODO uint16
     switch (varInt) {
 
         // Main placeholders
@@ -291,6 +291,9 @@ String NetWeb::templateProcessorWrapper(const String& var) {
             return "";
 
         default:
+            if (altTemplateProcessor != nullptr) {
+                return altTemplateProcessor(varInt);
+            }
             return "";
     }
 }

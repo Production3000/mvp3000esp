@@ -231,7 +231,7 @@ void NetMqtt::saveCfgCallback() {
     mvp.logger.write(CfgLogger::Level::INFO, "MQTT configuration changed, restarting.");
 }
 
-String NetMqtt::templateProcessor(uint8_t var) {
+String NetMqtt::templateProcessor(uint16_t var) {
     switch (var) {
         case 62:
             switch (mqttState) {

@@ -68,7 +68,7 @@ class NetWeb {
          * @param alternateTemplateProcessor (optional) The function to process the alternate page template.
          * @param mvpUri (optional) The URI of the main MVP3000 page.
          */
-        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, AwsTemplateProcessor alternateTemplateProcessor, const String& mvpUri)  { altResponseFiller = alternateResponseFiller; altTemplateProcessor = alternateTemplateProcessor; rootUri = mvpUri; }
+        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, std::function<String (uint16_t)> alternateTemplateProcessor, const String& mvpUri)  { altResponseFiller = alternateResponseFiller; altTemplateProcessor = alternateTemplateProcessor; rootUri = mvpUri; }
 
     public:
 
@@ -102,7 +102,7 @@ class NetWeb {
 
         String rootUri = "/";
         AwsResponseFiller altResponseFiller = nullptr;
-        AwsTemplateProcessor altTemplateProcessor;
+        std::function<String (uint16_t)> altTemplateProcessor = nullptr;
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
         size_t extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);

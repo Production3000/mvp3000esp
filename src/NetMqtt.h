@@ -110,7 +110,7 @@ class NetMqtt {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         const char* webPage = R"===(
 <h3>MQTT Communication</h3> <ul>
 <li>Status: %62% </li>

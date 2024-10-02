@@ -184,7 +184,7 @@ void Net::WiFiStationDisconnected() {
     }
 }
 
-String Net::templateProcessor(uint8_t var) {
+String Net::templateProcessor(uint16_t var) {
     switch (var) {
         case 41:
             return apSsid.c_str();
