@@ -62,7 +62,7 @@ void NetWebSockets::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String NetWebSockets::templateProcessor(uint8_t var) {
+String NetWebSockets::templateProcessor(uint16_t var) {
     switch (var) {        
         case 80: // Filling of the websocket topics is better be split, long strings are never good during runtime
             if (linkedListWebSocket.getSize() == 0) {

@@ -21,7 +21,8 @@ extern MVP3000 mvp;
 LimitTimer timer(2000);
 
 void setup() {
-    mvp.setAlternateRoot(altResponseFiller);
+    // Set a custom page as root and move the MVP page to a sub-uri
+    mvp.setAlternateRoot(responseFiller, templateProcessor);
 
     // Start mvp framework
     mvp.setup();
@@ -43,16 +44,28 @@ const char* altHtml = R"===(<!DOCTYPE html> <html lang='en'>
 <style>body { font-family: sans-serif; }</style> </head>
 <body> <h2>MVP3000 - Custom Landing Page</h2>
 <p>This is a custom landing page. The MVP3000 settings were moved to <a href='/mvp3000'>/mvp3000</a>.
-<p>&nbsp;</body></html>
+<p>The device IP is: %2%
+<p>The placeholder &percnt;2&percnt; becomes: '%256%'
+<p>Special characters need to be encoded, particularly the percent symbol &percnt;, use `&amp;percnt;`
 )===";
 
-size_t altResponseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
+size_t responseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
     // Chunked response filler for the html template
-    
     size_t len = strlen(altHtml);
     if (index + maxLen > len) {
         maxLen = len - index;
     }
     memcpy(buffer, altHtml + index, maxLen);
     return maxLen;
+}
+
+String templateProcessor(uint16_t var) {
+    // Special characters need to be encoded, particularly the percent symbol %, use `&percnt;`
+    switch (var) {
+        // Numeric placeholders up to 255 are reserved, but can be used. The device IP is %2%.
+        case 256: 
+            return "some text";
+        default:
+            return "";
+    }
 }

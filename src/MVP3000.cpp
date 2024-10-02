@@ -127,7 +127,7 @@ void MVP3000::updateLoopDuration() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-String MVP3000::templateProcessor(uint8_t var) {
+String MVP3000::templateProcessor(uint16_t var) {
     switch (var) {
         case 11:
             return __DATE__ " " __TIME__; // Timestamp concatenated at compilation time

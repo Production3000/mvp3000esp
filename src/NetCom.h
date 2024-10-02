@@ -85,7 +85,7 @@ class NetCom {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         const char* webPage = R"===(
 <h3>UDP Auto-Discovery</h3> <ul>
 <li>Discovered server: %51% </li>

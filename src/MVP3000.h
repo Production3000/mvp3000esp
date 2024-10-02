@@ -105,7 +105,7 @@ class MVP3000 {
          * @param alternateTemplateProcessor (optional) The function to process the alternate page template.
          * @param mvpUri (optional) The new URI of the main MVP3000 page. Default is "/mvp3000".
          */
-        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, AwsTemplateProcessor alternateTemplateProcessor = nullptr, const String& mvpUri = "/mvp3000") { net.netWeb.setAlternateRoot(alternateResponseFiller, alternateTemplateProcessor, mvpUri); }
+        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, std::function<String (uint16_t)> alternateTemplateProcessor = nullptr, const String& mvpUri = "/mvp3000") { net.netWeb.setAlternateRoot(alternateResponseFiller, alternateTemplateProcessor, mvpUri); }
 
     public:
 
@@ -148,7 +148,7 @@ class MVP3000 {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         uint8_t webPageProcessorCount;
         const char* webPage = R"===(
 <h3>System</h3> <ul>

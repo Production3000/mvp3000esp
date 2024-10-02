@@ -115,7 +115,7 @@ class Net {
 
     public:
 
-        String templateProcessor(uint8_t var);
+        String templateProcessor(uint16_t var);
         const char* webPage = R"===(
 <h3>Network</h3> <ul>
 <li>Fallback AP SSID: '%41%'</li>
