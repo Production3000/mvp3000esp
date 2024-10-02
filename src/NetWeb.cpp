@@ -26,21 +26,28 @@ extern _Helper _helper;
 void NetWeb::setup() {
     // IMPORTANT: /foo is matched by foo, foo/, /foo/bar, /foo?bar - but not by /foobar
 
-    // Main mvp page, move to sub-uri if alternate root page is set
+    // Main mvp page, uri is root or moved if alternate root page is set
     server.on(rootUri.c_str(), HTTP_GET, [&](AsyncWebServerRequest *request) {
         request->sendChunked("text/html", std::bind(&NetWeb::responseFillerHome, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3), std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1) );
     });
+    
+    // Set alternate root page if set
     if (!rootUri.equals("/")) {
         server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
             request->sendChunked("text/html", altResponseFiller, altTemplateProcessor);
         });
     }
-    // Module folders are registered separately
+
+    // Form actions
     server.on("/save", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/checksave", std::bind(&NetWeb::editCfg, this, std::placeholders::_1));
     server.on("/start", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
     server.on("/checkstart", std::bind(&NetWeb::startAction, this, std::placeholders::_1));
-    server.onNotFound([&](AsyncWebServerRequest *request) { // Catch all
+
+    // Module folders are registered separately
+
+    // Catch all redirect to root
+    server.onNotFound([&](AsyncWebServerRequest *request) {
         request->redirect("/");
     });
 

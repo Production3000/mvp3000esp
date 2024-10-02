@@ -50,8 +50,8 @@ XmoduleSensor xmoduleSensor(valueCount);
 void setup() {
     // Init the sensor module and add it to the mvp framework
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
-    xmoduleSensor.setSampleToIntExponent(exponent);
     xmoduleSensor.setSampleAveraging(1); // The SCD30 has already averaged data ready every 1.5 s. Averaging in the framwwork can be set to a low value.
+    xmoduleSensor.setSampleToIntExponent(exponent);
     mvp.addXmodule(&xmoduleSensor);
 
     // Start mvp framework
