@@ -61,6 +61,15 @@ class NetWeb {
          */
         void registerModulePage(const String& uri);
 
+        /**
+         * @brief Set an alternate page as root and move the main MVP3000 page to a sub-uri.
+         * 
+         * @param alternateResponseFiller The function to fill the alternate page.
+         * @param alternateTemplateProcessor (optional) The function to process the alternate page template.
+         * @param mvpUri (optional) The URI of the main MVP3000 page.
+         */
+        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, AwsTemplateProcessor alternateTemplateProcessor, const String& mvpUri)  { altResponseFiller = alternateResponseFiller; altTemplateProcessor = alternateTemplateProcessor; rootUri = mvpUri; }
+
     public:
 
         void setup();
@@ -90,6 +99,10 @@ class NetWeb {
 
         int8_t requestedModuleIndex = -1; // None selected, or there is just no module
         void serveModulePage(AsyncWebServerRequest *request);
+
+        String rootUri = "/";
+        AwsResponseFiller altResponseFiller = nullptr;
+        AwsTemplateProcessor altTemplateProcessor;
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
         size_t extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);

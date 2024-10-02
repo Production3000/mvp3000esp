@@ -193,6 +193,7 @@ The logger can be used to send message to serial and the websocket.
  *  `void mqttHardDisable()`: Completely disable MQTT communication.
  *  `void udpHardDisable()`: Completely disable the UDP discovery service in case it interferes with custom UDP code.
  *  `void wsHardDisable()`: Completely disable WebSockets.
+ *  `void setAlternateRoot(AwsResponseFiller alternateResponseFiller, AwsTemplateProcessor alternateTemplateProcessor = nullptr, const String& mvpUri = "/mvp3000")`: Set an alternate page as web root and move the main MVP3000 page to a sub-page.
 
 ### <a name='HelperFunctionsandClasses'></a>Helper Functions and Classes
 

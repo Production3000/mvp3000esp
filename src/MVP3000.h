@@ -98,6 +98,14 @@ class MVP3000 {
          */
         void wsHardDisable() { net.netWeb.webSockets.hardDisable(); };
 
+        /**
+         * @brief Set an alternate page as root and move the main MVP3000 page to a sub-uri.
+         * 
+         * @param alternateResponseFiller The function to fill the alternate page.
+         * @param alternateTemplateProcessor (optional) The function to process the alternate page template.
+         * @param mvpUri (optional) The new URI of the main MVP3000 page. Default is "/mvp3000".
+         */
+        void setAlternateRoot(AwsResponseFiller alternateResponseFiller, AwsTemplateProcessor alternateTemplateProcessor = nullptr, const String& mvpUri = "/mvp3000") { net.netWeb.setAlternateRoot(alternateResponseFiller, alternateTemplateProcessor, mvpUri); }
 
     public:
 
