@@ -216,8 +216,10 @@ struct _Helper {
 ///////////////////////////////////////////////////////////////////////////////////
 
 #if defined(ESP8266)
+    uint8_t adcBits = 10;
     EspClass* ESPX;
 #elif defined(ESP32)
+    uint8_t adcBits = 12;
 
     // Replicates selected methods available only in ESP8266 to ESP32 to simplify code later on
     // Ensures that the ESPX object is available in the same way on both platforms
