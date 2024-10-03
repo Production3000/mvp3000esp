@@ -39,6 +39,12 @@ void NetWebSockets::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, 
             break;
         case WS_EVT_DISCONNECT:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
+
+            // client->close();                                                 // TODO
+            // client->server()->cleanupClients();
+            // client->server()->_cleanBuffers();
+            // client->server()->_handleDisconnect(client);                    
+
             break;
         case WS_EVT_ERROR:
             mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "WS error from: %s, client %d", client->remoteIP().toString().c_str());

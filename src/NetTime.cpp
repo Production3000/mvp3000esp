@@ -32,16 +32,12 @@ extern MVP3000 mvp;
 
 
 void NetTime::setup() {
-
-    // TODO option to disable NTP after first time set ? 
-
     #if defined(ESP8266)
         settimeofday_cb([&]() { cbSyncTime(); });
     #else 
         sntp_set_sync_interval(60*60*1000); // 1 hour update interval
         sntp_set_time_sync_notification_cb(cbSyncTime32);
     #endif
-
 }
 
 void NetTime::loop() {

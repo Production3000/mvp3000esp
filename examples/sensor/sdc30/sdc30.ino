@@ -60,9 +60,8 @@ void setup() {
     xmoduleSensor.setSensorInfo(infoName, infoDescription, sensorTypes, sensorUnits);
     xmoduleSensor.setSampleAveraging(1); // The SCD30 has already averaged data ready every 1.5 s. Averaging in the framwwork can be set to a low value.
     xmoduleSensor.setSampleToIntExponent(exponent);
-    mvp.addXmodule(&xmoduleSensor);
-
     xmoduleSensor.setNetworkCtrlCallback(networkCtrlCallback);
+    mvp.addXmodule(&xmoduleSensor);
 
     // Start mvp framework
     mvp.setup();
@@ -145,8 +144,8 @@ void networkCtrlCallback(const String& data) {
 }
 
 void calibrateSensor() {
-    // Datasheet states 2 minutes for the sensor, but without housing.
-    if (millis() < 5*60*1000) {
+    // Datasheet states 2 minutes for the sensor. Could be more with housing.
+    if (millis() < 2*60*1000) {
         mvp.log("Calibration failed. The device needs to be OPERATING at FRESH air for AT LEAST 5 minutes before calibration!");
         return;
     }
