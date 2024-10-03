@@ -80,6 +80,8 @@ class NetWebSockets {
                 // Create websocket and attached to server
                 webSocket = new AsyncWebSocket(uri);
                 webSocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+                    // IMPORTANT: any delay() here or in any called function will crash the ESP8266 (ESP32 untested)
+                    // The reason is unclear, maybe the wrapped vTaskDelay()
                     webSocketEventCallbackWrapper(client, type, arg, data, len, ctrlCallback);
                 });
                 server->addHandler(webSocket);

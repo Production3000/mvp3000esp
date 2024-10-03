@@ -81,6 +81,12 @@ void XmoduleSensor::setup() {
 }
 
 void XmoduleSensor::loop() {
+    // IMPORTANT: seprated user control callback, the ESP crashes if a delay() is used there 
+    if (callCtrlCallbackNow) {
+        networkCtrlUserCallback(networkCtrlCallbackData);
+        callCtrlCallbackNow = false;
+    }
+
     // Check flag if there is something to do
     if (!dataCollection.avgCycleFinished)
         return;
@@ -192,7 +198,7 @@ void XmoduleSensor::setTare() {
 //////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleSensor::networkCtrlCallback(char* data) {
-    // data can be 'TARE' or 'CLEAR'
+    // IMPORTANT: any delay() here or in any called function will crash the ESP8266 (ESP32 untested)
     if (strcmp(data, "TARE") == 0) {
         setTare();
         mvp.logger.write(CfgLogger::Level::CONTROL, "Set Tare.");
@@ -200,13 +206,15 @@ void XmoduleSensor::networkCtrlCallback(char* data) {
         clearTare();
         mvp.logger.write(CfgLogger::Level::CONTROL, "Clear Tare.");
     } else {
-        // Check if there is a custom callback defined and try whether it accepts the command
-        boolean success = false;
-        if (networkCtrlUserCallback != nullptr) {
-            success = networkCtrlUserCallback(data);
-        }
-        if (!success) {
-            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown command '%s' received.", data);
+        // Check if there is a custom callback defined
+        if (networkCtrlUserCallback == nullptr) {
+            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown control command '%s' received.", data);
+        } else {
+            // IMPORTANT: Separate the callback from user/library code because of the delay() issue
+            // The callback is called from the loop()
+            callCtrlCallbackNow = true;
+            networkCtrlCallbackData = data;
+            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown control command '%s' received. Trying user callback function.", data);
         }
     }
 }

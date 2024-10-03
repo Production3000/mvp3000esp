@@ -199,7 +199,7 @@ class XmoduleSensor : public _Xmodule {
          *
          * @param callback The callback function.
          */
-        void setNetworkCtrlCallback(std::function<boolean(char*)> callback) { networkCtrlUserCallback = callback; };
+        void setNetworkCtrlCallback(std::function<void(const String&)> callback) { networkCtrlUserCallback = callback; };
 
     public:
 
@@ -232,7 +232,9 @@ class XmoduleSensor : public _Xmodule {
 
         void measureOffsetScalingFinish();
 
-        std::function<boolean(char*)> networkCtrlUserCallback = nullptr;
+        boolean callCtrlCallbackNow = false;
+        String networkCtrlCallbackData;
+        std::function<void(const String&)> networkCtrlUserCallback = nullptr;
         void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
 
         String webPageProcessor(uint8_t var);
