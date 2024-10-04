@@ -31,14 +31,14 @@ LimitTimer timer(50);
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
+    // All pixels in sync alternating color depending on uptime.
+    xmoduleLED.setOnDemandSetter(syncSetter);
 
     // Start mvp framework
     mvp.setup();
 
     // Some gradient to light all pixels before the actual LED data is available
-    xmoduleLED.setLed(arraySetter);
-    // All pixels in sync alternating color depending on uptime.
-    xmoduleLED.setOnDemandSetter(syncSetter);
+    xmoduleLED.setLed(arraySetter);                                                                        // TODO set this before .setup() and initialize then
 
     // Delay to see the initial LED colors
     delay(5000); 

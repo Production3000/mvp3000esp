@@ -32,7 +32,7 @@ void XmoduleLED::setup() {
 
     pixels->begin();
     pixels->clear();
-    pixels->setBrightness(cfgXmoduleLED.brightness);
+    pixels->setBrightness(cfgXmoduleLED.globalBrightness);
 }
 
 void XmoduleLED::loop() {
@@ -51,7 +51,7 @@ void XmoduleLED::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleLED::adaptiveBrightness(uint8_t analogPin, uint8_t analogBits) {
+void XmoduleLED::adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits) {
     adcBits = analogBits;
     if (adcBits == 0)
         _helper.adcBits;
@@ -68,9 +68,9 @@ void XmoduleLED::measureBrightness() {
     pixels->show();
 }
 
-void XmoduleLED::setBrightness(uint8_t brightness) {
+void XmoduleLED::setGlobalBrightness(uint8_t globalBrightness) {
     adcPin = 0;
-    pixels->setBrightness(brightness);
+    pixels->setBrightness(globalBrightness);
     pixels->show();
 }
 
@@ -82,10 +82,10 @@ void XmoduleLED::setLed(CallbackSyncSetter setOnceSyncSetter) {
     setLed([color](uint8_t i) { return color; });
 }
 
-void XmoduleLED::setLed(CallbackSingleSetter setOnceSingleSetter) {
+void XmoduleLED::setLed(CallbackSeparateSetter setOnceSeparateSetter) {
     pixels->clear();
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        pixels->setPixelColor(i, setOnceSingleSetter(i));
+        pixels->setPixelColor(i, setOnceSeparateSetter(i));
     }
     pixels->show();
 }
@@ -102,18 +102,18 @@ void XmoduleLED::setLed(CallbackArraySetter setOnceArraySetter) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleLED::setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSingleSetter singleSetter, CallbackArraySetter arraySetter) {
+void XmoduleLED::setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSeparateSetter separateSetter, CallbackArraySetter arraySetter) {
     xledState = XLED_STATE::ONDEMAND;
     onDemandSyncSetter = syncSetter;
-    onDemandSingleSetter = singleSetter;
+    onDemandSeparateSetter = separateSetter;
     onDemandArraySetter = arraySetter;
 }
 
 void XmoduleLED::demandLedUpdate() {
     if (onDemandSyncSetter != nullptr) {
         setLed(onDemandSyncSetter);
-    } else if (onDemandSingleSetter != nullptr) {
-        setLed(onDemandSingleSetter);
+    } else if (onDemandSeparateSetter != nullptr) {
+        setLed(onDemandSeparateSetter);
     } else {
         setLed(onDemandArraySetter);
     }
@@ -127,9 +127,9 @@ void XmoduleLED::setEffect(uint8_t effect) {
     fxContainer = xledFx.getFxContainer(effect);
 }
 
-void XmoduleLED::setEffect(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle) {
+void XmoduleLED::setEffect(FxSeparateSetter separateSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle) {
     xledState = XLED_STATE::EFFECT;
-    fxContainer = FxContainer(singleSetter, syncSetter, duration_ms, onlyOnNewCycle);
+    fxContainer = FxContainer(separateSetter, syncSetter, duration_ms, onlyOnNewCycle);
 }
 
 void XmoduleLED::executeEffect() {
@@ -153,7 +153,7 @@ void XmoduleLED::executeEffect() {
         }
     } else {
         for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-            pixels->setPixelColor(i, fxContainer.singleSetter(i, fxContainer.timingPosition));
+            pixels->setPixelColor(i, fxContainer.separateSetter(i, fxContainer.timingPosition));
         }
     }
     pixels->show();
@@ -176,7 +176,7 @@ String XmoduleLED::webPageProcessor(uint8_t var) {
 
         // TODO LED count
         case 101:
-            return String(cfgXmoduleLED.brightness);
+            return String(cfgXmoduleLED.globalBrightness);
         case 102:
             return "asdasd";
 

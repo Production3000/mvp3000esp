@@ -58,7 +58,7 @@ Please also see the documentation of the framework regarding [custom implementat
 Use a photoresistor connected to the internal ADC to automatically adapt the LED brightness depending on ambient light conditions.
 
     uint8_t analogPin = A0
-    xmoduleLed.adaptiveBrightness(analogPin);
+    xmoduleLed.adaptiveGlobalBrightness(analogPin);
 
 ##### Constructor
 
@@ -66,17 +66,17 @@ Use a photoresistor connected to the internal ADC to automatically adapt the LED
 
 ##### Public Methods and Options
 
- *  `void adaptiveBrightness(uint8_t analogPin, uint8_t analogBits = 0)`: Use a photoresistor to automatically adapt the brightness of the LED strip.
- *  `void setBrightness(uint8_t brightness)`: Set the brightness of the LED strip. This turns adaptive brightness off.
+ *  `void adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits = 0)`: Use a photoresistor to automatically adapt the global brightness of the LED strip. This overrides the global brightness setting.
+ *  `void setGlobalBrightness(uint8_t brightness)`: Set the global brightness of the LED strip. This turns adaptive global brightness off.
  *  `void setLed(CallbackSyncSetter setOnceSyncSetter)`:
- *  `void setLed(CallbackSingleSetter setOnceSingleSetter)`:
+ *  `void setLed(CallbackSeparateSetter setOnceSeparateSetter)`:
  *  `void setLed(CallbackArraySetter setOnceArraySetter)`:
  *  `void demandLedUpdate()`: Demand an update of the LED strip. This is necessary if the LED display depends on the status of the script.
  *  `void setOnDemandSetter(CallbackArraySetter onDemandArraySetter)`:
- *  `void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter)`:
+ *  `void setOnDemandSetter(CallbackSeparateSetter onDemandSeparateSetter)`:
  *  `void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter)`:
  *  `void setEffect(uint8_t effect)`: Display a pre-defined effect.
- *  `setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false)`: Set a custom effect. Each LED is set individually.
+ *  `setEffectSetter(FxSeparateSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false)`: Set a custom effect. Each LED is set individually.
  *  `setEffectSetter(FxSyncSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false)`: Set a custom effect. All LED are synchronized to display the same color.
 
 

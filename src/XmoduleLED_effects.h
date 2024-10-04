@@ -22,18 +22,18 @@ limitations under the License.
 #include <Adafruit_NeoPixel.h>
 
 
-typedef std::function<uint32_t(uint8_t, uint16_t)> FxSingleSetter; // Each LED with own color
+typedef std::function<uint32_t(uint8_t, uint16_t)> FxSeparateSetter; // Each LED with own color
 typedef std::function<uint32_t(uint16_t)> FxSyncSetter; // All LED in syncronuous mode
 
 struct FxContainer {
-    FxSingleSetter singleSetter;
+    FxSeparateSetter separateSetter;
     FxSyncSetter syncSetter;
     uint16_t timingPosition = 0;
     uint16_t duration_ms;
     boolean onlyOnNewCycle;
 
     FxContainer() {}
-    FxContainer(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle = false) : singleSetter(singleSetter), syncSetter(syncSetter), duration_ms(duration_ms), onlyOnNewCycle(onlyOnNewCycle) {}
+    FxContainer(FxSeparateSetter separateSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle = false) : separateSetter(separateSetter), syncSetter(syncSetter), duration_ms(duration_ms), onlyOnNewCycle(onlyOnNewCycle) {}
 };
 
 

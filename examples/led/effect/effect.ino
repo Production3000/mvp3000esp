@@ -41,7 +41,7 @@ void setup() {
     xmoduleLED.setEffectSetter(fxSyncSetter, 1000, true);
 
     // Each pixel with individual color, called with 40Hz, repeating/reset after 2000ms 
-    // xmoduleLED.setEffectSetter(fxSingleSetter, 2000);
+    // xmoduleLED.setEffectSetter(fxSeparateSetter, 2000);
 }
 
 void loop() {
@@ -52,7 +52,7 @@ uint32_t fxSyncSetter(uint16_t timingPosition) {
     return Adafruit_NeoPixel::Color(random(255), random(255), random(255));
 }
 
-uint32_t fxSingleSetter(uint8_t led, uint16_t timingPosition) {
+uint32_t fxSeparateSetter(uint8_t led, uint16_t timingPosition) {
     uint8_t shift = timingPosition / 256;
     return Adafruit_NeoPixel::Color(shift, 255 - shift, 255 * led / (ledCount - 1) );
 }

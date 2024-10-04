@@ -55,7 +55,7 @@ extern MVP3000 mvp;
 
 
 typedef std::function<uint32_t()> CallbackSyncSetter;
-typedef std::function<uint32_t(uint8_t)> CallbackSingleSetter;
+typedef std::function<uint32_t(uint8_t)> CallbackSeparateSetter;
 typedef std::function<void(uint32_t*, uint8_t)> CallbackArraySetter;
 
 
@@ -66,13 +66,13 @@ struct CfgXmoduleLED : public CfgJsonInterface {
 
     // Modifiable settings saved to SPIFFS
     uint8_t ledCount = 1;
-    uint8_t brightness = 75;
+    uint8_t globalBrightness = 75;
 
     // The config name is used as SPIFFS file name
     CfgXmoduleLED() : CfgJsonInterface("XmoduleLED") {
         // Initialize settings for load/save to SPIFFS:
         addSetting<uint8_t>("ledCount", &ledCount, [&](const String& s) { ledCount = s.toInt(); return true; } );
-        addSetting<uint8_t>("brightness", &brightness, [&](const String& s) { brightness = s.toInt(); return true; } );
+        addSetting<uint8_t>("globalBrightness", &globalBrightness, [&](const String& s) { globalBrightness = s.toInt(); return true; } );
     }
 };
 
@@ -87,24 +87,24 @@ class XmoduleLED : public _Xmodule {
         }
 
         /**
-         * @brief Use a photoresistor to automatically adapt the brightness of the LED strip.
+         * @brief Use a photoresistor to automatically adapt the global brightness of the LED strip. This overrides the global brightness setting.
          * 
          * @param analogPin The analog pin to read the ambient light from.
          * @param analogBits (optional) The resolution of the ADC. If 0, the resolution of internal ADC of the ESP is used.
          */
-        void adaptiveBrightness(uint8_t analogPin, uint8_t analogBits = 0);
+        void adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits = 0);
 
         /**
-         * @brief Set the brightness of the LED strip. This turns adaptive brightness off.
+         * @brief Set the global brightness of the LED strip. This turns adaptive global brightness off.
          * 
          * @param brightness Brightness value between 0 and 255.
          */
-        void setBrightness(uint8_t brightness);
+        void setGlobalBrightness(uint8_t globalBrightness);
 
 
 
         void setLed(CallbackSyncSetter setOnceSyncSetter); // single color, why ??? here this is stupid
-        void setLed(CallbackSingleSetter setOnceSingleSetter);
+        void setLed(CallbackSeparateSetter setOnceSeparateSetter);
         void setLed(CallbackArraySetter setOnceArraySetter);
 
         /**
@@ -118,7 +118,7 @@ class XmoduleLED : public _Xmodule {
         void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { setOnDemandCallback(nullptr, nullptr, onDemandArraySetter); }
 
 
-        void setOnDemandSetter(CallbackSingleSetter onDemandSingleSetter) { setOnDemandCallback(nullptr, onDemandSingleSetter, nullptr); }
+        void setOnDemandSetter(CallbackSeparateSetter onDemandSeparateSetter) { setOnDemandCallback(nullptr, onDemandSeparateSetter, nullptr); }
 
 
         void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(onDemandSyncSetter, nullptr, nullptr); }
@@ -138,7 +138,7 @@ class XmoduleLED : public _Xmodule {
          * @param duration_ms The duration of the effect in milliseconds.
          * @param onlyOnNewCycle (optional) If true, the callback is only executed on start of a new cycle.
          */
-        void setEffectSetter(FxSingleSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
+        void setEffectSetter(FxSeparateSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
 
         /**
          * @brief Set a custom effect. All LED are synchronized to display the same color.
@@ -177,13 +177,13 @@ class XmoduleLED : public _Xmodule {
         void measureBrightness();
 
         CallbackSyncSetter onDemandSyncSetter;
-        CallbackSingleSetter onDemandSingleSetter;
+        CallbackSeparateSetter onDemandSeparateSetter;
         CallbackArraySetter onDemandArraySetter;
-        void setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSingleSetter singleSetter, CallbackArraySetter arraySetter);
+        void setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSeparateSetter separateSetter, CallbackArraySetter arraySetter);
 
         LimitTimer fxTimer = LimitTimer(1000/cfgXmoduleLED.fxRefreshRate_Hz);
         FxContainer fxContainer;
-        void setEffect(FxSingleSetter singleSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle);
+        void setEffect(FxSeparateSetter separateSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle);
         void executeEffect();
 
         void saveCfgCallback();
@@ -193,7 +193,7 @@ class XmoduleLED : public _Xmodule {
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3> <ul>
-    <li>Brigtness:<br> <form action='/save' method='post'> <input name='brightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Brigtness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Duration [ms]:<br> <form action='/save' method='post'> <input name='duration' value='%102%' type='number' min='0' max='65535'> <input type='submit' value='Save'> </form> </li>
     <li>Effect:<br> <form action='/save' method='post'> <select name='fxmode'> %110% </select> <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Action</h3> <ul>
