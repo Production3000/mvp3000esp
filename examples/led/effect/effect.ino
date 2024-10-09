@@ -29,30 +29,21 @@ XmoduleLED xmoduleLED(LED_PIN, ledCount);
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
+    xmoduleLED.setRandomColor();
+    xmoduleLED.setColorEffect(2000, COLORFX::RAINBOW_SYNC);
+
+    // Set a custom effect
+    xmoduleLED.setBrightnessEffect(2000, false, false, customBrightnessEffect);
 
     // Start mvp framework
     mvp.setup();
-
-    // Internal effect
-    // xmoduleLED.setEffect(1);
-    // xmoduleLED.setEffect(2);
-
-    // All pixels in sync, called every 1000ms
-    xmoduleLED.setEffectSetter(fxSyncSetter, 1000, true);
-
-    // Each pixel with individual color, called with 40Hz, repeating/reset after 2000ms 
-    // xmoduleLED.setEffectSetter(fxSeparateSetter, 2000);
 }
 
 void loop() {
     mvp.loop();
 }
 
-uint32_t fxSyncSetter(uint16_t timingPosition) {
-    return Adafruit_NeoPixel::Color(random(255), random(255), random(255));
-}
-
-uint32_t fxSeparateSetter(uint8_t led, uint16_t timingPosition) {
-    uint8_t shift = timingPosition / 256;
-    return Adafruit_NeoPixel::Color(shift, 255 - shift, 255 * led / (ledCount - 1) );
+// Custom effect, copy of BRIGHTNESSFX::RND_SPARKLE
+uint32_t customBrightnessEffect(uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) {
+    return random(256);
 }

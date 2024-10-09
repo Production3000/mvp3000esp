@@ -18,14 +18,12 @@ limitations under the License.
 #define MVP3000_XMODULELED
 
 #include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
+#include <map>
 
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
-
-#include <Adafruit_NeoPixel.h>
-
-#include "XmoduleLED_effects.h"
 
 
 // struct PixelGroup {
@@ -54,19 +52,47 @@ extern MVP3000 mvp;
 // };
 
 
-typedef std::function<uint32_t()> CallbackSyncSetter;
-typedef std::function<uint32_t(uint8_t)> CallbackSeparateSetter;
-typedef std::function<void(uint32_t*, uint8_t)> CallbackArraySetter;
+typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t*)> FxColorSetter;
+typedef std::function<uint8_t(uint8_t, uint8_t, uint16_t, uint8_t*)> FxBrightnessSetter;
+typedef std::tuple<boolean, boolean, FxColorSetter> FxColorContainer;
+typedef std::tuple<boolean, boolean, FxBrightnessSetter> FxContainer;
+
+enum BRIGHTNESSFX: uint8_t {
+    BLINK = 0,
+    FADE_IN = 1,
+    FADE_OUT = 2,
+    PULSE_FULL = 3,
+    PULSE_HALF = 4,
+    RND_SYNC = 5,
+    RND_SPARKLE = 6,
+    RND_WALK = 7,
+    WAVE_FWD = 8,
+    WAVE_BWD = 9,
+};
+
+enum COLORFX: uint8_t {
+    TRANSITION = 0,
+    RND_SYNC_LOUD = 2,
+    RND_SYNC_PASTEL = 3,
+    RND_SPARKLE_LOUD = 4,
+    RND_SPARKLE_PASTEL = 5,
+    RND_WALK_LOUD = 6,
+    RND_WALK_PASTEL = 7,
+    RAINBOW_SYNC = 8,
+    RAINBOW_WAVE_FWD = 9,
+    RAINBOW_WAVE_BWD = 10,
+};
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
 
     uint8_t ledPin;
-    uint8_t fxRefreshRate_Hz = 40; // 40 Hz -> 25 ms
+    uint8_t refreshRateFx_Hz = 40; // 40 Hz -> 25 ms
+    uint8_t refreshRateStatic_s = 1; // s
 
     // Modifiable settings saved to SPIFFS
     uint8_t ledCount = 1;
-    uint8_t globalBrightness = 75;
+    uint8_t globalBrightness = 150;
 
     // The config name is used as SPIFFS file name
     CfgXmoduleLED() : CfgJsonInterface("XmoduleLED") {
@@ -84,6 +110,61 @@ class XmoduleLED : public _Xmodule {
         XmoduleLED(uint8_t ledPin, uint8_t ledCount) : _Xmodule("LED-Xmodule", "/led") {
             cfgXmoduleLED.ledPin = ledPin;
             cfgXmoduleLED.ledCount = ledCount;
+
+            delete [] currentColors;
+            currentColors = new uint32_t[cfgXmoduleLED.ledCount];
+            delete [] currentBrightness;
+            currentBrightness = new uint8_t[cfgXmoduleLED.ledCount];
+
+            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
+                currentColors[i] = 0;
+                currentBrightness[i] = 255;
+            }
+        }
+
+        void setRandomColor() { 
+            removeXledState(XLED_STATE::FXCOLOR);
+            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
+                currentColors[i] = Adafruit_NeoPixel::ColorHSV(random(65536), 255, 255);
+            }
+            resetTimer();
+        }
+
+
+        void setSeparateColor(uint32_t* colors) {         // NumberArray !! has loop
+            removeXledState(XLED_STATE::FXCOLOR);
+            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
+                currentColors[i] = colors[i];
+            }
+            resetTimer();
+        }
+
+        void setSeparateBrightness(uint8_t* brightness) {
+            removeXledState(XLED_STATE::FXBRIGHT);
+            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; ++i) {
+                currentBrightness[i] = brightness[i];
+            }
+            resetTimer();
+        }
+
+        void setSyncColor(uint32_t color) {
+            removeXledState(XLED_STATE::FXCOLOR);
+            std::fill_n(currentColors, cfgXmoduleLED.ledCount, color);
+            resetTimer();
+        }
+
+        void setSyncBrightness(uint8_t brightness) {
+            removeXledState(XLED_STATE::FXBRIGHT);
+            std::fill_n(currentBrightness, cfgXmoduleLED.ledCount, brightness);
+            resetTimer();
+        }
+
+        void resetTimer() {
+            if (xledState == XLED_STATE::ONDEMAND) {
+                updateTimer.restart(cfgXmoduleLED.refreshRateStatic_s * 1000);
+            } else {
+                updateTimer.restart(1000/cfgXmoduleLED.refreshRateFx_Hz);
+            }
         }
 
         /**
@@ -103,51 +184,12 @@ class XmoduleLED : public _Xmodule {
 
 
 
-        void setLed(CallbackSyncSetter setOnceSyncSetter); // single color, why ??? here this is stupid
-        void setLed(CallbackSeparateSetter setOnceSeparateSetter);
-        void setLed(CallbackArraySetter setOnceArraySetter);
+        void setBrightnessEffect(uint16_t duration_ms, BRIGHTNESSFX effect);
+        void setBrightnessEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, FxBrightnessSetter brightnessSetter);
 
-        /**
-         * @brief Demand an update of the LED strip. This is necessary if the LED display depends on the status of the script.
-         */
-        void demandLedUpdate();
+        void setColorEffect(uint16_t duration_ms, COLORFX effect);
+        void setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, FxColorSetter colorSetter);
 
-        /**
-         * 
-         */
-        void setOnDemandSetter(CallbackArraySetter onDemandArraySetter) { setOnDemandCallback(nullptr, nullptr, onDemandArraySetter); }
-
-
-        void setOnDemandSetter(CallbackSeparateSetter onDemandSeparateSetter) { setOnDemandCallback(nullptr, onDemandSeparateSetter, nullptr); }
-
-
-        void setOnDemandSetter(CallbackSyncSetter onDemandSyncSetter) { setOnDemandCallback(onDemandSyncSetter, nullptr, nullptr); }
-
-
-        /**
-         * @brief Display a pre-defined effect.
-         * 
-         * @param effect The effect to set.
-         */
-        void setEffect(uint8_t effect);
-
-        /**
-         * @brief Set a custom effect. Each LED is set individually.
-         * 
-         * @param fxCallback The setter function defining the current color of each LED.
-         * @param duration_ms The duration of the effect in milliseconds.
-         * @param onlyOnNewCycle (optional) If true, the callback is only executed on start of a new cycle.
-         */
-        void setEffectSetter(FxSeparateSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) {  setEffect(fxCallback, nullptr, duration_ms, onlyOnNewCycle); }
-
-        /**
-         * @brief Set a custom effect. All LED are synchronized to display the same color.
-         * 
-         * @param fxCallback The setter function defining the current color of all LED.
-         * @param duration_ms The duration of the effect in milliseconds.
-         * @param onlyOnNewCycle (optional) If true, the callback is only executed on start of a new cycle.
-         */
-        void setEffectSetter(FxSyncSetter fxCallback, uint16_t duration_ms, boolean onlyOnNewCycle = false) { setEffect(nullptr, fxCallback, duration_ms, onlyOnNewCycle); }
 
     public:
 
@@ -156,17 +198,58 @@ class XmoduleLED : public _Xmodule {
 
     private:
 
-        enum class XLED_STATE: uint8_t {
-            EFFECT = 0,
-            ONDEMAND = 1,
+        enum XLED_STATE: uint8_t {
+            ONDEMAND = 0,
+            FXCOLOR = 1,
+            FXBRIGHT = 2,
+            FXFULL = 3,
         };
         XLED_STATE xledState = XLED_STATE::ONDEMAND;
+        void appendXledState(XLED_STATE state) {
+            if ((xledState == state) || (state == XLED_STATE::FXFULL)) // nothing to do
+                return;
+            xledState = static_cast<XLED_STATE>(xledState + state);
+        }
+        void removeXledState(XLED_STATE state) {
+            if (xledState == XLED_STATE::ONDEMAND)
+                return;
+            if ((xledState == state) || (state == XLED_STATE::FXFULL))
+                xledState = static_cast<XLED_STATE>(xledState - state);
+        }
 
         CfgXmoduleLED cfgXmoduleLED;
 
         Adafruit_NeoPixel* pixels;
 
-        XledFx xledFx;
+
+        uint32_t* currentColors;
+        uint8_t* currentBrightness;
+
+        FxColorSetter fxColorSetter = nullptr;
+        FxBrightnessSetter fxBrightnessSetter = nullptr;
+
+        LimitTimer updateTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
+
+        // The timer is expected to be slower than anticipated, thus round up the timing calculation: step = MAX / (rate * duration) + 1
+        uint16_t nextTimingStep(uint8_t refreshRate_Hz, uint16_t duration_ms) { return (std::numeric_limits<uint16_t>::max() * 1000) / (refreshRate_Hz * duration_ms) + 1; };
+
+        uint16_t fxBrightnessTimingPosition = 0;
+        uint16_t fxBrightnessDuration_ms;
+        boolean fxBrightnessOnlyOnNewCycle;
+        boolean fxBrightnessRunOnlyOnce;
+
+        uint16_t fxColorTimingPosition = 0;
+        uint16_t fxColorDuration_ms;
+        boolean fxColorOnlyOnNewCycle;
+        boolean fxColorRunOnlyOnce;
+
+        void calculateColorEffect();
+        void calculateBrightnessEffect();
+
+
+        void drawLed();
+
+
 
         // PixelGroup* pixelGroup;
 
@@ -176,15 +259,6 @@ class XmoduleLED : public _Xmodule {
         LimitTimer brightnessTimer = LimitTimer(250);
         void measureBrightness();
 
-        CallbackSyncSetter onDemandSyncSetter;
-        CallbackSeparateSetter onDemandSeparateSetter;
-        CallbackArraySetter onDemandArraySetter;
-        void setOnDemandCallback(CallbackSyncSetter syncSetter, CallbackSeparateSetter separateSetter, CallbackArraySetter arraySetter);
-
-        LimitTimer fxTimer = LimitTimer(1000/cfgXmoduleLED.fxRefreshRate_Hz);
-        FxContainer fxContainer;
-        void setEffect(FxSeparateSetter separateSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle);
-        void executeEffect();
 
         void saveCfgCallback();
 

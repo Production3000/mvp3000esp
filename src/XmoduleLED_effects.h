@@ -19,43 +19,22 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include <Adafruit_NeoPixel.h>
+#include <map>
 
 
-typedef std::function<uint32_t(uint8_t, uint16_t)> FxSeparateSetter; // Each LED with own color
-typedef std::function<uint32_t(uint16_t)> FxSyncSetter; // All LED in syncronuous mode
 
-struct FxContainer {
-    FxSeparateSetter separateSetter;
-    FxSyncSetter syncSetter;
-    uint16_t timingPosition = 0;
-    uint16_t duration_ms;
-    boolean onlyOnNewCycle;
-
-    FxContainer() {}
-    FxContainer(FxSeparateSetter separateSetter, FxSyncSetter syncSetter, uint16_t duration_ms, boolean onlyOnNewCycle = false) : separateSetter(separateSetter), syncSetter(syncSetter), duration_ms(duration_ms), onlyOnNewCycle(onlyOnNewCycle) {}
-};
+// struct XledFx {
 
 
-struct XledFx {
-
-    FxContainer getFxContainer(uint8_t effect) {
-        if (effect == 1) {
-            return FxContainer(nullptr, std::bind(&XledFx::fxSync, this, std::placeholders::_1), fxDurationFast_ms);
-        } else {
-            return FxContainer(nullptr, std::bind(&XledFx::fxSync, this, std::placeholders::_1), fxDurationSlow_ms);
-        }
-    }
-
-    uint16_t fxDurationFast_ms = 500;
-    uint16_t fxDurationSlow_ms = 5000;
-    uint32_t fxSync(uint16_t position) {
-        float_t phase = TWO_PI * position / std::numeric_limits<uint16_t>::max();
-        uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
-        uint8_t g = ( sin(phase + TWO_PI/3) + 1 ) * 255 / 2;
-        uint8_t b = ( sin(phase + TWO_PI/3*2) + 1 ) * 255 / 2;
-        return Adafruit_NeoPixel::Color(r, g, b);
-    }
-};
+//     uint16_t fxDurationFast_ms = 500;
+//     uint16_t fxDurationSlow_ms = 5000;
+//     uint32_t fxSync(uint16_t position) {
+//         float_t phase = TWO_PI * position / std::numeric_limits<uint16_t>::max();
+//         uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
+//         uint8_t g = ( sin(phase + TWO_PI/3) + 1 ) * 255 / 2;
+//         uint8_t b = ( sin(phase + TWO_PI/3*2) + 1 ) * 255 / 2;
+//         return Adafruit_NeoPixel::Color(r, g, b);
+//     }
+// };
 
 #endif

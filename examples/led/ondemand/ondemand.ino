@@ -25,43 +25,30 @@ uint8_t ledCount = 12;
 
 XmoduleLED xmoduleLED(LED_PIN, ledCount);
 
-
-LimitTimer timer(50);
+LimitTimer timer(100);
 
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
     // All pixels in sync alternating color depending on uptime.
-    xmoduleLED.setOnDemandSetter(syncSetter);
+    xmoduleLED.setSyncColor(Adafruit_NeoPixel::Color(255, 0, 0));
 
     // Start mvp framework
     mvp.setup();
-
-    // Some gradient to light all pixels before the actual LED data is available
-    xmoduleLED.setLed(arraySetter);                                                                        // TODO set this before .setup() and initialize then
-
-    // Delay to see the initial LED colors
-    delay(5000); 
 }
+
 
 void loop() {
     // Change LED to based on status/data/events/...
-    if (timer.justFinished())
-        xmoduleLED.demandLedUpdate();
+    if (timer.justFinished()){
+        xmoduleLED.setSyncColor(evaluateData());
+    }
 
     mvp.loop();
 }
 
 
-// Callbacks
-
-void arraySetter(uint32_t* ledArray, uint8_t ledCount) {
-    for (uint8_t i = 0; i < ledCount; i++) {
-        ledArray[i] = Adafruit_NeoPixel::Color(127, i * (255/(ledCount - 1)), 255 - (i * (255/(ledCount - 1))));
-    }
-}
-
-uint32_t syncSetter() {
+uint32_t evaluateData() {
     switch ((millis() / 1000) % 3) {
         case 0:
             return Adafruit_NeoPixel::Color(255, 0, 0);
