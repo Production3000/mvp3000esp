@@ -29,11 +29,15 @@ XmoduleLED xmoduleLED(LED_PIN, ledCount);
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
-    xmoduleLED.setRandomColor();
-    xmoduleLED.setColorEffect(2000, COLORFX::RAINBOW_SYNC);
+    // xmoduleLED.setRandomColor();
+    // xmoduleLED.setColorEffect(2000, COLORFX::RAINBOW_SYNC);
 
     // Set a custom effect
-    xmoduleLED.setBrightnessEffect(2000, false, false, customBrightnessEffect);
+    // xmoduleLED.setBrightnessEffect(2000, false, false, customBrightnessEffect);
+
+
+        xmoduleLED.setSyncColor(Adafruit_NeoPixel::Color(0, 0, 255));
+        xmoduleLED.setBrightnessEffect(1000, BRIGHTNESSFX::PULSE_FULL);
 
     // Start mvp framework
     mvp.setup();

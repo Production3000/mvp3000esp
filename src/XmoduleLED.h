@@ -230,24 +230,20 @@ class XmoduleLED : public _Xmodule {
 
         LimitTimer updateTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
 
-        // The timer is expected to be slower than anticipated, thus round up the timing calculation: step = MAX / (rate * duration) + 1
-        uint16_t nextTimingStep(uint8_t refreshRate_Hz, uint16_t duration_ms) { return (std::numeric_limits<uint16_t>::max() * 1000) / (refreshRate_Hz * duration_ms) + 1; };
+        void drawLed();
 
-        uint16_t fxBrightnessTimingPosition = 0;
+
+        uint16_t fxBrightnessFrame = 0;
         uint16_t fxBrightnessDuration_ms;
         boolean fxBrightnessOnlyOnNewCycle;
         boolean fxBrightnessRunOnlyOnce;
+        void calculateBrightnessEffect();
 
-        uint16_t fxColorTimingPosition = 0;
+        uint16_t fxColorFrame = 0;
         uint16_t fxColorDuration_ms;
         boolean fxColorOnlyOnNewCycle;
         boolean fxColorRunOnlyOnce;
-
         void calculateColorEffect();
-        void calculateBrightnessEffect();
-
-
-        void drawLed();
 
 
 

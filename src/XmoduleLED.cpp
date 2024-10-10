@@ -216,82 +216,75 @@ void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, bo
 
 
 void XmoduleLED::calculateColorEffect() {
-    uint16_t timingStep = nextTimingStep(cfgXmoduleLED.refreshRateFx_Hz, fxColorDuration_ms);            /// TODO calc step depending on effect and global refresh rate
+    // The maximum position will never be achieved - this is a problem for fade effect that go for 0 to 255                                     // TODO
+    // 0 / 40 first/1st
+    // 1 / 40
+    // 39 / 40 last/40th
+    uint16_t frameCount = cfgXmoduleLED.refreshRateFx_Hz * fxColorDuration_ms / 1000;
+    // if (goesToMax) frameCount--;
 
     // Fx can be repeating or single run
     // There are two duration types: 1) many gradual steps during duration cycle (fade, wheel) or 2) a single change per duration cycle (blink, random color change).
-    if (fxColorOnlyOnNewCycle) {
-        if (fxColorTimingPosition >= timingStep) {
-            fxColorTimingPosition += timingStep;
-            return;
+
+    if (!fxColorOnlyOnNewCycle || (fxColorFrame == 0)) {
+        uint16_t timingPosition = 65535 * fxColorFrame / frameCount;
+        for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
+            currentColors[i] = fxColorSetter(i, cfgXmoduleLED.ledCount, timingPosition, currentColors);
         }
     }
 
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        // if (fxColorSetter != nullptr)
-        //     currentColors[i] = fxColorSetter(i, fxBrightnessTimingPosition, currentColors[i]);
-        if (fxColorSetter != nullptr)
-            currentColors[i] = fxColorSetter(i, cfgXmoduleLED.ledCount, fxColorTimingPosition, currentColors);
-
-    }
-
-    if (fxColorTimingPosition >= std::numeric_limits<uint16_t>::max() - timingStep) {
+    fxColorFrame++;
+    if (fxColorFrame >= frameCount) {
+        // Limited resolution for short durations: 40 * 140 / 1000 = 5 --> 125 ms instead of the targeted 140 ms
+        fxColorFrame = 0;
         if (fxColorRunOnlyOnce) {
             removeXledState(XLED_STATE::FXCOLOR);
         }
     }
-
-    fxColorTimingPosition += timingStep;
 }
 
-
 void XmoduleLED::calculateBrightnessEffect() {
-    uint16_t timingStep = nextTimingStep(cfgXmoduleLED.refreshRateFx_Hz, fxBrightnessDuration_ms);
+    uint16_t frameCount = cfgXmoduleLED.refreshRateFx_Hz * fxBrightnessDuration_ms / 1000;
+    // if (goesToMax) frameCount--;
 
-    // Fx can be repeating or single run
-    // There are two duration types: 1) many gradual steps during duration cycle (fade, wheel) or 2) a single change per duration cycle (blink, random color change).
-    if (fxBrightnessOnlyOnNewCycle) {
-        if (fxBrightnessTimingPosition >= timingStep) {
-            fxBrightnessTimingPosition += timingStep;
-            return;
+    if (!fxBrightnessOnlyOnNewCycle || (fxBrightnessFrame == 0)) {
+        uint16_t timingPosition = 65535 * fxBrightnessFrame / frameCount;
+        for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
+            currentBrightness[i] = fxBrightnessSetter(i, cfgXmoduleLED.ledCount, timingPosition, currentBrightness);
         }
     }
 
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        // if (fxColorSetter != nullptr)
-        //     currentColors[i] = fxColorSetter(i, fxBrightnessTimingPosition, currentColors[i]);
-        if (fxBrightnessSetter != nullptr)
-            currentBrightness[i] = fxBrightnessSetter(i, cfgXmoduleLED.ledCount, fxBrightnessTimingPosition, currentBrightness);
-    }
-
-    if (fxBrightnessTimingPosition >= std::numeric_limits<uint16_t>::max() - timingStep) {
+    fxBrightnessFrame++;
+    if (fxBrightnessFrame >= frameCount) {
+        fxBrightnessFrame = 0;
         if (fxBrightnessRunOnlyOnce) {
             removeXledState(XLED_STATE::FXBRIGHT);
         }
     }
-
-    fxBrightnessTimingPosition += timingStep;
 }
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleLED::adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits)
-{
+void XmoduleLED::adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits) {
     adcBits = analogBits;
     if (adcBits == 0)
-        _helper.adcBits;
+        adcBits = _helper.adcBits;
     adcPin = analogPin;
 }
 
 void XmoduleLED::measureBrightness() {
+    // Base brightness 55 + 0..200
+    uint16_t nwread = 55 + 250 * analogRead(adcPin) / pow(2, adcBits);
+    nwread = constrain(nwread, 0, 255);
     if (analogReading == -1) {
-        analogReading = analogRead(adcPin);
+        analogReading = nwread;
     } else {
-        analogReading = (2 * analogReading + analogRead(adcPin)) / 3; // Moving average over 3 measurements
+        analogReading = (9 * analogReading + nwread) / 10; // Moving average over 10 measurements
     }
-    pixels->setBrightness(analogReading*255/(1 << adcBits));
+    
+    pixels->setBrightness(analogReading);
     pixels->show();
 }
 
