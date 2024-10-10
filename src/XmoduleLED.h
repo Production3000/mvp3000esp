@@ -24,6 +24,7 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
+#include "XmoduleLED_effects.h"
 
 
 // struct PixelGroup {
@@ -51,38 +52,6 @@ extern MVP3000 mvp;
 //     }
 // };
 
-
-// led, ledcount, timingPosition, currentColor/currentBrightness
-typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t*)> FxColorSetter;
-typedef std::function<uint8_t(uint8_t, uint8_t, uint16_t, uint8_t*)> FxBrightnessSetter;
-// useSubFrames, runEndless, fullRange, fct
-typedef std::tuple<boolean, boolean, boolean, FxColorSetter> FxColorContainer;
-typedef std::tuple<boolean, boolean, boolean, FxBrightnessSetter> FxContainer;
-
-enum BRIGHTNESSFX: uint8_t {
-    BLINK = 0,
-    FADE_IN = 1,
-    FADE_OUT = 2,
-    PULSE_FULL = 3,
-    PULSE_HALF = 4,
-    RND_SYNC = 5,
-    RND_SPARKLE = 6,
-    RND_WALK = 7,
-    WAVE_FWD = 8,
-    WAVE_BWD = 9,
-};
-
-enum COLORFX: uint8_t {
-    RND_SYNC_LOUD = 2,
-    RND_SYNC_PASTEL = 3,
-    RND_SPARKLE_LOUD = 4,
-    RND_SPARKLE_PASTEL = 5,
-    RND_WALK_LOUD = 6,
-    RND_WALK_PASTEL = 7,
-    RAINBOW_SYNC = 8,
-    RAINBOW_WAVE_FWD = 9,
-    RAINBOW_WAVE_BWD = 10,
-};
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
@@ -185,10 +154,10 @@ class XmoduleLED : public _Xmodule {
 
 
 
-        void setBrightnessEffect(uint16_t duration_ms, BRIGHTNESSFX effect);
+        void setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect);
         void setBrightnessEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxBrightnessSetter brightnessSetter);
 
-        void setColorEffect(uint16_t duration_ms, COLORFX effect);
+        void setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect);
         void setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxColorSetter colorSetter);
 
 
@@ -221,6 +190,8 @@ class XmoduleLED : public _Xmodule {
         CfgXmoduleLED cfgXmoduleLED;
 
         Adafruit_NeoPixel* pixels;
+
+        XledFx xledFx;
 
 
         uint32_t* currentColors;

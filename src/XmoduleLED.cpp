@@ -20,111 +20,6 @@ limitations under the License.
 extern _Helper _helper;
 
 
-
-// HsvColor RgbToHsv(RgbColor rgb)
-// {
-//     HsvColor hsv;
-//     unsigned char rgbMin, rgbMax;
-
-//     rgbMin = rgb.r < rgb.g ? (rgb.r < rgb.b ? rgb.r : rgb.b) : (rgb.g < rgb.b ? rgb.g : rgb.b);
-//     rgbMax = rgb.r > rgb.g ? (rgb.r > rgb.b ? rgb.r : rgb.b) : (rgb.g > rgb.b ? rgb.g : rgb.b);
-    
-//     hsv.v = rgbMax;
-//     if (hsv.v == 0)
-//     {
-//         hsv.h = 0;
-//         hsv.s = 0;
-//         return hsv;
-//     }
-
-//     hsv.s = 255 * long(rgbMax - rgbMin) / hsv.v;
-//     if (hsv.s == 0)
-//     {
-//         hsv.h = 0;
-//         return hsv;
-//     }
-
-//     if (rgbMax == rgb.r)
-//         hsv.h = 0 + 43 * (rgb.g - rgb.b) / (rgbMax - rgbMin);
-//     else if (rgbMax == rgb.g)
-//         hsv.h = 85 + 43 * (rgb.b - rgb.r) / (rgbMax - rgbMin);
-//     else
-//         hsv.h = 171 + 43 * (rgb.r - rgb.g) / (rgbMax - rgbMin);
-
-//     return hsv;
-// }
-
-
-void rgb2hsv(uint32_t currentColor, uint16_t& h, uint8_t& s, uint8_t& v) {
-    uint8_t r = (uint8_t)(currentColor >> 16);
-    uint8_t g = (uint8_t)(currentColor >> 8);
-    uint8_t b = (uint8_t)currentColor;
-
-    // Convert RGB to HSV
-    uint8_t rgbMax = (r > g) ? r : g;
-    rgbMax = (rgbMax > b) ? rgbMax : b;
-
-    if (rgbMax == 0) { // Black
-        h = 0;
-        s = 0;
-        v = 0;
-        return;
-    }
-    v = rgbMax;
-
-    uint8_t rgbMin = (r < g) ? r : g;
-    rgbMin = (rgbMin < b) ? rgbMin : b;
-    float_t delta = rgbMax - rgbMin;
-    if (delta < 1) { // == 0 Gray
-        h = 0;
-        s = 0;
-        return;
-    }
-    s = 255 * (float_t)delta / v;
-
-    if (rgbMax == r)
-        h = nearbyintf(10922.5 * float_t(g - b) / delta); // Red centered at 65535/0 rollover
-    else if (rgbMax == g)
-        h = nearbyintf(21845.0 + (10922.5 * float_t(b - r) / delta));
-    else
-        h = nearbyintf(43690.0 + (10922.5 * float_t(r - g) / delta));
-};
-
-std::map<BRIGHTNESSFX, FxContainer> brightnessFx = {
-    { FADE_IN, std::make_tuple(true, false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return timingPosition / 256; }) },
-    { FADE_OUT, std::make_tuple(true, false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return 255 - timingPosition / 256; }) },
-    { BLINK, std::make_tuple(true, true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return (timingPosition > 32767) ? 0 : 255; }) },
-    { PULSE_FULL, std::make_tuple(true, true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return 2 * (uint8_t)abs((0.5 + (int16_t)timingPosition) / 256); }) },
-    { PULSE_HALF, std::make_tuple(true, true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return 255 - (uint8_t)abs((0.5 + (int16_t)timingPosition) / 256); }) },
-    { RND_SYNC, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return (led == 0) ? random(256) : currentBrightness[0]; }) },
-    { RND_SPARKLE, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return random(256); }) },
-    { RND_WALK, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { int16_t temp = currentBrightness[led] + random(-4, 5); return constrain(temp, 0, 255); }) },
-    { WAVE_FWD, std::make_tuple(true, false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return nearbyintf( 255.0/2 * ( 1 + sin(2 * PI * led / (ledcount - 1) - 2 * PI * timingPosition / 65535) ) ); }) },
-    { WAVE_BWD, std::make_tuple(true, false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) { return nearbyintf( 255.0/2 * ( 1 + sin(2 * PI * led / (ledcount - 1) + 2 * PI * timingPosition / 65535) ) ); }) },
-};
-
-
-std::map<COLORFX, FxColorContainer> colorFx = {
-    { RND_SYNC_LOUD, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return (led == 0) ? Adafruit_NeoPixel::ColorHSV(random(65536)) : currentColor[0]; }) },
-    { RND_SYNC_PASTEL, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return (led == 0) ? Adafruit_NeoPixel::Color(random(256), random(256), random(256)) : currentColor[0]; }) },
-    { RND_SPARKLE_LOUD, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return Adafruit_NeoPixel::ColorHSV(random(65536)); }) },
-    { RND_SPARKLE_PASTEL, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return Adafruit_NeoPixel::Color(random(256), random(256), random(256)); }) },
-    { RND_WALK_LOUD, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) {
-        uint16_t h;
-        uint8_t s, v;
-        rgb2hsv(currentColor[led], h, s, v);
-        return Adafruit_NeoPixel::ColorHSV(h + random(-512, 513)); }) },
-    { RND_WALK_PASTEL, std::make_tuple(false, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) {
-        int16_t r = (uint8_t)(currentColor[led] >> 16) + random(-4, 5);
-        int16_t g = (uint8_t)(currentColor[led] >> 8) + random(-4, 5);
-        int16_t b = (uint8_t)currentColor[led] + random(-4, 5);
-        return Adafruit_NeoPixel::Color(constrain(r, 0, 255), constrain(g, 0, 255), constrain(b, 0, 255)); }) },
-    { RAINBOW_SYNC, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return Adafruit_NeoPixel::ColorHSV(timingPosition); }) },
-    { RAINBOW_WAVE_FWD, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return Adafruit_NeoPixel::ColorHSV(65535 * led / (ledcount - 1) + timingPosition); }) },
-    { RAINBOW_WAVE_BWD, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) { return Adafruit_NeoPixel::ColorHSV(65535 * led / (ledcount - 1) - timingPosition); }) },
-};
-
-
 void XmoduleLED::setup() {
     // Read and register config
     mvp.config.readCfg(cfgXmoduleLED);
@@ -173,8 +68,8 @@ void XmoduleLED::drawLed() {
     pixels->show();
 }
 
-void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, BRIGHTNESSFX effect) {
-    FxContainer fx = brightnessFx[effect];
+void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect) {
+    FxContainer fx = xledFx.brightnessFx[effect];
     setBrightnessEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
 }
 
@@ -188,8 +83,8 @@ void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useSubFrames,
     resetTimer();
 }
 
-void XmoduleLED::setColorEffect(uint16_t duration_ms, COLORFX effect) {
-    FxColorContainer fx = colorFx[effect];
+void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
+    FxColorContainer fx = xledFx.colorFx[effect];
     setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
 }
 
