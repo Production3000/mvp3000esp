@@ -30,14 +30,11 @@ void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
     xmoduleLED.setRandomColor();
-    xmoduleLED.setColorEffect(2000, XledFx::COLORFX::RAINBOW_SYNC);
+    xmoduleLED.setColorEffect(10000, XledFx::COLORFX::RAINBOW_SYNC);
 
-    // Set a custom effect
-    // xmoduleLED.setBrightnessEffect(2000, false, false, customBrightnessEffect);
-
-
-    // xmoduleLED.setSyncColor(Adafruit_NeoPixel::Color(0, 0, 255));
-    xmoduleLED.setBrightnessEffect(2000, XledFx::BRIGHTNESSFX::WAVE_FWD);
+    // Set a custom effect, copy of BRIGHTNESSFX::RND_SPARKLE
+    xmoduleLED.setBrightnessEffect(300, false, true, true, customBrightnessEffect);
+    // xmoduleLED.setBrightnessEffect(300, XledFx::BRIGHTNESSFX::RND_SPARKLE);
 
     // Start mvp framework
     mvp.setup();
@@ -47,7 +44,8 @@ void loop() {
     mvp.loop();
 }
 
+
 // Custom effect, copy of BRIGHTNESSFX::RND_SPARKLE
-uint32_t customBrightnessEffect(uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t* currentBrightness) {
+uint32_t customBrightnessEffect(uint8_t led, uint8_t ledCount, uint16_t timingPosition, uint8_t** currentBrightness) {
     return random(256);
 }

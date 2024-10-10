@@ -92,50 +92,22 @@ class XmoduleLED : public _Xmodule {
             }
         }
 
-        void setRandomColor() { 
-            removeXledState(XLED_STATE::FXCOLOR);
-            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-                currentColors[i] = Adafruit_NeoPixel::ColorHSV(random(65536), 255, 255);
-            }
-            resetTimer();
-        }
 
 
-        void setSeparateColor(uint32_t* colors) {         // NumberArray !! has loop
-            removeXledState(XLED_STATE::FXCOLOR);
-            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-                currentColors[i] = colors[i];
-            }
-            resetTimer();
-        }
+        void setSeparateBrightness(uint8_t* brightness);
+        void setSyncBrightness(uint8_t brightness);
 
-        void setSeparateBrightness(uint8_t* brightness) {
-            removeXledState(XLED_STATE::FXBRIGHT);
-            for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; ++i) {
-                currentBrightness[i] = brightness[i];
-            }
-            resetTimer();
-        }
+        void setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect);
+        void setBrightnessEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxBrightnessSetter brightnessSetter);
 
-        void setSyncColor(uint32_t color) {
-            removeXledState(XLED_STATE::FXCOLOR);
-            std::fill_n(currentColors, cfgXmoduleLED.ledCount, color);
-            resetTimer();
-        }
+        void setSeparateColor(uint32_t* colors);
+        void setSyncColor(uint32_t color);
 
-        void setSyncBrightness(uint8_t brightness) {
-            removeXledState(XLED_STATE::FXBRIGHT);
-            std::fill_n(currentBrightness, cfgXmoduleLED.ledCount, brightness);
-            resetTimer();
-        }
+        void setRandomColor();
 
-        void resetTimer() {
-            if (xledState == XLED_STATE::ONDEMAND) {
-                updateTimer.restart(cfgXmoduleLED.refreshRateStatic_s * 1000);
-            } else {
-                updateTimer.restart(1000/cfgXmoduleLED.refreshRateFx_Hz);
-            }
-        }
+        void setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect);
+        void setColorEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxColorSetter colorSetter);
+
 
         /**
          * @brief Use a photoresistor to automatically adapt the global brightness of the LED strip. This overrides the global brightness setting.
@@ -153,14 +125,6 @@ class XmoduleLED : public _Xmodule {
         void setGlobalBrightness(uint8_t globalBrightness);
 
 
-
-        void setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect);
-        void setBrightnessEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxBrightnessSetter brightnessSetter);
-
-        void setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect);
-        void setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxColorSetter colorSetter);
-
-
     public:
 
         void setup() override;
@@ -175,18 +139,8 @@ class XmoduleLED : public _Xmodule {
             FXFULL = 3,
         };
         XLED_STATE xledState = XLED_STATE::ONDEMAND;
-        void appendXledState(XLED_STATE state) {
-            if ((xledState == state) || (state == XLED_STATE::FXFULL)) // nothing to do
-                return;
-            xledState = static_cast<XLED_STATE>(xledState + state);
-        }
-        void removeXledState(XLED_STATE state) {
-            if (xledState == XLED_STATE::ONDEMAND)
-                return;
-            if ((xledState == state) || (xledState == XLED_STATE::FXFULL)){
-                xledState = static_cast<XLED_STATE>(xledState - state);
-            }
-        }
+        void appendXledState(XLED_STATE state);
+        void removeXledState(XLED_STATE state);
 
         CfgXmoduleLED cfgXmoduleLED;
 
@@ -194,7 +148,8 @@ class XmoduleLED : public _Xmodule {
 
         XledFx xledFx;
 
-        LimitTimer updateTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
+        LimitTimer frameTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
+        void resetTimer();
 
         uint32_t* currentColors;
         uint8_t* currentBrightness;

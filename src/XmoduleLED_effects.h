@@ -112,6 +112,10 @@ struct XledFx {
         FxBrightnessSetter brightnessSetter;
         FxColorSetter colorSetter;
 
+        FxCalulator() {};
+        FxCalulator(uint16_t duration_ms, boolean fullRange, boolean runEndless, boolean useSubFrames, FxBrightnessSetter brightnessSetter) : duration_ms(duration_ms), fullRange(fullRange), runEndless(runEndless), useSubFrames(useSubFrames), brightnessSetter(brightnessSetter) {};
+        FxCalulator(uint16_t duration_ms, boolean fullRange, boolean runEndless, boolean useSubFrames, FxColorSetter colorSetter) : duration_ms(duration_ms), fullRange(fullRange), runEndless(runEndless), useSubFrames(useSubFrames), colorSetter(colorSetter) {};
+
         boolean calculate(uint8_t refreshRateFx_Hz, uint8_t** currentBrightness, uint8_t ledCount) {
             // Limited resolution for short durations: 40 * 140 / 1000 = 5 --> 125 ms instead of the targeted 140 ms
             uint16_t frameCount = refreshRateFx_Hz * duration_ms / 1000;
