@@ -183,8 +183,9 @@ class XmoduleLED : public _Xmodule {
         void removeXledState(XLED_STATE state) {
             if (xledState == XLED_STATE::ONDEMAND)
                 return;
-            if ((xledState == state) || (state == XLED_STATE::FXFULL))
+            if ((xledState == state) || (xledState == XLED_STATE::FXFULL)){
                 xledState = static_cast<XLED_STATE>(xledState - state);
+            }
         }
 
         CfgXmoduleLED cfgXmoduleLED;
@@ -193,32 +194,15 @@ class XmoduleLED : public _Xmodule {
 
         XledFx xledFx;
 
+        LimitTimer updateTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
 
         uint32_t* currentColors;
         uint8_t* currentBrightness;
 
-        FxColorSetter fxColorSetter = nullptr;
-        FxBrightnessSetter fxBrightnessSetter = nullptr;
-
-        LimitTimer updateTimer = LimitTimer(cfgXmoduleLED.refreshRateStatic_s * 1000);
+        XledFx::FxCalulator brightnessFxCalculator;
+        XledFx::FxCalulator colorFxCalculator;
 
         void drawLed();
-
-
-        uint16_t fxBrightnessFrame = 0;
-        uint16_t fxBrightnessDuration_ms;
-        boolean fxBrightnessFullRange;
-        boolean fxBrightnessRunEndless;
-        boolean fxBrightnessUseSubFrames;
-        void calculateBrightnessEffect();
-
-        uint16_t fxColorFrame = 0;
-        uint16_t fxColorDuration_ms;
-        boolean fxColorFullRange;
-        boolean fxColorRunEndless;
-        boolean fxColorUseSubFrames;
-        void calculateColorEffect();
-
 
 
         // PixelGroup* pixelGroup;

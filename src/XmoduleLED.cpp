@@ -42,11 +42,15 @@ void XmoduleLED::loop() {
 
     if (updateTimer.justFinished()) {
         if ((xledState == XLED_STATE::FXBRIGHT) || (xledState == XLED_STATE::FXFULL)) {
-            calculateBrightnessEffect();
+            if (!brightnessFxCalculator.calculate(cfgXmoduleLED.refreshRateFx_Hz, &currentBrightness, cfgXmoduleLED.ledCount)) {
+                removeXledState(XLED_STATE::FXBRIGHT);
+            }
         }
 
         if ((xledState == XLED_STATE::FXCOLOR) || (xledState == XLED_STATE::FXFULL)) {
-            calculateColorEffect();
+            if (!colorFxCalculator.calculate(cfgXmoduleLED.refreshRateFx_Hz, &currentColors, cfgXmoduleLED.ledCount)) {
+                removeXledState(XLED_STATE::FXCOLOR);
+            }
         }
         drawLed();
     }
@@ -56,14 +60,12 @@ void XmoduleLED::loop() {
 void XmoduleLED::drawLed() {
     pixels->clear();
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        // Extract r, g, b from color
-        uint8_t r = (uint8_t)(currentColors[i] >> 16);
-        uint8_t g = (uint8_t)(currentColors[i] >> 8);
-        uint8_t b = (uint8_t)currentColors[i];
-        r = (float_t)r * currentBrightness[i] / 255;
-        g = (float_t)g * currentBrightness[i] / 255;
-        b = (float_t)b * currentBrightness[i] / 255;
-        pixels->setPixelColor(i, r, g, b);
+        // Combine current color and brightness
+        uint32_t cC = currentColors[i];
+        uint8_t *c = (uint8_t *)&cC;
+        for (uint8_t j = 0; j < 4; j++)
+            c[j] = (float_t)c[j] * currentBrightness[i] / 255;
+        pixels->setPixelColor(i, cC);
     }
     pixels->show();
 }
@@ -74,11 +76,11 @@ void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX 
 }
 
 void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxBrightnessSetter brightnessSetter) {
-    fxBrightnessDuration_ms = duration_ms;
-    fxBrightnessRunEndless = runEndless;
-    fxBrightnessUseSubFrames = useSubFrames;
-    fxBrightnessFullRange = fullRange;
-    fxBrightnessSetter = brightnessSetter;
+    brightnessFxCalculator.duration_ms = duration_ms;
+    brightnessFxCalculator.runEndless = runEndless;
+    brightnessFxCalculator.useSubFrames = useSubFrames;
+    brightnessFxCalculator.fullRange = fullRange;
+    brightnessFxCalculator.brightnessSetter = brightnessSetter;
     appendXledState(XLED_STATE::FXBRIGHT);
     resetTimer();
 }
@@ -89,64 +91,14 @@ void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
 }
 
 void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxColorSetter colorSetter) {
-    fxColorDuration_ms = duration_ms;
-    fxColorUseSubFrames = useSubFrames;
-    fxColorRunEndless = runEndless;
-    fxColorFullRange = fullRange;
-    fxColorSetter = colorSetter;
+    colorFxCalculator.duration_ms = duration_ms;
+    colorFxCalculator.runEndless = runEndless;
+    colorFxCalculator.useSubFrames = useSubFrames;
+    colorFxCalculator.fullRange = fullRange;
+    colorFxCalculator.colorSetter = colorSetter;
     appendXledState(XLED_STATE::FXCOLOR);
     resetTimer();
 }
-
-
-void XmoduleLED::calculateColorEffect() {
-    // The maximum position will never be achieved - this is a problem for fade effect that go for 0 to 255
-    // 0 / 40 first/1st
-    // 1 / 40
-    // 39 / 40 last/40th
-    uint16_t frameCount = cfgXmoduleLED.refreshRateFx_Hz * fxColorDuration_ms / 1000;
-    uint16_t dividingFrameCount = (fxBrightnessFullRange) ? frameCount -1 : frameCount;
-
-    // Fx can be repeating or single run
-    // There are two duration types: 1) many gradual steps during duration cycle (fade, wheel) or 2) a single change per duration cycle (blink, random color change).
-
-    if (fxColorUseSubFrames || (fxColorFrame == 0)) {
-        uint16_t timingPosition = 65535 * fxColorFrame / dividingFrameCount;
-        for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-            currentColors[i] = fxColorSetter(i, cfgXmoduleLED.ledCount, timingPosition, currentColors);
-        }
-    }
-
-    fxColorFrame++;
-    if (fxColorFrame >= frameCount) {
-        // Limited resolution for short durations: 40 * 140 / 1000 = 5 --> 125 ms instead of the targeted 140 ms
-        fxColorFrame = 0;
-        if (!fxColorRunEndless) {
-            removeXledState(XLED_STATE::FXCOLOR);
-        }
-    }
-}
-
-void XmoduleLED::calculateBrightnessEffect() {
-    uint16_t frameCount = cfgXmoduleLED.refreshRateFx_Hz * fxBrightnessDuration_ms / 1000;
-    uint16_t dividingFrameCount = (fxBrightnessFullRange) ? frameCount -1 : frameCount;
-
-    if (fxBrightnessUseSubFrames || (fxBrightnessFrame == 0)) {
-        uint16_t timingPosition = 65535 * fxBrightnessFrame / dividingFrameCount;
-        for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-            currentBrightness[i] = fxBrightnessSetter(i, cfgXmoduleLED.ledCount, timingPosition, currentBrightness);
-        }
-    }
-
-    fxBrightnessFrame++;
-    if (fxBrightnessFrame >= frameCount) {
-        fxBrightnessFrame = 0;
-        if (!fxBrightnessRunEndless) {
-            removeXledState(XLED_STATE::FXBRIGHT);
-        }
-    }
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////////////
