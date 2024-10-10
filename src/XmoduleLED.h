@@ -52,10 +52,12 @@ extern MVP3000 mvp;
 // };
 
 
+// led, ledcount, timingPosition, currentColor/currentBrightness
 typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t*)> FxColorSetter;
 typedef std::function<uint8_t(uint8_t, uint8_t, uint16_t, uint8_t*)> FxBrightnessSetter;
-typedef std::tuple<boolean, boolean, FxColorSetter> FxColorContainer;
-typedef std::tuple<boolean, boolean, FxBrightnessSetter> FxContainer;
+// useSubFrames, runEndless, fullRange, fct
+typedef std::tuple<boolean, boolean, boolean, FxColorSetter> FxColorContainer;
+typedef std::tuple<boolean, boolean, boolean, FxBrightnessSetter> FxContainer;
 
 enum BRIGHTNESSFX: uint8_t {
     BLINK = 0,
@@ -71,7 +73,6 @@ enum BRIGHTNESSFX: uint8_t {
 };
 
 enum COLORFX: uint8_t {
-    TRANSITION = 0,
     RND_SYNC_LOUD = 2,
     RND_SYNC_PASTEL = 3,
     RND_SPARKLE_LOUD = 4,
@@ -185,10 +186,10 @@ class XmoduleLED : public _Xmodule {
 
 
         void setBrightnessEffect(uint16_t duration_ms, BRIGHTNESSFX effect);
-        void setBrightnessEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, FxBrightnessSetter brightnessSetter);
+        void setBrightnessEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxBrightnessSetter brightnessSetter);
 
         void setColorEffect(uint16_t duration_ms, COLORFX effect);
-        void setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, FxColorSetter colorSetter);
+        void setColorEffect(uint16_t duration_ms, boolean onlyOnNewCycle, boolean runOnlyOnce, boolean fullRange, FxColorSetter colorSetter);
 
 
     public:
@@ -235,14 +236,16 @@ class XmoduleLED : public _Xmodule {
 
         uint16_t fxBrightnessFrame = 0;
         uint16_t fxBrightnessDuration_ms;
-        boolean fxBrightnessOnlyOnNewCycle;
-        boolean fxBrightnessRunOnlyOnce;
+        boolean fxBrightnessFullRange;
+        boolean fxBrightnessRunEndless;
+        boolean fxBrightnessUseSubFrames;
         void calculateBrightnessEffect();
 
         uint16_t fxColorFrame = 0;
         uint16_t fxColorDuration_ms;
-        boolean fxColorOnlyOnNewCycle;
-        boolean fxColorRunOnlyOnce;
+        boolean fxColorFullRange;
+        boolean fxColorRunEndless;
+        boolean fxColorUseSubFrames;
         void calculateColorEffect();
 
 

@@ -37,7 +37,7 @@ void setup() {
 
 
         xmoduleLED.setSyncColor(Adafruit_NeoPixel::Color(0, 0, 255));
-        xmoduleLED.setBrightnessEffect(1000, BRIGHTNESSFX::PULSE_FULL);
+        xmoduleLED.setBrightnessEffect(1025, BRIGHTNESSFX::WAVE_FWD);
 
     // Start mvp framework
     mvp.setup();

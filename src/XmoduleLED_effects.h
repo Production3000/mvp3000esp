@@ -22,19 +22,19 @@ limitations under the License.
 #include <map>
 
 
+// uint32_t color1 = Adafruit_NeoPixel::Color(255, 0, 0);
+// uint32_t color2 = Adafruit_NeoPixel::Color(0, 0, 255);
+//     { TRANSITION, std::make_tuple(false, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t* currentColor) {                     // TODO how to get the colors in ???
+//         uint8_t r1 = color1 >> 16;
+//         uint8_t g1 = color1 >> 8;
+//         uint8_t b1 = color1;
+//         uint8_t r2 = color2 >> 16;
+//         uint8_t g2 = color2 >> 8;
+//         uint8_t b2 = color2;
+//         uint8_t r = r1 + (r2 - r1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//         uint8_t g = g1 + (g2 - g1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//         uint8_t b = b1 + (b2 - b1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//         return Adafruit_NeoPixel::Color(r ,g, b); }) },
 
-// struct XledFx {
-
-
-//     uint16_t fxDurationFast_ms = 500;
-//     uint16_t fxDurationSlow_ms = 5000;
-//     uint32_t fxSync(uint16_t position) {
-//         float_t phase = TWO_PI * position / std::numeric_limits<uint16_t>::max();
-//         uint8_t r = ( sin(phase + 0) + 1 ) * 255 / 2;
-//         uint8_t g = ( sin(phase + TWO_PI/3) + 1 ) * 255 / 2;
-//         uint8_t b = ( sin(phase + TWO_PI/3*2) + 1 ) * 255 / 2;
-//         return Adafruit_NeoPixel::Color(r, g, b);
-//     }
-// };
 
 #endif
