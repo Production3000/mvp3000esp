@@ -93,27 +93,81 @@ class XmoduleLED : public _Xmodule {
         }
 
 
-
-        void setSeparateBrightness(uint8_t* brightness);
-        void setSyncBrightness(uint8_t brightness);
-
+        /**
+         * @brief Select a predefined brightness effect for the LED strip.
+         * 
+         * @param duration_ms Duration of the effect in milliseconds.
+         * @param effect The pre-defined effect to use.
+         */
         void setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect);
-        void setBrightnessEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxBrightnessSetter brightnessSetter);
 
-        void setSeparateColor(uint32_t* colors);
-        void setSyncColor(uint32_t color);
+        /**
+         * @brief Set a custom brightness effect for the LED strip.
+         * 
+         * @param duration_ms Duration of the effect in milliseconds.
+         * @param useFrames If true, the effect is calculated for each subframe (40 Hz). If false, the effect is calculated only for the first frame of each cycle.
+         * @param runEndless If true, the effect runs endlessly. If false, the effect stops after a single cycle.
+         * @param brightnessSetter The function to calculate the brightness for each LED.
+         */
+        void setBrightnessEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, FxBrightnessSetter brightnessSetter);
 
-        void setRandomColor();
+        /**
+         * @brief Set the brightness of each LED individually.
+         * 
+         * @param brightness An array of brightness values between 0 and 255.
+         */
+        void setFixedBrightnessIndividual(uint8_t* brightness);
 
+        /**
+         * @brief Set the brightness of all LEDs to the same value.
+         * 
+         * @param brightness Brightness value between 0 and 255.
+         */
+        void setFixedBrightnessSync(uint8_t brightness);
+
+        /**
+         * @brief Select a predefined color effect for the LED strip.
+         * 
+         * @param duration_ms Duration of the effect in milliseconds.
+         * @param effect The pre-defined effect to use.
+         */
         void setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect);
-        void setColorEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxColorSetter colorSetter);
 
+        /**
+         * @brief Set a custom color effect for the LED strip.
+         * 
+         * @param duration_ms Duration of the effect in milliseconds.
+         * @param useFrames If true, the effect is calculated for each frame. If false, the effect is calculated only for the first frame of each cycle.
+         * @param runEndless If true, the effect runs endlessly. If false, the effect stops after a single cycle.
+         * @param colorWheel If true, the maximum 'position' of the color effect does not reach 255/65535. If false, the last 'position' is 255/65535.
+         * @param colorSetter The function to calculate the color for each LED.
+         */
+        void setColorEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, boolean colorWheel, FxColorSetter colorSetter);
+
+        /**
+         * @brief Set the color of each LED individually.
+         * 
+         * @param colors An array of color values.
+         */
+        void setFixedColorIndividual(uint32_t* colors);
+
+        /**
+         * @brief Set the color of all LEDs to the same value.
+         * 
+         * @param color The color value.
+         */
+        void setFixedColorSync(uint32_t color);
+
+        /**
+         * @brief Set the color of each LED individually to a random color.
+         */
+        void setFixedColorRandom();
 
         /**
          * @brief Use a photoresistor to automatically adapt the global brightness of the LED strip. This overrides the global brightness setting.
          * 
          * @param analogPin The analog pin to read the ambient light from.
-         * @param analogBits (optional) The resolution of the ADC. If 0, the resolution of internal ADC of the ESP is used.
+         * @param analogBits (optional) The resolution of the ADC. If 0, the resolution of internal ADC is used: 10 bits for ESP8266, 12 bits for ESP32.
          */
         void adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits = 0);
 
@@ -122,7 +176,7 @@ class XmoduleLED : public _Xmodule {
          * 
          * @param brightness Brightness value between 0 and 255.
          */
-        void setGlobalBrightness(uint8_t globalBrightness);
+        void fixedGlobalBrightness(uint8_t globalBrightness);
 
 
     public:
@@ -154,8 +208,8 @@ class XmoduleLED : public _Xmodule {
         uint32_t* currentColors;
         uint8_t* currentBrightness;
 
-        XledFx::FxCalulator brightnessFxCalculator;
-        XledFx::FxCalulator colorFxCalculator;
+        XledFx::FxCalculator brightnessFxCalculator;
+        XledFx::FxCalculator colorFxCalculator;
 
         void drawLed();
 
@@ -176,7 +230,7 @@ class XmoduleLED : public _Xmodule {
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3> <ul>
-    <li>Brigtness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Brightness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
     <li>Duration [ms]:<br> <form action='/save' method='post'> <input name='duration' value='%102%' type='number' min='0' max='65535'> <input type='submit' value='Save'> </form> </li>
     <li>Effect:<br> <form action='/save' method='post'> <select name='fxmode'> %110% </select> <input type='submit' value='Save'> </form> </li> </ul>
 <h3>Action</h3> <ul>

@@ -59,7 +59,18 @@ void XmoduleLED::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleLED::setSeparateBrightness(uint8_t *brightness) {
+void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect) {
+    FxContainer fx = xledFx.brightnessFx[effect];
+    setBrightnessEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx));
+}
+
+void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, FxBrightnessSetter brightnessSetter) {
+    brightnessFxCalculator = XledFx::FxCalculator(duration_ms, runEndless, useFrames, brightnessSetter);
+    appendXledState(XLED_STATE::FXBRIGHT);
+    resetTimer();
+}
+
+void XmoduleLED::setFixedBrightnessIndividual(uint8_t *brightness) {
     removeXledState(XLED_STATE::FXBRIGHT);
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; ++i) {
         currentBrightness[i] = brightness[i];
@@ -67,13 +78,27 @@ void XmoduleLED::setSeparateBrightness(uint8_t *brightness) {
     resetTimer();
 }
 
-void XmoduleLED::setSyncBrightness(uint8_t brightness){
+void XmoduleLED::setFixedBrightnessSync(uint8_t brightness){
             removeXledState(XLED_STATE::FXBRIGHT);
             std::fill_n(currentBrightness, cfgXmoduleLED.ledCount, brightness);
             resetTimer();
         }
 
-void XmoduleLED::setSeparateColor(uint32_t *colors) {                                                       // NumberArray !! has loop
+
+///////////////////////////////////////////////////////////////////////////////////
+
+void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
+    FxColorContainer fx = xledFx.colorFx[effect];
+    setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
+}
+
+void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, boolean colorWheel, FxColorSetter colorSetter) {
+    colorFxCalculator = XledFx::FxCalculator(duration_ms, colorWheel, runEndless, useFrames, colorSetter);
+    appendXledState(XLED_STATE::FXCOLOR);
+    resetTimer();
+}
+
+void XmoduleLED::setFixedColorIndividual(uint32_t *colors) {
     removeXledState(XLED_STATE::FXCOLOR);
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
         currentColors[i] = colors[i];
@@ -81,13 +106,7 @@ void XmoduleLED::setSeparateColor(uint32_t *colors) {                           
     resetTimer();
 }
 
-void XmoduleLED::setSyncColor(uint32_t color){
-    removeXledState(XLED_STATE::FXCOLOR);
-    std::fill_n(currentColors, cfgXmoduleLED.ledCount, color);
-    resetTimer();
-}
-
-void XmoduleLED::setRandomColor(){ 
+void XmoduleLED::setFixedColorRandom(){ 
     removeXledState(XLED_STATE::FXCOLOR);
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
         currentColors[i] = Adafruit_NeoPixel::ColorHSV(random(65536), 255, 255);
@@ -95,29 +114,12 @@ void XmoduleLED::setRandomColor(){
     resetTimer();
 }
 
-///////////////////////////////////////////////////////////////////////////////////
-
-void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect) {
-    FxContainer fx = xledFx.brightnessFx[effect];
-    setBrightnessEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
-}
-
-void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxBrightnessSetter brightnessSetter) {
-    brightnessFxCalculator = XledFx::FxCalulator(duration_ms, fullRange, runEndless, useSubFrames, brightnessSetter);
-    appendXledState(XLED_STATE::FXBRIGHT);
+void XmoduleLED::setFixedColorSync(uint32_t color){
+    removeXledState(XLED_STATE::FXCOLOR);
+    std::fill_n(currentColors, cfgXmoduleLED.ledCount, color);
     resetTimer();
 }
 
-void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
-    FxColorContainer fx = xledFx.colorFx[effect];
-    setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
-}
-
-void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean useSubFrames, boolean runEndless, boolean fullRange, FxColorSetter colorSetter) {
-    colorFxCalculator = XledFx::FxCalulator(duration_ms, fullRange, runEndless, useSubFrames, colorSetter);
-    appendXledState(XLED_STATE::FXCOLOR);
-    resetTimer();
-}
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -169,19 +171,19 @@ void XmoduleLED::adaptiveGlobalBrightness(uint8_t analogPin, uint8_t analogBits)
 
 void XmoduleLED::measureBrightness() {
     // Base brightness 55 + 0..200
-    uint16_t nwread = 55 + 250 * analogRead(adcPin) / pow(2, adcBits);
-    nwread = constrain(nwread, 0, 255);
+    uint16_t newValue = 55 + 250 * analogRead(adcPin) / pow(2, adcBits);
+    newValue = constrain(newValue, 0, 255);
     if (analogReading == -1) {
-        analogReading = nwread;
+        analogReading = newValue;
     } else {
-        analogReading = (9 * analogReading + nwread) / 10; // Moving average over 10 measurements
+        analogReading = (9 * analogReading + newValue) / 10; // Moving average over 10 measurements
     }
     
     pixels->setBrightness(analogReading);
     pixels->show();
 }
 
-void XmoduleLED::setGlobalBrightness(uint8_t globalBrightness) {
+void XmoduleLED::fixedGlobalBrightness(uint8_t globalBrightness) {
     adcPin = 0;
     pixels->setBrightness(globalBrightness);
     pixels->show();

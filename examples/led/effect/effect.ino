@@ -29,11 +29,11 @@ XmoduleLED xmoduleLED(LED_PIN, ledCount);
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
-    xmoduleLED.setRandomColor();
+    xmoduleLED.setFixedColorRandom();
     xmoduleLED.setColorEffect(10000, XledFx::COLORFX::RAINBOW_SYNC);
 
     // Set a custom effect, copy of BRIGHTNESSFX::RND_SPARKLE
-    xmoduleLED.setBrightnessEffect(300, false, true, true, customBrightnessEffect);
+    xmoduleLED.setBrightnessEffect(300, false, true, customBrightnessEffect);
     // xmoduleLED.setBrightnessEffect(300, XledFx::BRIGHTNESSFX::RND_SPARKLE);
 
     // Start mvp framework

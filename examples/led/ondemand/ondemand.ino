@@ -30,8 +30,6 @@ LimitTimer timer(100);
 void setup() {
     // Add the custom module to the mvp framework
     mvp.addXmodule(&xmoduleLED);
-    // All pixels in sync alternating color depending on uptime.
-    xmoduleLED.setSyncColor(Adafruit_NeoPixel::Color(255, 0, 0));
 
     // Start mvp framework
     mvp.setup();
@@ -41,7 +39,7 @@ void setup() {
 void loop() {
     // Change LED to based on status/data/events/...
     if (timer.justFinished()){
-        xmoduleLED.setSyncColor(evaluateData());
+        xmoduleLED.setFixedColorSync(evaluateData());
     }
 
     mvp.loop();
