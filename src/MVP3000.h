@@ -19,6 +19,8 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include <stdarg.h>
+
 #include "Logger.h"
 #include "Led.h"
 #include "Config.h"
@@ -26,9 +28,7 @@ limitations under the License.
 
 #include "_Xmodule.h"
 #include "XmoduleSensor.h"
-
-
-#include <stdarg.h>
+#include "XmoduleLED.h"
 
 
 class MVP3000 {
@@ -38,7 +38,7 @@ class MVP3000 {
         /**
          * @brief Add a Xmodule to the MVP3000 system.
          *
-         * @param XmoduleSensor Pointer to the module to add.
+         * @param Pointer to the module to add.
          */
         void addXmodule(_Xmodule *xmodule);
 

@@ -39,7 +39,7 @@ void loop() {
 }
 
 
-const char* altHtml = R"===(<!DOCTYPE html> <html lang='en'>
+const char altHtml[] PROGMEM = R"===(<!DOCTYPE html> <html lang='en'>
 <head> <title>MVP3000 - Custom Landing Page</title>
 <style>body { font-family: sans-serif; }</style> </head>
 <body> <h2>MVP3000 - Custom Landing Page</h2>
@@ -47,15 +47,17 @@ const char* altHtml = R"===(<!DOCTYPE html> <html lang='en'>
 <p>The device IP is: %2%
 <p>The placeholder &percnt;2&percnt; becomes: '%256%'
 <p>Special characters need to be encoded, particularly the percent symbol &percnt;, use `&amp;percnt;`
+<p>Make sure to use PROGMEM for the HTML string to not run out of RAM.
+%9%
 )===";
 
 size_t responseFiller(uint8_t *buffer, size_t maxLen, size_t index) {
     // Chunked response filler for the html template
-    size_t len = strlen(altHtml);
+    size_t len = strlen_P(altHtml);
     if (index + maxLen > len) {
         maxLen = len - index;
     }
-    memcpy(buffer, altHtml + index, maxLen);
+    memcpy_P(buffer, altHtml + index, maxLen);
     return maxLen;
 }
 

@@ -21,8 +21,8 @@ limitations under the License.
 #include <Adafruit_NeoPixel.h>
 #include <map>
 
-#include <MVP3000.h>
-extern MVP3000 mvp;
+#include "_Xmodule.h"
+#include "_Helper_LimitTimer.h"
 
 #include "XmoduleLED_effects.h"
 

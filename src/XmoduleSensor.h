@@ -22,7 +22,6 @@ limitations under the License.
 #include <ArduinoJson.h>
 
 #include "_Xmodule.h"
-
 #include "_Helper_LimitTimer.h"
 
 #include "XmoduleSensor_DataCollection.h"

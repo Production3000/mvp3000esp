@@ -16,6 +16,9 @@ limitations under the License.
 
 #include "XmoduleLED.h"
 
+#include "MVP3000.h"
+extern MVP3000 mvp;
+
 #include "_Helper.h"
 extern _Helper _helper;
 
