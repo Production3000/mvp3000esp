@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef MVP3000_XMODULESENSOR_DATAPROCESSING
-#define MVP3000_XMODULESENSOR_DATAPROCESSING
+#ifndef XMODULESENSOR_DATAPROCESSING
+#define XMODULESENSOR_DATAPROCESSING
 
 #include <Arduino.h>
 #include <ArduinoJson.h>

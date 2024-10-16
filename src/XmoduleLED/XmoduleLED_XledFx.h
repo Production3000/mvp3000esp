@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef MVP3000_XMODULELED_EFFECTS
-#define MVP3000_XMODULELED_EFFECTS
+#ifndef XMODULELED_EFFECTS
+#define XMODULELED_EFFECTS
 
 #include <Arduino.h>
 
@@ -26,14 +26,12 @@ limitations under the License.
 // led, ledCount, timingPosition, currentColor/currentBrightness
 typedef std::function<uint8_t(uint8_t, uint8_t, uint16_t, uint8_t**)> FxBrightnessSetter;
 typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t**)> FxColorSetter;
+
 // useFrames, runEndless, setter function
 typedef std::tuple<boolean, boolean, FxBrightnessSetter> FxContainer;
+
 // useFrames, runEndless, colorWheel, setter function
 typedef std::tuple<boolean, boolean, boolean, FxColorSetter> FxColorContainer;
-
-
-
-
 
 struct XledFx {
     enum BRIGHTNESSFX: uint8_t {

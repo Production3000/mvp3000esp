@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef MVP3000_XMODULESENSOR_DATACOLLECTION
-#define MVP3000_XMODULESENSOR_DATACOLLECTION
+#ifndef XMODULESENSOR_DATACOLLECTION
+#define XMODULESENSOR_DATACOLLECTION
 
 #include "XmoduleSensor_DataCollection_NumberArray.h"
 #include "XmoduleSensor_DataProcessing.h"

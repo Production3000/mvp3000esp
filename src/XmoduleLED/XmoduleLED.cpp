@@ -30,9 +30,6 @@ void XmoduleLED::setup() {
 
     pixels = new Adafruit_NeoPixel(cfgXmoduleLED.ledCount, cfgXmoduleLED.ledPin, NEO_GRB + NEO_KHZ800);
 
-    // pixelGroup = new PixelGroup(cfgXmoduleLED.ledCount, 0, cfgXmoduleLED.ledCount - 1);
-    // pixelGroup = new PixelGroup(cfgXmoduleLED.ledCount, 0, 5);
-
     pixels->begin();
     pixels->clear();
     pixels->setBrightness(cfgXmoduleLED.globalBrightness);
