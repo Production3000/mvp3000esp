@@ -86,14 +86,7 @@ class NetCom {
     public:
 
         String templateProcessor(uint16_t var);
-        const char* webPage = R"===(
-<h3>UDP Auto-Discovery</h3> <ul>
-<li>Discovered server: %51% </li>
-<li>Discovered clients: [not implemented] </li>
-<li>Auto-discovery port: 1024-65535, default is 4211.<br> <form action='/save' method='post'> <input name='discoveryPort' value='%52%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
-)===";
-
-        const char* webPageHardDisabled = "<h3>UDP Auto-Discovery (DISABLED)</h3>";
+        PGM_P getHtml();
 
 };
 

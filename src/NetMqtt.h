@@ -111,17 +111,7 @@ class NetMqtt {
     public:
 
         String templateProcessor(uint16_t var);
-        const char* webPage = R"===(
-<h3>MQTT Communication</h3> <ul>
-<li>Status: %62% </li>
-<li>Local broker: %63% </li>
-<li>Forced external broker:<br> <form action='/save' method='post'> <input name='mqttForcedBroker' value='%64%'> <input type='submit' value='Save'> </form> </li>
-<li>MQTT port: default is 1883 (unsecure) <br> <form action='/save' method='post'> <input name='mqttPort' value='%65%' type='number' min='1024' max='65535'> <input type='submit' value='Save'> </form> </li>
-<li>Topics: <ul> %70% </ul> </li> </ul>
-)===";
-
-        const char* webPageHardDisabled = "<h3>MQTT Communication (DISABLED)</h3>";
-        const char* webPageNoTopics = "<h3>MQTT Communication (No Topics)</h3>";
+        PGM_P getHtml();
 
 };
 

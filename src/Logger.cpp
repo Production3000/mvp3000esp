@@ -32,9 +32,6 @@ void Logger::setup() {
         Serial.println("");
     }
 
-    if (!cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
-        webPage = webPageHardDisabled;
-
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
         mvp.net.netWeb.webSockets.registerWebSocket(webSocketUri);
 
@@ -133,7 +130,16 @@ String Logger::levelToString(CfgLogger::Level messageLevel) {
     }
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////
+#include "NetWeb_HtmlStrings.h"
+
+PGM_P Logger::getHtml() {
+    if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
+        return htmlLogger;
+    else
+        return htmlLoggerDisabled;
+}
 
 String Logger::templateProcessor(uint16_t var) {
     switch (var) {

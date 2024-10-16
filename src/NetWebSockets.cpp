@@ -67,6 +67,14 @@ void NetWebSockets::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, 
 
 
 ///////////////////////////////////////////////////////////////////////////////////
+#include "NetWeb_HtmlStrings.h"
+
+PGM_P NetWebSockets::getHtml() {
+    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
+        return htmlNetWebSocketsDisabled;
+    else
+        return htmlNetWebSockets;
+}
 
 String NetWebSockets::templateProcessor(uint16_t var) {
     switch (var) {        

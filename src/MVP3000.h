@@ -145,27 +145,10 @@ class MVP3000 {
         uint16_t loopDurationMin_ms = std::numeric_limits<uint16_t>::max();
         void updateLoopDuration();
 
-
     public:
 
         String templateProcessor(uint16_t var);
         uint8_t webPageProcessorCount;
-        const char* webPage = R"===(
-<h3>System</h3> <ul>
-<li>ID: %1%</li>
-<li>Build: %11%</li>
-<li>Memory: %12%&percnt; fragmented</li>
-<li>Device time: %17%</li>
-<li>Uptime: %13%</li>
-<li>Last restart reason: %14%</li>
-<li>CPU frequency: %15% MHz</li>
-<li>Main loop duration: %16% ms (mean/min/max)</li> </ul>
-<h3>Modules</h3>
-<ul> %20% </ul>
-<h3>Maintenance</h3> <ul>
-<li> <form action='/start' method='post' onsubmit='return confirm(`Restart?`);'> <input name='restart' type='hidden'> <input type='submit' value='Restart' > </form> </li>
-<li> <form action='/checkstart' method='post' onsubmit='return promptId(this);'> <input name='reset' type='hidden'> <input name='deviceId' type='hidden'> <input type='submit' value='Factory reset'> <input type='checkbox' name='keepwifi' checked value='1'> keep Wifi </form> </li> </ul>
-)===";
 
 };
 

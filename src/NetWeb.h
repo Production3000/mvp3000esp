@@ -22,8 +22,10 @@ limitations under the License.
 #include <ESPAsyncWebServer.h>
 
 #include "Config_JsonInterface.h"
-#include "NetWeb_WebStructs.h"
 #include "NetWebSockets.h"
+
+#include "NetWeb_HtmlStrings.h"
+#include "NetWeb_WebStructs.h"
 
 
 class NetWeb {
@@ -105,21 +107,8 @@ class NetWeb {
         std::function<String (uint16_t)> altTemplateProcessor = nullptr;
 
         size_t responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index);
-        size_t extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index);
+        size_t extendedResponseFiller(PGM_P html, uint8_t *buffer, size_t maxLen, size_t index);
         String templateProcessorWrapper(const String& var);
-
-        const char* webPageHead = R"===(<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Device ID %1%</title>
-<script>
-function promptId(f) { f.elements['deviceId'].value = prompt('WARNING! Confirm with device ID.'); return (f.elements['deviceId'].value == '') ? false : true ; }
-function cboxSum(e) { let sum = 0; for (var i = 0; i < e.length; i++) { if (e[i].type == 'checkbox') { sum += (e[i].checked) ? parseInt(e[i].value) : 0; } }; e['setFilter'].value = sum; }
-</script>
-<style>body { font-family: sans-serif; } table { border-collapse: collapse; border-style: hidden; } td { border: 1px solid black; vertical-align:top; padding:5px; } input:invalid { background-color: #eeccdd; }</style> </head>
-<body> <h2>MVP3000 - Device ID %1%</h2> <h3 style='color: red;'>%3%</h3>)===";
-
-        const char* webPageFoot = "<p>&nbsp;</body></html>";
-
-        const char* webPageRedirect = "<!DOCTYPE html> <head> <meta http-equiv='refresh' content='4;url=/'> </head> <body> <h3 style='color: red;'>Restarting ...</h3> </body> </html>";
 
 };
 

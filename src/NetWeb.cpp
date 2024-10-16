@@ -179,7 +179,7 @@ void NetWeb::responseRedirect(AsyncWebServerRequest *request, const char* messag
 
 void NetWeb::responseMetaRefresh(AsyncWebServerRequest *request) {
     // http-equiv seems to not show up in history
-    request->send(200, "text/html", webPageRedirect);
+    request->send(200, "text/html", htmlRedirect);
 }
 
 void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
@@ -195,53 +195,54 @@ void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
         request->redirect("/");
 
     request->sendChunked("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebPage(), buffer, maxLen, index);
+        return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebXXXPage(), buffer, maxLen, index);
     }, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1));
 }
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////
 
 size_t NetWeb::responseFillerHome(uint8_t *buffer, size_t maxLen, size_t index) {
     // Head
-    if (index < strlen(webPageHead))
-        return extendedResponseFiller(webPageHead, buffer, maxLen, index);
-    index -= strlen(webPageHead);
+    if (index < strlen_P(htmlHead))
+        return extendedResponseFiller(htmlHead, buffer, maxLen, index);
+    index -= strlen_P(htmlHead);
     // Main
-    if (index < strlen(mvp.webPage))
-        return extendedResponseFiller(mvp.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.webPage);
+    if (index < strlen_P(htmlSystem))
+        return extendedResponseFiller(htmlSystem, buffer, maxLen, index);
+    index -= strlen_P(htmlSystem);
     // Log
-    if (index < strlen(mvp.logger.webPage))
-        return extendedResponseFiller(mvp.logger.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.logger.webPage);
+    if (index < strlen_P(mvp.logger.getHtml()))
+        return extendedResponseFiller(htmlLogger, buffer, maxLen, index);
+    index -= strlen_P(mvp.logger.getHtml());
     // Network
-    if (index < strlen(mvp.net.webPage))
-        return extendedResponseFiller(mvp.net.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.net.webPage);
+    if (index < strlen_P(htmlNet))
+        return extendedResponseFiller(htmlNet, buffer, maxLen, index);
+    index -= strlen_P(htmlNet);
     // WebSocket
-    if (index < strlen(mvp.net.netWeb.webSockets.webPage))
-        return extendedResponseFiller(mvp.net.netWeb.webSockets.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.net.netWeb.webSockets.webPage);
+    if (index < strlen_P(mvp.net.netWeb.webSockets.getHtml()))
+        return extendedResponseFiller(mvp.net.netWeb.webSockets.getHtml(), buffer, maxLen, index);
+    index -= strlen_P(mvp.net.netWeb.webSockets.getHtml());
     // MQTT
-    if (index < strlen(mvp.net.netMqtt.webPage))
-        return extendedResponseFiller(mvp.net.netMqtt.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.net.netMqtt.webPage);
+    if (index < strlen_P(mvp.net.netMqtt.getHtml()))
+        return extendedResponseFiller(mvp.net.netMqtt.getHtml(), buffer, maxLen, index);
+    index -= strlen_P(mvp.net.netMqtt.getHtml());
     // UDP
-    if (index < strlen(mvp.net.netCom.webPage))
-        return extendedResponseFiller(mvp.net.netCom.webPage, buffer, maxLen, index);
-    index -= strlen(mvp.net.netCom.webPage);
+    if (index < strlen_P(mvp.net.netCom.getHtml()))
+        return extendedResponseFiller(mvp.net.netCom.getHtml(), buffer, maxLen, index);
+    index -= strlen_P(mvp.net.netCom.getHtml());
     // Footer
-    return extendedResponseFiller(webPageFoot, buffer, maxLen, index);
+    return extendedResponseFiller(htmlFoot, buffer, maxLen, index);
 }
 
-size_t NetWeb::extendedResponseFiller(const char* html, uint8_t *buffer, size_t maxLen, size_t index) {
+size_t NetWeb::extendedResponseFiller(PGM_P html, uint8_t *buffer, size_t maxLen, size_t index) {
     // Chunked response filler for the html template
-    size_t len = strlen(html);
+    size_t len = strlen_P(html);
     if (index + maxLen > len) {
         maxLen = len - index;
     }
-    memcpy(buffer, html + index, maxLen);
+    memcpy_P(buffer, html + index, maxLen);
     return maxLen;
 }
 
@@ -250,12 +251,12 @@ String NetWeb::templateProcessorWrapper(const String& var) {
         mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
         return "[" + var + "]";
     }
-    int32_t varInt = var.toInt();               // TODO uint16
+    uint16 varInt = var.toInt();
     switch (varInt) {
 
         // Main placeholders
         case 0: // Standard HTML head
-            return webPageHead;
+            return String(htmlHead);
         case 1: // Device ID
             return String(_helper.ESPX->getChipId());
         case 2: // Device IP
@@ -268,7 +269,7 @@ String NetWeb::templateProcessorWrapper(const String& var) {
             }
             return "";
         case 9: // Standard HTML foot
-            return webPageFoot;
+            return String(htmlFoot);
 
         // Class placeholders
         case 10 ... 29: // System

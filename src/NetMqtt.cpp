@@ -38,7 +38,6 @@ void NetMqtt::setup() {
     // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
     if (cfgNetMqtt.isHardDisabled) {
         mqttState = MQTT_STATE::HARDDISABLED;
-        webPage = webPageHardDisabled; // Set web to display disabled html
     } else {
         mqttState = MQTT_STATE::INIT;
     }
@@ -50,7 +49,6 @@ void NetMqtt::lateSetup() {
     // This can be completely turned off if not needed. Saves minimal memory, maybe 500 kB
     if (linkedListMqttTopic.getSize() == 0) {
         mqttState = MQTT_STATE::NOTOPIC;
-        webPage = webPageNoTopics; // Set web to display no-topic html
         mvp.logger.write(CfgLogger::Level::INFO, "No MQTT topics defined, MQTT disabled.");
         return;
     }
@@ -216,6 +214,16 @@ void NetMqtt::handleMessage() {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
+#include "NetWeb_HtmlStrings.h"
+
+PGM_P NetMqtt::getHtml() {
+    if (mqttState == MQTT_STATE::HARDDISABLED)
+        return htmlNetMqttDisabled;
+    else if (mqttState == MQTT_STATE::NOTOPIC)
+        return htmlNetMqttNoTopics;
+    else
+        return htmlNetMqtt;
+}
 
 void NetMqtt::saveCfgCallback() {
     // HARDDISABLED, NOTOPIC: nothing to do

@@ -55,10 +55,7 @@ class NetWebSockets {
         // void setup() { };
         // void loop() {};
 
-        void hardDisable() {
-            webSocketState = WEBSOCKET_STATE::HARDDISABLED;
-            webPage = webPageHardDisabled; 
-        }
+        void hardDisable() { webSocketState = WEBSOCKET_STATE::HARDDISABLED; }
 
     private:
 
@@ -119,11 +116,7 @@ class NetWebSockets {
     public:
 
         String templateProcessor(uint16_t var);
-        const char* webPage = R"===(
-<h3>WebSockets</h3> <ul> %80% </ul>
-)===";
-
-        const char* webPageHardDisabled = "<h3>WebSockets (DISABLED)</h3>";
+        PGM_P getHtml();
 };
 
 #endif

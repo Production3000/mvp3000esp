@@ -40,7 +40,6 @@ void NetCom::setup() {
     // This can be completely to allow external UDP uses, in a Xmodule or other. Saves minimal 200 kB memory.
     if (cfgNetCom.isHardDisabled) {
         udpState = UDP_STATE::HARDDISABLED;
-        webPage = webPageHardDisabled; // Set web to display disabled html
         return;
     }
     udpState = UDP_STATE::ENABLED;
@@ -142,6 +141,14 @@ void NetCom::udpSendMessage(const char* message, IPAddress remoteIp) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////
+#include "NetWeb_HtmlStrings.h"
+
+PGM_P NetCom::getHtml() {
+    if (udpState == UDP_STATE::HARDDISABLED)
+        return htmlNetComDisabled;
+    else
+        return htmlNetCom;
+}
 
 void NetCom::saveCfgCallback() {
     // HARDDISABLED: nothing to do (actually this request comes from an outdated HTML form)
