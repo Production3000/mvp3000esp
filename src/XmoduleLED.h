@@ -72,6 +72,17 @@ struct CfgXmoduleLED : public CfgJsonInterface {
     }
 };
 
+const char htmlXmoduleLed[] PROGMEM = R"===(%0%
+<p><a href='/'>Home</a></p>
+<h3>%100%</h3>
+<h3>Settings</h3> <ul>
+    <li>Brightness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
+    <li>Duration [ms]:<br> <form action='/save' method='post'> <input name='duration' value='%102%' type='number' min='0' max='65535'> <input type='submit' value='Save'> </form> </li>
+    <li>Effect:<br> <form action='/save' method='post'> <select name='fxmode'> %110% </select> <input type='submit' value='Save'> </form> </li> </ul>
+<h3>Action</h3> <ul>
+    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
+%9%)===";
+
 
 class XmoduleLED : public _Xmodule {
 
@@ -226,18 +237,8 @@ class XmoduleLED : public _Xmodule {
         void saveCfgCallback();
 
         String webPageProcessor(uint8_t var);
-        const char*  getWebPage() override { return R"===(%0%
-<p><a href='/'>Home</a></p>
-<h3>%100%</h3>
-<h3>Settings</h3> <ul>
-    <li>Brightness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Duration [ms]:<br> <form action='/save' method='post'> <input name='duration' value='%102%' type='number' min='0' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Effect:<br> <form action='/save' method='post'> <select name='fxmode'> %110% </select> <input type='submit' value='Save'> </form> </li> </ul>
-<h3>Action</h3> <ul>
-    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>   
-%9%)==="; }
+        PGM_P getWebXXXPage() override { return htmlXmoduleLed; }
 
 };
-
 
 #endif

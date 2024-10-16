@@ -23,11 +23,11 @@ extern MVP3000 mvp;
 #include <Wire.h>
 SensirionI2cScd30 sdc30;
 
-uint16_t athmosphericCO2 = 419; // ppm
+uint16_t atmosphericCO2 = 419; // ppm
 uint16_t siteAltitude = 450; // m
 uint16_t temperatureCompensation = 350; // °C*100 - The library function requests an unsigned value.
 
-enum OPERATINGSTATE: uint8_t {
+enum OperatingState: uint8_t {
     ERROR = 0,
     MEASURE = 1,
     CALIBRATE = 2,
@@ -77,11 +77,11 @@ void setup() {
         static char errorMessage[128];
         errorToString(sdcError, errorMessage, sizeof errorMessage);
         mvp.logFormatted("Error starting sensor: %s", errorMessage);
-        operatingState = OPERATINGSTATE::ERROR;
+        operatingState = OperatingState::ERROR;
         return;
     }
 
-    operatingState = OPERATINGSTATE::MEASURE;
+    operatingState = OperatingState::MEASURE;
     sdc30.setTemperatureOffset(temperatureCompensation);
 
     // Get and print sensor information
@@ -109,7 +109,7 @@ void loop() {
     // Do the work
     mvp.loop();
 
-    if (operatingState == OPERATINGSTATE::ERROR) {
+    if (operatingState == OperatingState::ERROR) {
         return;
     }
 
@@ -117,16 +117,16 @@ void loop() {
     sdc30.getDataReady(sdcDataReady);
     if (sdcDataReady) {
         if (sdc30.readMeasurementData(data[0], data[1], data[2]) == NO_ERROR) {
-            if (operatingState == OPERATINGSTATE::MEASURE) {
+            if (operatingState == OperatingState::MEASURE) {
                 // Add data to the sensor module
                 // The first CO2 measurement is always 0, probably some running median thing
-                if (data[0] > athmosphericCO2 - 100)
+                if (data[0] > atmosphericCO2 - 100)
                     xmoduleSensor.addSample(data);
             }
-            if (operatingState == OPERATINGSTATE::CALIBRATE) {
+            if (operatingState == OperatingState::CALIBRATE) {
                 // The sensor needs 1-3 measurement cycles to update the calibration curve
                 if (calibrationCounter++ > 2)
-                    operatingState = OPERATINGSTATE::MEASURE;
+                    operatingState = OperatingState::MEASURE;
             }
         } else {
             mvp.log("Error trying to execute readMeasurementData()");
@@ -151,16 +151,16 @@ void calibrateSensor() {
     }
 
     // Set calibrating step
-    operatingState = OPERATINGSTATE::CALIBRATE;
+    operatingState = OperatingState::CALIBRATE;
     calibrationCounter = 0;
 
-    int16_t sdcError = sdc30.forceRecalibration(athmosphericCO2); // Blocking 10 ms
+    int16_t sdcError = sdc30.forceRecalibration(atmosphericCO2); // Blocking 10 ms
     if (sdcError != NO_ERROR) {
         static char errorMessage[128];
         errorToString(sdcError, errorMessage, sizeof errorMessage);
         mvp.logFormatted("Calibration failed. Error during calibration: %s", errorMessage);
-        operatingState = OPERATINGSTATE::ERROR;
+        operatingState = OperatingState::ERROR;
     } else {
-        mvp.logFormatted("Calibration to %d ppm initiated. Restarting measurement ...", athmosphericCO2);
+        mvp.logFormatted("Calibration to %d ppm initiated. Restarting measurement ...", atmosphericCO2);
     }
 }
