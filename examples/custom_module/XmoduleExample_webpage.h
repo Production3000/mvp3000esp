@@ -14,22 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef XMODULELED_WEBPAGE
-#define XMODULELED_WEBPAGE
+#ifndef XMODULEEXAMPLE_WEBPAGE
+#define XMODULEEXAMPLE_WEBPAGE
 
-const char htmlXmoduleLed[] PROGMEM = R"===(%0%
+
+const char htmlXmoduleExample[] PROGMEM = R"===(%0%
 <p><a href='/'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3>
 <ul>
-    <li>Brightness:<br> <form action='/save' method='post'> <input name='globalBrightness' value='%101%' type='number' min='0' max='255'> <input type='submit' value='Save'> </form> </li>
-    <li>Duration [ms]:<br> <form action='/save' method='post'> <input name='duration' value='%102%' type='number' min='0' max='65535'> <input type='submit' value='Save'> </form> </li>
-    <li>Effect:<br> <form action='/save' method='post'> <select name='fxmode'> %110% </select> <input type='submit' value='Save'> </form> </li>
+    <li>Some fixed number: %101% </li>
+    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li>
 </ul>
 <h3>Action</h3>
 <ul>
     <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li>
-</ul>   
+</ul>
 %9%)===";
 
 #endif

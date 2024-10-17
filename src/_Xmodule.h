@@ -44,7 +44,7 @@ class _Xmodule {
 
         virtual String webPageProcessor(uint8_t var) { return ""; };
         // We cannot override the values, but we can override this function.
-        virtual PGM_P getWebXXXPage() { return ""; };
+        virtual PGM_P getWebPage() { return ""; };
         
     private:
         void setupFramework();

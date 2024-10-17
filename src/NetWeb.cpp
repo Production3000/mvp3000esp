@@ -195,7 +195,7 @@ void NetWeb::serveModulePage(AsyncWebServerRequest *request) {
         request->redirect("/");
 
     request->sendChunked("text/html", [&](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-        return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebXXXPage(), buffer, maxLen, index);
+        return extendedResponseFiller(mvp.xmodules[requestedModuleIndex]->getWebPage(), buffer, maxLen, index);
     }, std::bind(&NetWeb::templateProcessorWrapper, this, std::placeholders::_1));
 }
 
@@ -248,8 +248,8 @@ size_t NetWeb::extendedResponseFiller(PGM_P html, uint8_t *buffer, size_t maxLen
 
 String NetWeb::templateProcessorWrapper(const String& var) {
     if (!_helper.isValidInteger(var)) {
-        mvp.logger.writeFormatted(CfgLogger::Level::WARNING, "Invalid placeholder in template: %s", var.c_str());
-        return "[" + var + "]";
+        mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Invalid placeholder in template: %s", var.c_str());
+        return "[PLACEHOLDERERROR]";
     }
     uint16 varInt = var.toInt();
     switch (varInt) {

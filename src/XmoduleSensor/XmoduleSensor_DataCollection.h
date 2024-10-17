@@ -63,7 +63,7 @@ struct DataCollection {
             String str;
             if (withTime) {
                 str += String(node->dataStruct->time);
-                str += ";";
+                str += ",";
             }
             for (uint8_t i = 0; i < node->dataStruct->value_size; i++) {
                 str += (processing == nullptr) ? node->dataStruct->values[i] : processing->applyProcessing(node->dataStruct->values[i], i);

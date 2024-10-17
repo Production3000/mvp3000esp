@@ -39,16 +39,24 @@ void loop() {
 }
 
 
-const char altHtml[] PROGMEM = R"===(<!DOCTYPE html> <html lang='en'>
-<head> <title>MVP3000 - Custom Landing Page</title>
-<style>body { font-family: sans-serif; }</style> </head>
-<body> <h2>MVP3000 - Custom Landing Page</h2>
-<p>This is a custom landing page. The MVP3000 settings were moved to <a href='/mvp3000'>/mvp3000</a>.
-<p>The device IP is: %2%
-<p>The placeholder &percnt;2&percnt; becomes: '%256%'
-<p>Special characters need to be encoded, particularly the percent symbol &percnt;, use `&amp;percnt;`
-<p>Make sure to use PROGMEM for the HTML string to not run out of RAM.
-%9%
+const char altHtml[] PROGMEM = R"===(
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>MVP3000 - Custom Landing Page</title>
+    <style>
+        body { font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <h2>MVP3000 - Custom Landing Page</h2>
+    <p>This is a custom landing page. The MVP3000 settings were moved to <a href='/mvp3000'>/mvp3000</a>.
+    <p>The device IP is: %2%
+    <p>The placeholder &percnt;2&percnt; becomes: '%256%'
+    <p>Special characters need to be encoded, particularly the percent symbol &percnt;, use `&amp;percnt;` or self-encode it using `&percnt;&percnt;`
+    <p>Make sure to use PROGMEM for the HTML string to not run out of RAM.
+</body>
+</html>
 )===";
 
 size_t responseFiller(uint8_t *buffer, size_t maxLen, size_t index) {

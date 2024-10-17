@@ -22,6 +22,8 @@ limitations under the License.
 #include <MVP3000.h>
 extern MVP3000 mvp;
 
+#include "XmoduleExample_webpage.h"
+
 
 struct CfgXmoduleExample : public CfgJsonInterface {
 
@@ -46,15 +48,6 @@ struct CfgXmoduleExample : public CfgJsonInterface {
 
 };
 
-const char htmlXmoduleExample[] PROGMEM = R"===(%0%
-<p><a href='/'>Home</a></p>
-<h3>%100%</h3>
-<h3>Settings</h3> <ul>
-    <li>Some fixed number: %101% </li>
-    <li>Some editable number:<br> <form action='/save' method='post'> <input name='editableNumber' value='%102%' type='number' min='11112' max='65535'> <input type='submit' value='Save'> </form> </li> </ul>
-<h3>Action</h3> <ul>
-    <li>Perform some action:<br> <form action='/start' method='post'> <input name='someAction' type='hidden'> <input type='submit' value='Action'> </form> </li> </ul>
-%9%)===";
 
 class XmoduleExample : public _Xmodule {
     public:
@@ -76,7 +69,7 @@ class XmoduleExample : public _Xmodule {
         String webPageProcessor(uint8_t var) override;
 
         // We cannot override the values, but we can override this function.
-        PGM_P getWebXXXPage() override { return htmlXmoduleExample; }
+        PGM_P getWebPage() override { return htmlXmoduleExample; }
 };
 
 #endif

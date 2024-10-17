@@ -37,7 +37,7 @@ const char htmlXmoduleSensor[] PROGMEM = R"===(%0%
 <h3>Sensor Details</h3>
 <table>
     <tr>
-        <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td><td>Scaling</td><td>Float to Int exp. 10<sup>x</sup></td>
+        <td>#</td> <td>Type</td> <td>Unit</td> <td>Offset</td> <td>Scaling</td> <td>Float to Int exp. 10<sup>x</sup></td>
     </tr>
     %120%
     <tr>

@@ -118,7 +118,7 @@ Read-out of the sensor needs to be done by the user in custom code. The data, if
 A description of the sensor and its measurement units can be added for identification. Please refer to the [examples](#example-scripts) for use cases. Some special characters need to be encoded:
 
  *  Degree ° is non-ASCII, use `&deg;`
- *  The percent symbol % is used as deliminator by the string parser, use `&percnt;`  
+ *  The percent symbol % is used as deliminator by the string parser, use `&percnt;` or self-encode it '%%'  
 
 Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
 

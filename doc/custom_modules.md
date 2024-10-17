@@ -43,6 +43,10 @@ In order to provide a web interface define:
  *  `const char* getWebPage() override { return R"..." }` : String containing the HTML template with placeholders.
  *  `String webPageProcessor(uint8_t var) override` : Function to return the placeholder value.
 
+
+ *  The percent symbol % is used as deliminator by the string parser in the ESPAsyncWebServer library. This can only be changed by providing an alternate definition with the compiler args - which is not feasible.
+ * Just us %%, while this brakes CSS :/
+
 ### <a name='InSetup'></a>In Setup()
 
     // Read config from SPIFFS

@@ -245,7 +245,7 @@ class XmoduleSensor : public _Xmodule {
         size_t csvScaledResponseFiller(uint8_t* buffer, size_t maxLen, size_t index);
         size_t csvExtendedResponseFiller(uint8_t* buffer, size_t maxLen, size_t index, boolean firstOnly, std::function<String()> stringFunc);
 
-        PGM_P getWebXXXPage() override { return htmlXmoduleSensor; }
+        PGM_P getWebPage() override { return htmlXmoduleSensor; }
 };
 
 #endif

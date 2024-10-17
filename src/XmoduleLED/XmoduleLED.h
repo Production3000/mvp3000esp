@@ -197,7 +197,7 @@ class XmoduleLED : public _Xmodule {
         void saveCfgCallback();
 
         String webPageProcessor(uint8_t var);
-        PGM_P getWebXXXPage() override { return htmlXmoduleLed; }
+        PGM_P getWebPage() override { return htmlXmoduleLed; }
 
 };
 
