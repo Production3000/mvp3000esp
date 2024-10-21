@@ -19,6 +19,8 @@ limitations under the License.
 
 #include <Arduino.h>
 
+#include <sntp.h> // For gettimeofday
+
 // Additional defines are in Arduino.h
 #define checkrange(amt, low, high) ( ((amt)<(low) || (amt) > (high)) ? (false) : (true) )  // Compare constrain(amt,low,high)
 
@@ -88,15 +90,15 @@ struct _Helper {
 ///////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @brief Convert a millisecond timestamp to a UTC date time in format "YYYY-MM-DD hh:mm:ss".
+     * @brief Convert a millis time stamp to an epoch time stamp in milliseconds.
      * 
      * @param millisStamp Millisecond timestamp
+     * @return Epoch time stamp in milliseconds
      */
-    String msEpochToUtcString(uint64_t millisStamp) {
-        time_t seconds = millisStamp / 1000;
-        tm timeinfo;
-        localtime_r(&seconds, &timeinfo);
-        return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    uint64_t millisStampToEpoch_ms(uint64_t millisStamp) {
+        timeval tv;
+        gettimeofday(&tv, NULL);
+        return ((uint64_t)time(nullptr) * 1000 + tv.tv_usec / 1000 - millis() + millisStamp);
     }
 
     /**
@@ -105,7 +107,7 @@ struct _Helper {
      * @param millisStamp Millisecond timestamp
      * @return String in format "Dd hh:mm:ss"
      */
-    String millisTimeString(uint64_t millisStamp) {
+    String millisStampString(uint64_t millisStamp) {
         millisStamp = millisStamp / 1000; // s -> ms
         uint16_t days = millisStamp / 86400; // 24*60*60
         millisStamp = millisStamp % 86400;
@@ -117,26 +119,23 @@ struct _Helper {
     }
 
     /**
-     * @brief Get the device UTC date time if synced, or the device uptime.
+     * @brief Convert a millisecond timestamp to UTC date time "YYYY-MM-DD hh:mm:ss" if time is synced. Else print as device time "Dd hh:mm:ss".
+     * 
+     * @param millisStamp Millisecond timestamp
+     * @return String in format "YYYY-MM-DD hh:mm:ss"
      */
-    String timeString() {
-        // This crazy getLocalTime() in ESP time class has a default wait delay of 5 seconds!!!
+    String utcOrMillisStampString(uint64_t millisStamp) {
+        time_t then_s = millisStampToEpoch_ms(millisStamp) / 1000;
         tm timeinfo;
-        time_t now = time(nullptr);
-        localtime_r(&now, &timeinfo);
+        localtime_r(&then_s, &timeinfo); // This crazy getLocalTime() in ESP time class has a default wait delay of 5 seconds!!!
+
         if(timeinfo.tm_year > (1970 - 1900)){ // Synced time
             return printFormatted("%04d-%02d-%02d %02d:%02d:%02d", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
         } else {
-            return uptimeString(); // Uptime
+            return millisStampString(millisStamp);
         }
     }
 
-    /**
-     * @brief Get the device uptime as "Dd hh:mm:ss"
-     */
-    String uptimeString() {
-        return millisTimeString(millis());
-    }
 
 ///////////////////////////////////////////////////////////////////////////////////
 

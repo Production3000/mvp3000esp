@@ -92,16 +92,16 @@ class Logger {
             CfgLogger::Level level;
             String message;
 
-            DataStructLog(uint64_t millisStamp, const String& message, CfgLogger::Level level) : millisStamp(millisStamp), message(message), level(level) { }
+            DataStructLog(const String& message, CfgLogger::Level level) : millisStamp(millis()), message(message), level(level) { }
         };
 
         struct LinkedListLog : LinkedList3010<DataStructLog> {
             LinkedListLog(uint16_t size) : LinkedList3010<DataStructLog>(size) { }
 
-            void append(uint64_t millisStamp, CfgLogger::Level level, const String& message) {
+            void append(CfgLogger::Level level, const String& message) {
                 // Create data structure and add node to linked list
                 // Using this-> as base class/function is templated
-                this->appendDataStruct(new DataStructLog(millisStamp, message, level));
+                this->appendDataStruct(new DataStructLog(message, level));
             }
         };
 

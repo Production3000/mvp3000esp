@@ -50,7 +50,7 @@ const char htmlSystem[] PROGMEM = R"===(
     <li>ID: %1%</li>
     <li>Build: %11%</li>
     <li>Memory: %12%&percnt; fragmented</li>
-    <li>Device time: %17%</li>
+    <li>Device time (UTC): %17%</li>
     <li>Uptime: %13%</li>
     <li>Last restart reason: %14%</li>
     <li>CPU frequency: %15% MHz</li>

@@ -134,7 +134,7 @@ String MVP3000::templateProcessor(uint16_t var) {
         case 12:
             return _helper.printFormatted("%d / %d", ESP.getFreeHeap(), _helper.ESPX->getHeapFragmentation());
         case 13:
-            return _helper.uptimeString();
+            return _helper.millisStampString(millis());
         case 14:
             return _helper.ESPX->getResetReason();
         case 15:
@@ -142,7 +142,7 @@ String MVP3000::templateProcessor(uint16_t var) {
         case 16:
             return _helper.printFormatted("%d / %d / %d", loopDurationMean_ms, loopDurationMin_ms, loopDurationMax_ms);
         case 17:
-            return _helper.timeString();
+            return _helper.utcOrMillisStampString(millis());
 
         case 18:
             return (net.netCom.isHardDisabled()) ? "UDP discovery (disabled)" : "<a href='/netcom'>UDP discovery</a>";

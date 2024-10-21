@@ -60,7 +60,7 @@ void Logger::write(CfgLogger::Level messageLevel, const String& message) {
 
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBLOG))
         if (messageLevel >= CfgLogger::Level::USER) // USER, WARNING, ERROR are stored
-            linkedListLog.append(mvp.net.netTime.millisSinceEpoch(), messageLevel, message);
+            linkedListLog.append(messageLevel, message);
         
     if (cfgLogger.outputSettings.isSet(CfgLogger::OutputTarget::WEBSOCKET))
         if (messageLevel != CfgLogger::Level::DATA) // Omit data, this is to be handled within the module using a separate websocket
@@ -83,7 +83,7 @@ void Logger::writeFormatted(CfgLogger::Level messageLevel, const String& formatS
 
 void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    String str = _helper.timeString();
+    String str = _helper.utcOrMillisStampString(millis());
     str += levelToString(messageLevel);
     str += message;
     mvp.net.netWeb.webSockets.printWebSocket(webSocketUri, str);
@@ -91,7 +91,7 @@ void Logger::printNetwork(CfgLogger::Level messageLevel, const String &message) 
 
 void Logger::printSerial(CfgLogger::Level messageLevel, const String &message) {
     // Prefix with timestamp, add type literal
-    Serial.print(_helper.timeString());
+    Serial.print(_helper.utcOrMillisStampString(millis()));
     Serial.print(levelToString(messageLevel));
 
     // Color-code messages for easier readability
@@ -152,7 +152,7 @@ String Logger::templateProcessor(uint16_t var) {
             linkedListLog.bookmarkByIndex(0, true);
         case 31:
             return _helper.printFormatted("%s%s%s %s",
-                _helper.msEpochToUtcString(linkedListLog.getBookmarkData()->millisStamp).c_str(),
+                _helper.utcOrMillisStampString(linkedListLog.getBookmarkData()->millisStamp).c_str(),
                 levelToString(linkedListLog.getBookmarkData()->level),
                 linkedListLog.getBookmarkData()->message.c_str(),
                 (linkedListLog.moveBookmark(true)) ? "\n%31%" : ""); // Recursive call if there are more entries

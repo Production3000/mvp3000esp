@@ -20,7 +20,6 @@ limitations under the License.
 #include <Arduino.h>
 
 
-
 class NetTime {
 
     public:
@@ -48,8 +47,6 @@ class NetTime {
 
 
     public:
-
-
 
 };
 

@@ -24,31 +24,31 @@ limitations under the License.
 struct DataCollection {
 
     /**
-     * Data structure to store sensor data and its time.
+     * Data structure to store sensor data and its millis time stamp.
      */
     struct DataStructSensor : NumberArray<int32_t> {
-        uint64_t time;
+        uint64_t millisStamp;
 
         /**
          * @brief Constructor for data structure.
          *
-         * @param _time Time of data
-         * @param _values Pointer to data array
+         * @param millisStamp Time of data
+         * @param values Pointer to data array
          * @param _value_size Size of data array
          */
-        DataStructSensor(uint64_t _time, int32_t* _values, uint8_t _value_size) : NumberArray<int32_t>(_values, _value_size), time(_time) { }
+        DataStructSensor(uint64_t millisStamp, int32_t* values, uint8_t value_size) : NumberArray<int32_t>(values, value_size), millisStamp(millisStamp) { }
     };
 
     /**
-     * Derived linked list to store sensor data and its time. Grows automatically.
+     * Derived linked list to store sensor data and its millis time stamp.
      */
     struct LinkedListSensor : LinkedList3110<DataStructSensor> {
         LinkedListSensor(uint16_t size) : LinkedList3110<DataStructSensor>(size) { }
 
-        void append(uint64_t time, NumberArrayLateInit<int32_t> *data) {
+        void append(uint64_t millisStamp, NumberArrayLateInit<int32_t> *data) {
             // Create data structure and add node to linked list
             // Using this-> as base class/function is templated
-            this->appendDataStruct(new DataStructSensor(time, data->values, data->value_size));
+            this->appendDataStruct(new DataStructSensor(millisStamp, data->values, data->value_size));
         }
 
         String getBookmarkAsCsv(uint8_t columnCount, DataProcessing *processing) { return nodeToCSV(bookmark, columnCount, processing); }
@@ -62,7 +62,7 @@ struct DataCollection {
             }
             String str;
             if (withTime) {
-                str += String(node->dataStruct->time);
+                str += String(_helper.millisStampToEpoch_ms(node->dataStruct->millisStamp));
                 str += ",";
             }
             for (uint8_t i = 0; i < node->dataStruct->value_size; i++) {
@@ -152,7 +152,7 @@ struct DataCollection {
 
             // Calculate data averages
             avgDataSum.loopArray([&](int32_t& value, uint8_t i) { value = nearbyintf( value / *averagingCountPtr ); } );
-            // Store median time and data in linked list
+            // Store median millis time stamp and data in linked list
             linkedListSensor.append((uint64_t)nearbyintf( (avgStartTime + millis()) / 2 ), &avgDataSum);
 
             // Reset temporary values, counters

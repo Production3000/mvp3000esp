@@ -38,10 +38,9 @@ The Helper class provides a range of functions for checking and converting strin
 
 ### <a name='TimeStrings'></a>Time Strings 
 
- *  `String msEpochToUtcString(uint64_t millisStamp)`: Convert a millisecond timestamp to a UTC date time in format "YYYY-MM-DD hh:mm:ss".
- *  `String millisTimeString(uint64_t millisStamp)`: Convert a millisecond timestamp to a string in format "Dd hh:mm:ss".
- *  `String timeString()`: Get the device UTC date time if synced, or the device uptime.
- *  `String uptimeString()`: Get the device uptime as "Dd hh:mm:ss"
+ *	`millisStampToEpoch_ms(uint64_t millisStamp)`: Convert a device time millisecond timestamp to an epoch UTC timestamp in milliseconds.
+ *  `String millisStampString(uint64_t millisStamp)`: Print a millisecond timestamp as device time "Dd hh:mm:ss".
+ *  `String utcOrMillisStampString(uint64_t millisStamp)`: Convert a millisecond timestamp to UTC date time "YYYY-MM-DD hh:mm:ss" if time is synced. Else print as device time "Dd hh:mm:ss".
 
 ### <a name='FormattedString'></a>Formatted String
 

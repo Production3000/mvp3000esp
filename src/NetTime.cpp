@@ -48,7 +48,7 @@ void NetTime::loop() {
         return;
 
     if (waitBeforeRequest == 0) {
-        waitBeforeRequest = millis() + 500; // At least on ESP8266 there is a pause on conenct, so maybe wait a little
+        waitBeforeRequest = millis() + 500; // At least on ESP8266 there is a pause on connect, so maybe wait a little
     }
     
     if (millis() > waitBeforeRequest) {
