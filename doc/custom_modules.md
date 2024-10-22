@@ -19,7 +19,7 @@ Most users will not need to create a custom module, particularly if a similar on
 
 ## <a name='ExampleCustomModule'></a>Example Custom Module
 
-Please refer to the simplified custom module example [class](/examples/custom_module/custom_module.h) when reading the following sections. Main parts of the code are explained there. Its [implementation](/examples/custom_module/custom_module.ino) is ready to compile.
+Please refer to the simplified custom module example [class](/examples/mvp/custom_module/custom_module.h) when reading the following sections. Main parts of the code are explained there. Its [implementation](/examples/mvp/custom_module/custom_module.ino) is ready to compile.
 
 ### <a name='TheConfigurationStruct'></a>The Configuration Struct
 

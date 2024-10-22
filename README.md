@@ -58,7 +58,7 @@ A listing in the library managers of PlatformIO and Arduino is targeted for a fu
 
 ### <a name='FirstSteps'></a>First Steps
 
-A good starting point is the [basic example](/examples/basic/basic.ino). It does not include any module, and thus is not very useful beyond testing.
+A good starting point is the [basic example](/examples/mvp/basic/basic.ino). It does not include any module, and thus is not very useful beyond testing.
 
 Compile a copy of the sketch and listen to the serial port using your IDE (baud rate: 115200).
 The serial output will look like this, with a time stamp, the log category, and the actual message:
