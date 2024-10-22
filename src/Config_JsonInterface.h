@@ -65,6 +65,9 @@ struct CfgJsonInterface : public JsonInterface {
         SettingNode(const String& varName, uint8_t* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
             get = [&]() { return String(*((uint8_t*)varPtr)); };
         };
+        SettingNode(const String& varName, int16_t* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
+            get = [&]() { return String(*((int16_t*)varPtr)); };
+        };
         SettingNode(const String& varName, uint16_t* _varPtr, std::function<bool(const String&)> checkSet) : hash(_helper.hashStringDjb2(varName.c_str())), varPtr(_varPtr), checkSet(checkSet) {
             get = [&]() { return String(*((uint16_t*)varPtr)); };
         };

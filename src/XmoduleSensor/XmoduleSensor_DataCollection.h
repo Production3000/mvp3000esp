@@ -72,6 +72,34 @@ struct DataCollection {
             return str;
         }
 
+        boolean isAboveThreshold(uint16_t threshold, int16_t thresholdOnlySingleIndex, DataProcessing *processing) {
+            // Nothing to compare
+            if ((tail == nullptr) || (tail->prev == nullptr)) {
+                return true;
+            }
+
+            for (uint8_t i = 0; i < tail->dataStruct->value_size; i++) {
+                if (thresholdOnlySingleIndex >= 0 && i != thresholdOnlySingleIndex) {
+                    continue;
+                }
+                // Use floats, ints distort: 10 * 999/1000 -> 9.99 -> 9 --> 8 (-2) OK    vs.    10 * 1001/1000 -> 10.01 -> 10 --> 11 (+1) OK
+                float_t thisValue = processing->applyProcessing(tail->dataStruct->values[i], i);
+                float_t prevValue = processing->applyProcessing(tail->prev->dataStruct->values[i], i);
+                // One value beating threshold is enough
+                if (!isInRange(thisValue, prevValue * (1000 - threshold) / 1000, prevValue * (1000 + threshold) / 1000))
+                    return true;
+            }
+
+            // No value above threshold, remove the tail node
+            _removeNode(tail);
+            return false;
+        }
+
+        void removeLast() {
+            if (tail != nullptr) {
+                _removeNode(tail);
+            }
+        }
     };
 
     DataProcessing processing;

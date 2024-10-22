@@ -22,7 +22,7 @@ limitations under the License.
 #include <sntp.h> // For gettimeofday
 
 // Additional defines are in Arduino.h
-#define checkrange(amt, low, high) ( ((amt)<(low) || (amt) > (high)) ? (false) : (true) )  // Compare constrain(amt,low,high)
+#define isInRange(val, low, high) ( ((val)<(low) || (val) > (high)) ? (false) : (true) )  // Compare constrain(amt,low,high)
 
 
 struct _Helper {

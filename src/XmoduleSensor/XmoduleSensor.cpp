@@ -35,7 +35,7 @@ void XmoduleSensor::setup() {
     mvp.net.netWeb.registerCfg(&cfgXmoduleSensor);
 
     if (cfgXmoduleSensor.reportingInterval > 0)
-        sensorTimer.restart(cfgXmoduleSensor.reportingInterval);
+        reportingTimer.restart(cfgXmoduleSensor.reportingInterval);
 
     // Register webpage actions
     mvp.net.netWeb.registerAction("measureOffset", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
@@ -92,21 +92,37 @@ void XmoduleSensor::loop() {
         return;
     dataCollection.avgCycleFinished = false;;
 
+    // Check if offset or scaling measurement is running
     if (offsetRunning || scalingRunning) {
         measureOffsetScalingFinish();
         return;
     }
 
-    // Act only if remaining is 0: was never started or just finished
-    if (sensorTimer.justFinished()) {
-        // Output data to serial, websocket, MQTT
-        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::CONSOLE))
-            mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
-        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::WEBSOCKET))
-            mvp.net.netWeb.webSockets.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
-        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::MQTT))
-            mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
-   }
+    // Check if recording threshold was reached, otherwise just remove the measurement and do nothing
+    // Threshold is not checked when appending but here: no need to check for offset/scaling measurements and averaging is already done/noise is lower
+    if (cfgXmoduleSensor.thresholdPermilleChange > 0) {
+        if (!dataCollection.linkedListSensor.isAboveThreshold(cfgXmoduleSensor.thresholdPermilleChange, cfgXmoduleSensor.thresholdOnlySingleIndex, &dataCollection.processing)) {
+            return;
+        }
+    }
+
+    // Act only if timer a) was never started or b) just finished, otherwise remove measurment
+    // This is not done when appending but here to not delay offset/scaling measurements, actual time is not known during averaging
+    if (!reportingTimer.justFinished()) {
+        dataCollection.linkedListSensor.removeLast();
+        return;
+    }
+
+    // Output data to serial, websocket, MQTT
+    if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::CONSOLE)) {
+        mvp.logger.write(CfgLogger::Level::DATA, dataCollection.linkedListSensor.getLatestAsCsvNoTime(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing).c_str() );
+    }
+    if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::WEBSOCKET)) {
+        mvp.net.netWeb.webSockets.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+    }
+    if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::MQTT)) {
+        mvp.net.netMqtt.printMqtt(mqttTopic, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+    }
 }
 
 
@@ -117,10 +133,10 @@ void XmoduleSensor::measureOffset() {
         return;
 
     // Stop interval
-    sensorTimer.stop();
+    reportingTimer.stop();
 
     // Restart data collection with new averaging
-    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.avgCountOffsetScaling);
 
     offsetRunning = true;
     mvp.logger.write(CfgLogger::Level::INFO, "Offset measurement started.");
@@ -139,10 +155,10 @@ bool XmoduleSensor::measureScaling(uint8_t valueNumber, int32_t targetValue) {
     dataCollection.processing.setScalingTarget(valueNumber - 1, targetValue);
 
     // Stop interval
-    sensorTimer.stop();
+    reportingTimer.stop();
 
     // Restart data collection with new averaging
-    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.averagingOffsetScaling);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.avgCountOffsetScaling);
 
     scalingRunning = true;
     mvp.logger.writeFormatted(CfgLogger::Level::INFO, "Scaling measurement of index %d started.", scalingValueIndex);
@@ -168,10 +184,10 @@ void XmoduleSensor::measureOffsetScalingFinish() {
 
     // Restart data collection with new averaging
     clearTare();
-    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.sampleAveraging);
+    dataCollection.setAveragingCountPtr(&cfgXmoduleSensor.avgCountSample);
 
     // Restart interval
-    sensorTimer.restart();
+    reportingTimer.restart();
 }
 
 void XmoduleSensor::resetOffset() {
@@ -230,15 +246,19 @@ String XmoduleSensor::webPageProcessor(uint8_t var) {
             return cfgXmoduleSensor.infoDescription;
 
         case 111:
-            return String(cfgXmoduleSensor.sampleAveraging);
+            return String(cfgXmoduleSensor.avgCountSample);
         case 112:
-            return String(cfgXmoduleSensor.averagingOffsetScaling);
+            return String(cfgXmoduleSensor.avgCountOffsetScaling);
         case 113:
             return String(cfgXmoduleSensor.reportingInterval);
         case 114:
             return _helper.printFormatted("%d / %d (%s)", dataCollection.linkedListSensor.getSize(), dataCollection.linkedListSensor.getMaxSize(), (dataCollection.linkedListSensor.isAdaptive() ? "adaptive" : "fixed"));
         case 115:
             return String(cfgXmoduleSensor.dataValueCount);
+        case 116:
+            return String(cfgXmoduleSensor.thresholdPermilleChange);
+        case 117:
+            return String(cfgXmoduleSensor.thresholdOnlySingleIndex);
 
         case 120: // Split the long string into multiple rows
             webPageProcessorCount = 0;

@@ -54,7 +54,7 @@ void setup() {
 
     // Turn off averaging on the ESP to not mess with the generated noise
     // Any value set via the web interface overrides this, make sure to factory reset the device before working with noise
-    xmoduleSensor.cfgXmoduleSensor.sampleAveraging = 1;
+    xmoduleSensor.cfgXmoduleSensor.avgCountSample = 1;
 
     // Add the sensor module to the mvp framework
     mvp.addXmodule(&xmoduleSensor);

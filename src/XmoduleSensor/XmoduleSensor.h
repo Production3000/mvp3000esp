@@ -39,14 +39,18 @@ struct CfgXmoduleSensor : CfgJsonInterface {
 
     // Modifiable settings saved to SPIFF
 
-    uint8_t sampleAveraging = 10; // Before values are reported
-    uint8_t averagingOffsetScaling = 25;
-    uint16_t reportingInterval = 0; // [ms], set to 0 to ignore
+    uint8_t avgCountSample = 10; // At least 1
+    uint8_t avgCountOffsetScaling = 25; // At least 1
+    uint16_t reportingInterval = 0; // [ms], 0 to ignore
+    uint8_t thresholdPermilleChange = 0; // 0 to disable
+    int16_t thresholdOnlySingleIndex = -1; // Max 255, -1 to apply to all values
 
     CfgXmoduleSensor() : CfgJsonInterface("cfgXmoduleSensor") {
-        addSetting<uint8_t>("sampleAveraging", &sampleAveraging, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; sampleAveraging = n; return true; } ); // At least 1
-        addSetting<uint8_t>("averagingOffsetScaling", &averagingOffsetScaling, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; averagingOffsetScaling = n; return true; } ); // At least 1
+        addSetting<uint8_t>("avgCountSample", &avgCountSample, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; avgCountSample = n; return true; } );
+        addSetting<uint8_t>("avgCountOffsetScaling", &avgCountOffsetScaling, [&](const String& s) { uint8_t n = s.toInt(); if (n == 0) return false; avgCountOffsetScaling = n; return true; } );
         addSetting<uint16_t>("reportingInterval", &reportingInterval, [&](const String& s) { reportingInterval = s.toInt(); return true; } );
+        addSetting<uint8_t>("thresholdPermilleChange", &thresholdPermilleChange, [&](const String& s) { thresholdPermilleChange = s.toInt(); return true; } );
+        addSetting<int16_t>("thresholdOnlySingleIndex", &thresholdOnlySingleIndex, [&](const String& s) { int16_t n = s.toInt(); if ((n < -1) || (n > 255)) return false; thresholdOnlySingleIndex = n; return true; } );
     };
 
     // Settings that are not known during creation of this config within the framework but need init before anything works
@@ -153,11 +157,29 @@ class XmoduleSensor : public _Xmodule {
         };
 
         /**
+         * @brief Set the wait time between data reports.
+         * 
+         * @param reportingInterval The interval in milliseconds, 0 to report once new data is available.
+         */
+        void setReportingInterval(uint16_t reportingInterval) { cfgXmoduleSensor.reportingInterval = reportingInterval; };
+
+        /**
+         * @brief Set the reporting threshold in permille change.
+         * 
+         * @param thresholdPermilleChange The threshold in permille change.
+         * @param thresholdOnlySingleIndex (optional) The index of the value to apply the threshold to, -1 for all values (default).
+         */
+        void setReportingThreshold(uint8_t thresholdPermilleChange, int16_t thresholdOnlySingleIndex = -1) {
+            cfgXmoduleSensor.thresholdPermilleChange = thresholdPermilleChange;
+            cfgXmoduleSensor.updateSingleValue("thresholdOnlySingleIndex", String(thresholdOnlySingleIndex)); // Use set function as datatype is different to allow -1
+        };
+
+        /**
          * @brief Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
          * 
-         * @param sampleAveraging The number of samples to average before reporting.
+         * @param avgCountSample The number of samples to average before reporting.
          */
-        void setSampleAveraging(uint8_t sampleAveraging) { cfgXmoduleSensor.sampleAveraging = sampleAveraging; };
+        void setSampleAveraging(uint8_t avgCountSample) { cfgXmoduleSensor.avgCountSample = avgCountSample; };
 
         /**
          * @brief Shift the decimal point of the sample values by the given exponent.
@@ -217,12 +239,12 @@ class XmoduleSensor : public _Xmodule {
 
     private:
 
-        DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.sampleAveraging);
+        DataCollection dataCollection = DataCollection(&cfgXmoduleSensor.avgCountSample);
 
         String uriWebSocket;
         String mqttTopic;
 
-        LimitTimer sensorTimer = LimitTimer(0);
+        LimitTimer reportingTimer = LimitTimer(0);
 
         // Offset and scaling
         boolean offsetRunning = false;

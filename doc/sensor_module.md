@@ -122,7 +122,7 @@ A description of the sensor and its measurement units can be added for identific
 
 Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
 
-    uint8_t sampleAveraging = 10;
+    uint8_t avgCountSample = 10;
     xmoduleSensor.setSampleAveraging(1);
 
 Shift the decimal point of the sample values by the given exponent, see section [Sample-to-Int Exponent](#sample-to-int-exponent) for more information. Also see the [BME680](/examples/sensor/bme680/bme680.ino) example for a use case.
@@ -145,7 +145,7 @@ Disable data output serial. This does not affect general logging to serial. This
  *  `void disableMqtt()`: Disable communication and data output via MQTT.
  *  `void disableWebSocket()`: Disable communication and data output via WebSocket.
  *  `void setDataCollectionAdaptive()`: Set data collection to adaptive mode, growing depending on available memory.
- *  `void setSampleAveraging(uint8_t sampleAveraging)`: Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
+ *  `void setSampleAveraging(uint8_t avgCountSample)`: Set initial sample averaging count after first compile. This value is superseeded by the user-set/saved value in the web interface.
  *  `void setSampleToIntExponent(int8_t *sampleToIntExponent)`: Shift the decimal point of the sample values by the given exponent.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, String* sensorTypes, String* sensorUnits)`: Set the sensor information.
  *  `void setSensorInfo(const String& infoName, const String& infoDescription, const String& pixelType, const String& pixelUnit, uint8_t matrixColumnCount)`: Set the sensor information for a matrix sensor.
