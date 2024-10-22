@@ -18,7 +18,7 @@ limitations under the License.
 #define XMODULELED_WEBPAGE
 
 const char htmlXmoduleLed[] PROGMEM = R"===(%0%
-<p><a href='/'>Home</a></p>
+<p><a href='%4%'>Home</a></p>
 <h3>%100%</h3>
 <h3>Settings</h3>
 <ul>

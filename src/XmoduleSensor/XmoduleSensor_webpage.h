@@ -18,7 +18,7 @@ limitations under the License.
 #define XMODULESENSOR_WEBPAGE
 
 const char htmlXmoduleSensor[] PROGMEM = R"===(%0%
-<p><a href='/'>Home</a></p>
+<p><a href='%4%'>Home</a></p>
 <h3>%101%: %102%</h3>
 <p>%103%</p>
 <h3>Data Handling</h3>

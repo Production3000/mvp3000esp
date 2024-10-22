@@ -268,6 +268,8 @@ String NetWeb::templateProcessorWrapper(const String& var) {
                 return postMessage;
             }
             return "";
+        case 4: // Main settings url, / or alternate root
+            return rootUri;
         case 9: // Standard HTML foot
             return String(htmlFoot);
 
