@@ -16,6 +16,7 @@ limitations under the License.
 
 
 #include <MVP3000.h>
+#include <XmoduleSensor/XmoduleSensor.h>
 extern MVP3000 mvp;
 
 // Sensirion I2C SCD30 https://github.com/Sensirion/arduino-i2c-scd30

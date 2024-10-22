@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include <MVP3000.h>
+#include <XmoduleLED/XmoduleLED.h>
 extern MVP3000 mvp;
 
 #define LED_PIN D6 // <-- SET THIS TO THE CORRECT PIN

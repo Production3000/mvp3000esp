@@ -27,8 +27,6 @@ limitations under the License.
 #include "Net.h"
 
 #include "_Xmodule.h"
-#include "XmoduleSensor/XmoduleSensor.h"
-#include "XmoduleLED/XmoduleLED.h"
 
 
 class MVP3000 {

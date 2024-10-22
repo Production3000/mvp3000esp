@@ -16,6 +16,7 @@ limitations under the License.
 
 
 #include <MVP3000.h>
+#include <XmoduleSensor/XmoduleSensor.h>
 extern MVP3000 mvp;
 
 // Adjust value count for the used sensor (e.g. temperature, rH)

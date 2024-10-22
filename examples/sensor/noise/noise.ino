@@ -18,6 +18,7 @@ limitations under the License.
 #include <random>
 
 #include <MVP3000.h>
+#include <XmoduleSensor/XmoduleSensor.h>
 extern MVP3000 mvp;
 
 // Value count given by noise types

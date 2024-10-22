@@ -16,6 +16,7 @@ limitations under the License.
 
 
 #include <MVP3000.h>
+#include <XmoduleSensor/XmoduleSensor.h>
 extern MVP3000 mvp;
 
 // BME68x Sensor library https://github.com/boschsensortec/Bosch-BME68x-Library
