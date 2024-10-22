@@ -16,10 +16,10 @@ limitations under the License.
 
 # Python script to rearrange HTML/CSS/JS into a single line and removing comments and double white spaces, yielding a 40% reduction
 #   Usage: python webpagebuilder.py <options> <input_html_file>
+#   No arguments default to index.html and full build
 #   Options:
 #       -l: Embed linked styles, javascript and images
 #       -m: Minify the content
-#       -M: Aggressive minification, could affect text strings
 #       -e: Encode for ESPAsyncWebServer templating
 #       -w: Write the output to ../webpage.h
 #       -x: All of the above
@@ -60,7 +60,7 @@ def embed_linked(content : str) -> str:
     return content
 
 
-def minify(content : str, aggressive : bool) -> str:
+def minify(content : str) -> str:
         
     original_size = len(content)
 
@@ -69,39 +69,17 @@ def minify(content : str, aggressive : bool) -> str:
     content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
     # Remove HTML comments <!-- -->
     content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
-    # Remove HTML comments <!-- -->
-    content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
 
     # Remove newlines, reduce spaces to single space
     content = content.replace("\n", "")
     content = " ".join(content.split())
 
-    # Aggressive, could alter some text strings and break code
-    if aggressive:
-        content = re.sub(r"\s?{\s?", "{", content)
-        content = re.sub(r"\s?}\s?", "}", content)
-        content = re.sub(r"\s?\(\s?", "(", content)
-        content = re.sub(r"\s?\)\s?", ")", content)
-        content = re.sub(r"\s?\[\s?", "[", content)
-        content = re.sub(r"\s?\]\s?", "]", content)
-        # content = re.sub(r"\s?<\s?", "<", content) # Messes up a lot of text when using spans
-        # content = re.sub(r"\s?>\s?", ">", content) # Messes up a lot of text when using spans
-        content = re.sub(r"\s?;\s?", ";", content)
-        # content = re.sub(r"\s?,\s?", ",", content) # Common in text
-        # content = re.sub(r"\s?:\s?", ":", content) # Common in text
-        content = re.sub(r"\s?=\s?", "=", content)
-        content = re.sub(r"\s?\+\s?", "+", content)
-        # content = re.sub(r"\s?-\s?", "-", content) # Common in text
-        content = re.sub(r"\*\s", "*", content) # Breaks CSS if first space is missing: div *{ ... }
-        content = re.sub(r"\s?/\s?", "/", content)
-
     # Append a single new line, easier for copy paste
     content += "\n"
 
-
     # Print simple statistics of file size reduction
     minified_size = len(content)
-    print(f"Reduction: {original_size} -> {minified_size} bytes, {100 - (minified_size / original_size * 100):.0f}%")
+    print(f"Reduction by {minified_size - original_size} bytes ({100 - (minified_size / original_size * 100):.0f}%) to {minified_size} bytes")
 
     return content
         
@@ -142,7 +120,7 @@ def save_output(content : str, input_file : str):
 
 if __name__ == "__main__":
     if len(sys.argv) not in [1, 3]:
-        print("Usage: python webpagebuilder.py [lmMewx] [input_file]")
+        print("Usage: python webpagebuilder.py [lmewx] [input_file]")
     else:
         if len(sys.argv) == 1: # Default to index.html and full build
             input_file = "index.html"
@@ -150,9 +128,8 @@ if __name__ == "__main__":
         else:
             input_file = sys.argv[2]
 
-        do_embed= True if "l" or "x" in sys.argv[1] else False
-        do_minify = True if "m" or "M" or "x" in sys.argv[1] else False
-        aggressive = True if "M" or "x" in sys.argv[1] else False
+        do_embed = True if "l" or "x" in sys.argv[1] else False
+        do_minify = True if "m" or "x" in sys.argv[1] else False
         do_encode = True if "e" or "x" in sys.argv[1] else False
         do_write = True if "w" or "x" in sys.argv[1] else False
 
@@ -164,7 +141,7 @@ if __name__ == "__main__":
                 if do_embed:
                     content = embed_linked(content)
                 if do_minify:
-                    content = minify(content, aggressive)
+                    content = minify(content)
                 if do_encode:
                     content = encode_for_esp(content)
 

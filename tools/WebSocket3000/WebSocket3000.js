@@ -17,11 +17,11 @@ limitations under the License.
 WebSocket3000 = new function() {
     let $ = this;
 
-    $.init = function(url, onconnected, ondisconnected, onmessage) {
+    $.init = function(url, onConnect, onDisconnect, onMessage) {
         $.url = url;
-        $.onopen = onconnected;
-        $.onclose = ondisconnected;
-        $.onmessage = onmessage;
+        $.onopen = onConnect;
+        $.onclose = onDisconnect;
+        $.onmessage = onMessage;
         $.connect();
     };
 
