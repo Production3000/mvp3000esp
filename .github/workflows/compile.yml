@@ -21,7 +21,10 @@ env:
     - name: ArduinoMqttClient
     - name: ESP Async WebServer
       source-url: https://github.com/me-no-dev/ESPAsyncWebServer.git
+
+    - name: Adafruit NeoPixel
     - name: MVP3000esp
+    
       source-url: ${{ github.ref == 'refs/heads/main' && 'https://github.com/Production3000/mvp3000esp.git' || 'https://github.com/Production3000/mvp3000esp/archive/refs/heads/dev.zip' }}
 
 jobs:
