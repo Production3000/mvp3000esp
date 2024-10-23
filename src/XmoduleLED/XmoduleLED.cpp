@@ -205,8 +205,6 @@ String XmoduleLED::webPageProcessor(uint8_t var) {
         // TODO LED count
         case 101:
             return String(cfgXmoduleLED.globalBrightness);
-        case 102:
-            return "asdasd";
 
         case 110: // The fx modes
             // for (uint8_t i = 0; i < MODE_COUNT; i++) {
