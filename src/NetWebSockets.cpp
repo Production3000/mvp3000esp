@@ -20,22 +20,28 @@ limitations under the License.
 extern MVP3000 mvp;
 
 
-void NetWebSockets::printWebSocket(const String& uri, const String& message) {
-    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
-        return;
-    linkedListWebSocket.printWebSocket(uri, message);
-}
-
-void NetWebSockets::registerWebSocket(const String& uri, WebSocketCtrlCallback ctrlCallback) {
-    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
-        return;
-    linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWebSockets::webSocketEventCallbackWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
+void NetWebSockets::loop() {
+    if (ctrlUserCallback != nullptr) {
+        // IMPORTANT: Execute the callback from the main loop, separated from the event
+        ctrlUserCallback(ctrlData);
+        ctrlUserCallback = nullptr;
+    }
 };
 
-void NetWebSockets::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback) {
+
+void NetWebSockets::registerWebSocket(const String& uri, NetworkCtrlCallback ctrlCallback) {
+    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
+        return;
+    linkedListWebSocket.appendUnique(uri, ctrlCallback, std::bind(&NetWebSockets::ctrlCbWrapper, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6), &server);
+};
+
+void NetWebSockets::ctrlCbWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, NetworkCtrlCallback ctrlCallback) {
     switch (type) {
         case WS_EVT_CONNECT:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d connected from: %s", client->id(), client->remoteIP().toString().c_str());
+            // IMPORTANT: Execute the callback from the main loop, separated from the event
+            ctrlData = "CONNECT";
+            ctrlUserCallback = ctrlCallback;
             break;
         case WS_EVT_DISCONNECT:
             mvp.logger.writeFormatted(CfgLogger::Level::INFO, "WS client %d disconnected.", client->id()); // No IP available
@@ -54,15 +60,22 @@ void NetWebSockets::webSocketEventCallbackWrapper(AsyncWebSocketClient *client, 
             if (ctrlCallback != nullptr) { // Only parse data if there is something to do
                 AwsFrameInfo *info = (AwsFrameInfo*)arg;
                 if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                    // IMPORTANT: Execute the callback from the main loop, separated from the event
                     data[len] = 0; // Terminate string
-                    // Execute callback
-                    ctrlCallback((char*)data);
+                    ctrlData = String((char*)data);
+                    ctrlUserCallback = ctrlCallback;
                 }
             }
             break;
         default: // WS_EVT_PONG
             break;
     }
+}
+
+void NetWebSockets::printWebSocket(const String& uri, const String& message) {
+    if (webSocketState == WEBSOCKET_STATE::HARDDISABLED)
+        return;
+    linkedListWebSocket.printWebSocket(uri, message);
 }
 
 

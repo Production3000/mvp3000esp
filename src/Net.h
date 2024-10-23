@@ -33,6 +33,9 @@ limitations under the License.
 #include "NetWeb.h"
 
 
+typedef std::function<void(const String&)> NetworkCtrlCallback;
+
+
 struct CfgNet : public CfgJsonInterface  {
 
     // Modifiable settings saved to SPIFF

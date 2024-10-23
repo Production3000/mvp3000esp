@@ -65,7 +65,7 @@ class NetMqtt {
          * @param ctrlCallback The function to call when data is received on the topic suffixed with _ctrl. Omit to not subscribe to the topic.
          * @return Returns the function to write data to MQTT.
          */
-        void registerMqtt(const String& topic, MqttCtrlCallback ctrlCallback = nullptr);
+        void registerMqtt(const String& topic, NetworkCtrlCallback ctrlCallback = nullptr);
 
         void hardDisable() { cfgNetMqtt.isHardDisabled = true; }
         boolean isHardDisabled() { return cfgNetMqtt.isHardDisabled; }

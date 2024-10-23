@@ -143,7 +143,7 @@ void NetMqtt::loop() {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void NetMqtt::registerMqtt(const String& baseTopic, MqttCtrlCallback ctrlCallback) {
+void NetMqtt::registerMqtt(const String& baseTopic, NetworkCtrlCallback ctrlCallback) {
     if (mqttState == MQTT_STATE::HARDDISABLED) // mqttState needs to be set in order to not default to HARDDISABLED
         return;
     linkedListMqttTopic.appendUnique(baseTopic, ctrlCallback);

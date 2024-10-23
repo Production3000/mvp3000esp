@@ -25,16 +25,16 @@ limitations under the License.
 extern _Helper _helper;
 
 
-typedef std::function<void(char*)> MqttCtrlCallback;
+typedef std::function<void(const String&)> NetworkCtrlCallback;
 
 
 struct DataStructMqttTopic {
     String baseTopic;
-    MqttCtrlCallback ctrlCallback;
+    NetworkCtrlCallback ctrlCallback;
 
     DataStructMqttTopic() { }
     DataStructMqttTopic(const String& baseTopic) : baseTopic(baseTopic) { } // For comparision only
-    DataStructMqttTopic(const String& baseTopic, MqttCtrlCallback ctrlCallback) : baseTopic(baseTopic), ctrlCallback(ctrlCallback) { }
+    DataStructMqttTopic(const String& baseTopic, NetworkCtrlCallback ctrlCallback) : baseTopic(baseTopic), ctrlCallback(ctrlCallback) { }
 
     String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_ctrl";  return str; }
     String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_data";  return str; }
@@ -42,7 +42,7 @@ struct DataStructMqttTopic {
 
 struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
     
-    void appendUnique(const String& baseTopic, MqttCtrlCallback ctrlCallback = nullptr) {
+    void appendUnique(const String& baseTopic, NetworkCtrlCallback ctrlCallback = nullptr) {
         this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback));
     }
 

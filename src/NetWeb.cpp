@@ -56,7 +56,10 @@ void NetWeb::setup() {
 }
 
 void NetWeb::loop() {
-    // There is actually nothing to do here, the async server is running in the background
+    // The async server is running in the background, nothing to do here
+
+    // WebSocket controll callbacks need to be executed in the main loop
+    webSockets.loop();
 }
 
 

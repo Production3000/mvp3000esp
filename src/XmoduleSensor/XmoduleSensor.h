@@ -28,6 +28,9 @@ limitations under the License.
 #include "XmoduleSensor_webpage.h"
 
 
+typedef std::function<void(const String&)> NetworkCtrlCallback;
+
+
 struct CfgXmoduleSensor : CfgJsonInterface {
 
     enum OutputTarget: uint8_t {
@@ -221,7 +224,7 @@ class XmoduleSensor : public _Xmodule {
          *
          * @param callback The callback function.
          */
-        void setNetworkCtrlCallback(std::function<void(const String&)> callback) { networkCtrlUserCallback = callback; };
+        void setNetworkCtrlCallback(NetworkCtrlCallback callback) { networkCtrlCbUserScript = callback; };
 
     public:
 
@@ -254,10 +257,8 @@ class XmoduleSensor : public _Xmodule {
 
         void measureOffsetScalingFinish();
 
-        boolean callCtrlCallbackNow = false;
-        String networkCtrlCallbackData;
-        std::function<void(const String&)> networkCtrlUserCallback = nullptr;
-        void networkCtrlCallback(char* data); // Callback for to receive control commands from MQTT and websocket
+        void networkCtrlCallback(const String& data); // Callback to receive control commands from MQTT and WebSocket
+        NetworkCtrlCallback networkCtrlCbUserScript = nullptr;
 
         String webPageProcessor(uint8_t var);
         uint8_t webPageProcessorCount;

@@ -60,7 +60,7 @@ void Net::loop() {
     // Unwanted connection states need to be filltered in the respective loop() functions
     netMqtt.loop();
     netCom.loop();
-    // netWeb.loop(); // async
+    netWeb.loop();
     netTime.loop();
 
     // Captive portal only for AP

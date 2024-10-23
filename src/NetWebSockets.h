@@ -23,8 +23,8 @@ limitations under the License.
 
 #include "NetWeb_WebStructs.h"
 
-typedef std::function<void(char*)> WebSocketCtrlCallback;
-typedef std::function<void(AsyncWebSocketClient *, AwsEventType, void*, uint8_t*, size_t, WebSocketCtrlCallback)> WebSocketEventCallbackWrapper;
+typedef std::function<void(const String&)> NetworkCtrlCallback;
+typedef std::function<void(AsyncWebSocketClient *, AwsEventType, void*, uint8_t*, size_t, NetworkCtrlCallback)> WebSocketCtrlCbWrapper;
 
 
 class NetWebSockets {
@@ -37,7 +37,7 @@ class NetWebSockets {
          * @param dataCallback (optional) The function to execute when data is received. Leave empty to not execute a function.
          * @return Returns the function to write data to the websocket.
          */
-        void registerWebSocket(const String& uri, WebSocketCtrlCallback dataCallback = nullptr);
+        void registerWebSocket(const String& uri, NetworkCtrlCallback dataCallback = nullptr);
 
         /**
          * @brief Write data to a websocket.
@@ -53,7 +53,7 @@ class NetWebSockets {
         ~NetWebSockets() { }
 
         // void setup() { };
-        // void loop() {};
+        void loop();
 
         void hardDisable() { webSocketState = WEBSOCKET_STATE::HARDDISABLED; }
 
@@ -69,26 +69,26 @@ class NetWebSockets {
             String uri;
 
             AsyncWebSocket* webSocket;
-            WebSocketCtrlCallback ctrlCallback;
-            WebSocketEventCallbackWrapper webSocketEventCallbackWrapper;
+            NetworkCtrlCallback ctrlCallback;
+            WebSocketCtrlCbWrapper ctrlCbWrapper;
 
             DataStructSocketPack(const String& uri) : uri(uri) { };
-            DataStructSocketPack(const String& _uri, WebSocketCtrlCallback _ctrlCallback, WebSocketEventCallbackWrapper _webSocketEventCallbackWrapper, AsyncWebServer *server) : uri(_uri), ctrlCallback(_ctrlCallback), webSocketEventCallbackWrapper(_webSocketEventCallbackWrapper) {
+            DataStructSocketPack(const String& _uri, NetworkCtrlCallback _ctrlCallback, WebSocketCtrlCbWrapper _ctrlCbWrapper, AsyncWebServer *server) : uri(_uri), ctrlCallback(_ctrlCallback), ctrlCbWrapper(_ctrlCbWrapper) {
                 // Create websocket and attached to server
-                webSocket = new AsyncWebSocket(uri);
+                webSocket = new AsyncWebSocket(_uri);
                 webSocket->onEvent([&](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-                    // IMPORTANT: any delay() here or in any called function will crash the ESP8266 (ESP32 untested)
+                    // IMPORTANT: Execute the callback from the main loop, separated from the event
+                    // Any delay() in any called function will crash the ESP8266 (ESP32 untested)
                     // The reason is unclear, maybe the wrapped vTaskDelay()
-                    webSocketEventCallbackWrapper(client, type, arg, data, len, ctrlCallback);
+                    ctrlCbWrapper(client, type, arg, data, len, ctrlCallback);
                 });
                 server->addHandler(webSocket);
             }
         };
 
         struct LinkedListWebSocket : LinkedList3111<DataStructSocketPack> {
-            void appendUnique(const String& uri, WebSocketCtrlCallback ctrlCallback, WebSocketEventCallbackWrapper webSocketEventCallbackWrapper, AsyncWebServer* server) {
-                this->appendUniqueDataStruct(new DataStructSocketPack(uri, ctrlCallback, webSocketEventCallbackWrapper, server));
-                // return this->tail->dataStruct->getTextAll();
+            void appendUnique(const String& uri, NetworkCtrlCallback ctrlCallback, WebSocketCtrlCbWrapper ctrlCbWrapper, AsyncWebServer* server) {
+                this->appendUniqueDataStruct(new DataStructSocketPack(uri, ctrlCallback, ctrlCbWrapper, server));
             }
 
             DataStructSocketPack* findUri(const String& uri) {
@@ -111,7 +111,9 @@ class NetWebSockets {
 
         LinkedListWebSocket linkedListWebSocket; // Adaptive size
 
-        void webSocketEventCallbackWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, WebSocketCtrlCallback ctrlCallback);
+        String ctrlData = "";
+        NetworkCtrlCallback ctrlUserCallback = nullptr;
+        void ctrlCbWrapper(AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len, NetworkCtrlCallback ctrlCallback);
 
     public:
 

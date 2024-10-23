@@ -81,12 +81,6 @@ void XmoduleSensor::setup() {
 }
 
 void XmoduleSensor::loop() {
-    // IMPORTANT: seprated user control callback, the ESP crashes if a delay() is used there 
-    if (callCtrlCallbackNow) {
-        networkCtrlUserCallback(networkCtrlCallbackData);
-        callCtrlCallbackNow = false;
-    }
-
     // Check flag if there is something to do
     if (!dataCollection.avgCycleFinished)
         return;
@@ -213,28 +207,28 @@ void XmoduleSensor::setTare() {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void XmoduleSensor::networkCtrlCallback(char* data) {
-    // IMPORTANT: any delay() here or in any called function will crash the ESP8266 (ESP32 untested)
-    if (strcmp(data, "TARE") == 0) {
+void XmoduleSensor::networkCtrlCallback(const String &data) {
+    if (data == "CONNECT") {
+        // Send initial data to websocket to populate client view for slow sensors/reporting or if reportingThreshold is set
+        if (cfgXmoduleSensor.outputTargets.isSet(CfgXmoduleSensor::OutputTarget::WEBSOCKET) && (dataCollection.linkedListSensor.getSize() > 0)) {
+            mvp.net.netWeb.webSockets.printWebSocket(uriWebSocket, dataCollection.linkedListSensor.getLatestAsCsv(cfgXmoduleSensor.matrixColumnCount, &dataCollection.processing));
+        }
+    } else if (data == "TARE") {
         setTare();
         mvp.logger.write(CfgLogger::Level::CONTROL, "Set Tare.");
-    } else if (strcmp(data, "CLEAR") == 0) {
+    } else if (data == "CLEAR") {
         clearTare();
         mvp.logger.write(CfgLogger::Level::CONTROL, "Clear Tare.");
     } else {
         // Check if there is a custom callback defined
-        if (networkCtrlUserCallback == nullptr) {
-            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown control command '%s' received.", data);
+        if (networkCtrlCbUserScript == nullptr) {
+            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown control command '%s' received.", data.c_str());
         } else {
-            // IMPORTANT: Separate the callback from user/library code because of the delay() issue
-            // The callback is called from the loop()
-            callCtrlCallbackNow = true;
-            networkCtrlCallbackData = data;
-            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Unknown control command '%s' received. Trying user callback function.", data);
+            networkCtrlCbUserScript(data);
+            mvp.logger.writeFormatted(CfgLogger::Level::CONTROL, "Passing control command '%s' to user callback function.", data.c_str());
         }
     }
 }
-
 
 String XmoduleSensor::webPageProcessor(uint8_t var) {
     switch (var) {
