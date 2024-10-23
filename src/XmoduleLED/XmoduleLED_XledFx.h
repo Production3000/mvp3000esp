@@ -28,10 +28,32 @@ typedef std::function<uint8_t(uint8_t, uint8_t, uint16_t, uint8_t**)> FxBrightne
 typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t**)> FxColorSetter;
 
 // useFrames, runEndless, setter function
-typedef std::tuple<boolean, boolean, FxBrightnessSetter> FxContainer;
+typedef std::tuple<boolean, boolean, FxBrightnessSetter> FxBrightnessContainer;
 
 // useFrames, runEndless, colorWheel, setter function
 typedef std::tuple<boolean, boolean, boolean, FxColorSetter> FxColorContainer;
+
+const char brfx_name_0[] PROGMEM = "Blink";
+const char brfx_name_1[] PROGMEM = "Fade in";
+const char brfx_name_2[] PROGMEM = "Fade out";
+const char brfx_name_3[] PROGMEM = "Pulse full";
+const char brfx_name_4[] PROGMEM = "Pulse upper half";
+const char brfx_name_5[] PROGMEM = "Random all synced";
+const char brfx_name_6[] PROGMEM = "Random individual sparkle";
+const char brfx_name_7[] PROGMEM = "Random individual walk";
+const char brfx_name_8[] PROGMEM = "Wave forward";
+const char brfx_name_9[] PROGMEM = "Wave backward";
+
+const char cfx_name_0[] PROGMEM = "Random all synced (loud)";
+const char cfx_name_1[] PROGMEM = "Random all synced (pastel)";
+const char cfx_name_2[] PROGMEM = "Random individual sparkle (loud)";
+const char cfx_name_3[] PROGMEM = "Random individual sparkle (pastel)";
+const char cfx_name_4[] PROGMEM = "Random individual walk (loud)";
+const char cfx_name_5[] PROGMEM = "Random individual walk (pastel)";
+const char cfx_name_6[] PROGMEM = "Rainbow all synced";
+const char cfx_name_7[] PROGMEM = "Rainbow wave forward";
+const char cfx_name_8[] PROGMEM = "Rainbow wave backward";
+
 
 struct XledFx {
     enum BRIGHTNESSFX: uint8_t {
@@ -48,19 +70,44 @@ struct XledFx {
     };
 
     enum COLORFX: uint8_t {
-        RND_SYNC_LOUD = 2,
-        RND_SYNC_PASTEL = 3,
-        RND_SPARKLE_LOUD = 4,
-        RND_SPARKLE_PASTEL = 5,
-        RND_WALK_LOUD = 6,
-        RND_WALK_PASTEL = 7,
-        RAINBOW_SYNC = 8,
-        RAINBOW_WAVE_FWD = 9,
-        RAINBOW_WAVE_BWD = 10,
+        RND_SYNC_LOUD = 0,
+        RND_SYNC_PASTEL = 1,
+        RND_SPARKLE_LOUD = 2,
+        RND_SPARKLE_PASTEL = 3,
+        RND_WALK_LOUD = 4,
+        RND_WALK_PASTEL = 5,
+        RAINBOW_SYNC = 6,
+        RAINBOW_WAVE_FWD = 7,
+        RAINBOW_WAVE_BWD = 8,
+    };
+
+    std::map<BRIGHTNESSFX, const __FlashStringHelper*> brightnessFxNames = {
+        { BRIGHTNESSFX::BLINK, FPSTR(brfx_name_0) },
+        { BRIGHTNESSFX::FADE_IN, FPSTR(brfx_name_1) },
+        { BRIGHTNESSFX::FADE_OUT, FPSTR(brfx_name_2) },
+        { BRIGHTNESSFX::PULSE_FULL, FPSTR(brfx_name_3) },
+        { BRIGHTNESSFX::PULSE_HALF, FPSTR(brfx_name_4) },
+        { BRIGHTNESSFX::RND_SYNC, FPSTR(brfx_name_5) },
+        { BRIGHTNESSFX::RND_SPARKLE, FPSTR(brfx_name_6) },
+        { BRIGHTNESSFX::RND_WALK, FPSTR(brfx_name_7) },
+        { BRIGHTNESSFX::WAVE_FWD, FPSTR(brfx_name_8) },
+        { BRIGHTNESSFX::WAVE_BWD, FPSTR(brfx_name_9) },
+    };
+
+    std::map<COLORFX, const __FlashStringHelper*> colorFxNames = {
+        { COLORFX::RND_SYNC_LOUD, FPSTR(cfx_name_0) },
+        { COLORFX::RND_SYNC_PASTEL, FPSTR(cfx_name_1) },
+        { COLORFX::RND_SPARKLE_LOUD, FPSTR(cfx_name_2) },
+        { COLORFX::RND_SPARKLE_PASTEL, FPSTR(cfx_name_3) },
+        { COLORFX::RND_WALK_LOUD, FPSTR(cfx_name_4) },
+        { COLORFX::RND_WALK_PASTEL, FPSTR(cfx_name_5) },
+        { COLORFX::RAINBOW_SYNC, FPSTR(cfx_name_6) },
+        { COLORFX::RAINBOW_WAVE_FWD, FPSTR(cfx_name_7) },
+        { COLORFX::RAINBOW_WAVE_BWD, FPSTR(cfx_name_8) },
     };
 
     // useFrames, runEndless, colorWheel, setter function
-    std::map<BRIGHTNESSFX, FxContainer> brightnessFx = {
+    std::map<BRIGHTNESSFX, FxBrightnessContainer> brightnessFx = {
         { FADE_IN, std::make_tuple(true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return timingPosition / 256; }) },
         { FADE_OUT, std::make_tuple(true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return 255 - timingPosition / 256; }) },
         { BLINK, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return (timingPosition > 32767) ? 0 : 255; }) },

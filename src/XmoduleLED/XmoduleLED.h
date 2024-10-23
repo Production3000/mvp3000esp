@@ -19,7 +19,6 @@ limitations under the License.
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <map>
 
 #include "_Xmodule.h"
 #include "_Helper_LimitTimer.h"
@@ -161,12 +160,12 @@ class XmoduleLED : public _Xmodule {
     private:
 
         enum XLED_STATE: uint8_t {
-            ONDEMAND = 0,
+            NOFX = 0,
             FXCOLOR = 1,
             FXBRIGHT = 2,
             FXFULL = 3,
         };
-        XLED_STATE xledState = XLED_STATE::ONDEMAND;
+        XLED_STATE xledState = XLED_STATE::NOFX;
         void appendXledState(XLED_STATE state);
         void removeXledState(XLED_STATE state);
 
