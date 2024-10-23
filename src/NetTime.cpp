@@ -24,9 +24,10 @@ extern MVP3000 mvp;
 #if defined(ESP8266)
     uint32_t sntp_update_delay_MS_rfc_not_less_than_15000 () { return 60*60*1000; } // 1 hour update interval
 #else 
-    #include "esp_sntp.h"                        // ESP32 only
-    void cbSyncTime32(struct timeval *tv)  {
-        mvp.net.netTime.cbSyncTime(); // timeval is with microseconds
+    #include <esp_sntp.h>
+    void cbSyncTimeWrapper(struct timeval *tv)  {
+        // timeval is with microseconds, but as ESP8266 is different we get the ntp to millis offset in the _Helper
+        mvp.net.netTime.cbSyncTime();
     }
 #endif
 
@@ -36,7 +37,7 @@ void NetTime::setup() {
         settimeofday_cb([&]() { cbSyncTime(); });
     #else 
         sntp_set_sync_interval(60*60*1000); // 1 hour update interval
-        sntp_set_time_sync_notification_cb(cbSyncTime32);
+        sntp_set_time_sync_notification_cb(cbSyncTimeWrapper);
     #endif
 }
 

@@ -89,6 +89,8 @@ void setup() {
     uint8_t major = 0;
     uint8_t minor = 0;
     sdc30.readFirmwareVersion(major, minor);
+    uint16_t interval;
+    sdc30.getMeasurementInterval(interval);
     uint16_t altitude;
     sdc30.getAltitudeCompensation(altitude);
     uint16_t temperatureOffset;
@@ -97,7 +99,7 @@ void setup() {
     // sdc30.getForceRecalibrationStatus(co2RefConcentration); // This always returns 400 after softReset/power cycle. However, the sensor still uses the updated calibration curve.
     uint16_t isActive;
     sdc30.getAutoCalibrationStatus(isActive);
-    mvp.logFormatted("SDC30: Firmware version %d.%d, altitude %d m, temp offset %d C, auto calibration %s", major, minor, altitude, temperatureOffset, (isActive) ? "active" : "disabled");
+    mvp.logFormatted("SDC30: Firmware version %d.%d, interval %d s, altitude %d m, temp offset %d C, auto calibration %s", major, minor, interval, altitude, temperatureOffset, (isActive) ? "active" : "disabled");
 
     // Start periodic measurement
     // This is ambiguous in the library: "Setting the ambient pressure will overwrite previous settings of altitude compensation. Setting the argument to zero will deactivate the ambient pressure compensation."

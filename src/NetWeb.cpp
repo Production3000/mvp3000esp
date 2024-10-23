@@ -254,7 +254,7 @@ String NetWeb::templateProcessorWrapper(const String& var) {
         mvp.logger.writeFormatted(CfgLogger::Level::ERROR, "Invalid placeholder in template: %s", var.c_str());
         return "[PLACEHOLDERERROR]";
     }
-    uint16 varInt = var.toInt();
+    uint16_t varInt = var.toInt();
     switch (varInt) {
 
         // Main placeholders

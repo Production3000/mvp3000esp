@@ -19,7 +19,11 @@ limitations under the License.
 
 #include <Arduino.h>
 
-#include <sntp.h> // For gettimeofday
+#if defined(ESP8266)
+    #include <sntp.h> // For gettimeofday
+#else 
+    #include <esp_sntp.h> // For gettimeofday
+#endif
 
 // Additional defines are in Arduino.h
 #define isInRange(val, low, high) ( ((val)<(low) || (val) > (high)) ? (false) : (true) )  // Compare constrain(amt,low,high)
