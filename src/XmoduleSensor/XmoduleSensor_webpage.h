@@ -34,7 +34,7 @@ const char htmlXmoduleSensor[] PROGMEM = R"===(%0%
     <li>Apply threshold only to single value, -1 to apply to all values:<br>
         <form action='/save' method='post'> <input name='thresholdOnlySingleIndex' value='%117%' type='number' min='-1' max='255'> <input type='submit' value='Save'> </form> </li>
 </ul>
-<h3>Data Interface</h3
+<h3>Data Interface</h3>
  <ul>
     <li>Data storage: %114% </li>
     <li>Current data: <a href='/sensordata'>/sensordata</a> </li>
@@ -54,8 +54,14 @@ const char htmlXmoduleSensor[] PROGMEM = R"===(%0%
     %120%
     <tr>
         <td colspan='3'></td>
-        <td valign='bottom'> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
-        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'> <input name='measureScaling' type='hidden'> Value number #<br> <input name='valueNumber' type='number' min='1' max='%115%'><br> Target setpoint<br> <input name='targetValue' type='number'><br> <input type='submit' value='Measure scaling'> </form> </td>
+        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure offset?`);'> <input name='measureOffset' type='hidden'> <input type='submit' value='Measure offset'> </form> </td>
+        <td> <form action='/start' method='post' onsubmit='return confirm(`Measure scaling?`);'>
+            <input name='measureScaling' type='hidden'> Select #<br>
+            <input name='valueNumber' type='number' min='1' max='%115%'><br>
+            Target value<br>
+            <input name='targetValue' type='number'><br>
+            <input type='submit' value='Measure scaling'> </form>
+        </td>
         <td></td>
     </tr>
     <tr>

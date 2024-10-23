@@ -32,7 +32,8 @@ limitations under the License.
 
 #include "_Helper_LimitTimer.h"
 
-#include "NetMqtt_TopicList.h"
+
+typedef std::function<void(const String&)> NetworkCtrlCallback;
 
 
 struct CfgNetMqtt : public CfgJsonInterface {
@@ -74,6 +75,33 @@ class NetMqtt {
 
     private:
 
+        struct DataStructMqttTopic {
+            String baseTopic;
+            NetworkCtrlCallback ctrlCallback;
+
+            DataStructMqttTopic() { }
+            DataStructMqttTopic(const String& baseTopic) : baseTopic(baseTopic) { } // For comparision only
+            DataStructMqttTopic(const String& baseTopic, NetworkCtrlCallback ctrlCallback) : baseTopic(baseTopic), ctrlCallback(ctrlCallback) { }
+
+            String getCtrlTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_ctrl";  return str; }
+            String getDataTopic() { String str; str += _helper.ESPX->getChipId(); str += "_"; str += baseTopic; str += "_data";  return str; }
+        };
+
+        struct LinkedListMqttTopic : LinkedList3111<DataStructMqttTopic> {
+            
+            void appendUnique(const String& baseTopic, NetworkCtrlCallback ctrlCallback = nullptr) {
+                this->appendUniqueDataStruct(new DataStructMqttTopic(baseTopic, ctrlCallback));
+            }
+
+            DataStructMqttTopic* findTopic(const String& baseTopic) {
+                return this->findByContentData(DataStructMqttTopic(baseTopic));
+            }
+
+            boolean compareContent(DataStructMqttTopic* dataStruct, DataStructMqttTopic* other) override {
+                return dataStruct->baseTopic.equals(other->baseTopic);
+            }
+        };
+
         enum class MQTT_STATE: uint8_t {
             HARDDISABLED = 0,
             INIT = 1,
@@ -84,6 +112,7 @@ class NetMqtt {
             CONNECTING = 6,
             CONNECTED = 7,
         };
+        
         MQTT_STATE mqttState;
 
         LinkedListMqttTopic linkedListMqttTopic; // Adaptive size

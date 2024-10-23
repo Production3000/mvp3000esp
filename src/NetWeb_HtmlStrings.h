@@ -32,11 +32,12 @@ const char htmlHead[] PROGMEM = R"===(
         table { border-collapse: collapse; border-style: hidden; }
         td { border: 1px solid black; vertical-align:top; padding:5px; }
         input:invalid { background-color: #eeccdd; }
+        .emph { color: red; }
     </style>
 </head>
 <body>
     <h2>MVP3000 - Device ID %1%</h2>
-    <h3 style='color: red;'>%3%</h3>
+    <h3 class='emph'>%3%</h3>
 )===";
 
 const char htmlFoot[] PROGMEM = "<p>&nbsp;</body></html>";

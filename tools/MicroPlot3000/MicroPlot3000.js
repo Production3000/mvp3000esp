@@ -125,7 +125,7 @@ MicroPlot3000 = new function() {
                 unitString = '[yyyy-MM-dd]';
             }
         });
-        $.domElement.querySelector('.xaxis div').textContent = `starting UTC ${dtStart.getFullYear()}-${(dtStart.getUTCMonth() + 1).toString().padStart(2, '0')}-${dtStart.getUTCDate().toString().padStart(2, '0')} ${dtStart.getUTCHours().toString().padStart(2, '0')}:${dtStart.getUTCMinutes().toString().padStart(2, '0')}:${dtStart.getUTCSeconds().toString().padStart(2, '0')} with units ${unitString}`;
+        $.domElement.querySelector('.xaxis div').textContent = `from UTC ${dtStart.getFullYear()}-${(dtStart.getUTCMonth() + 1).toString().padStart(2, '0')}-${dtStart.getUTCDate().toString().padStart(2, '0')} ${dtStart.getUTCHours().toString().padStart(2, '0')}:${dtStart.getUTCMinutes().toString().padStart(2, '0')}:${dtStart.getUTCSeconds().toString().padStart(2, '0')} as ${unitString}`;
 
         // Get the order of magnitude for y axis labeling 
         let magnitudeY = Math.log10(Math.abs(yMax - yMin)) | 0;
