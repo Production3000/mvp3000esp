@@ -86,7 +86,7 @@ void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX 
 }
 
 void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, FxBrightnessSetter brightnessSetter) {
-    brightnessFxCalculator = XledFx::FxCalculator(duration_ms, runEndless, useFrames, brightnessSetter);
+    brightnessFxCalculator = XledFx::FxCalculator(duration_ms, useFrames, runEndless, brightnessSetter);
     appendXledState(XLED_STATE::FXBRIGHT);
     resetTimer();
 }
@@ -113,8 +113,13 @@ void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
     setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
 }
 
+void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean runEndless, XledFx::COLORFX effect) {
+    FxColorContainer fx = xledFx.colorFx[effect];
+    setColorEffect(duration_ms, std::get<0>(fx), runEndless, std::get<2>(fx), std::get<3>(fx));
+}
+
 void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, boolean colorWheel, FxColorSetter colorSetter) {
-    colorFxCalculator = XledFx::FxCalculator(duration_ms, colorWheel, runEndless, useFrames, colorSetter);
+    colorFxCalculator = XledFx::FxCalculator(duration_ms, useFrames, runEndless, colorWheel, colorSetter);
     appendXledState(XLED_STATE::FXCOLOR);
     resetTimer();
 }
@@ -123,14 +128,6 @@ void XmoduleLED::setFixedColorIndividual(uint32_t *colors) {
     removeXledState(XLED_STATE::FXCOLOR);
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
         currentColors[i] = colors[i];
-    }
-    resetTimer();
-}
-
-void XmoduleLED::setFixedColorRandom(){ 
-    removeXledState(XLED_STATE::FXCOLOR);
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        currentColors[i] = Adafruit_NeoPixel::ColorHSV(random(65536), 255, 255);
     }
     resetTimer();
 }
@@ -214,8 +211,9 @@ void XmoduleLED::fixedGlobalBrightness(uint8_t globalBrightness) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleLED::saveCfgCallback() {
-    // mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
-    // setLed();
+    mvp.logger.write(CfgLogger::INFO, "The LED config was changed via the web interface.");
+    pixels->setBrightness(cfgXmoduleLED.globalBrightness);
+    pixels->show();
 }
 
 String XmoduleLED::webPageProcessor(uint8_t var) {
