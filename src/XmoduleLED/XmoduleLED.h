@@ -19,13 +19,16 @@ limitations under the License.
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <map>
 
 #include "_Xmodule.h"
 #include "_Helper_LimitTimer.h"
 
 #include "XmoduleLED_XledFx.h"
 #include "XmoduleLED_webpage.h"
+
+
+// Stacked RGB color as in the Adafruit library, copy here to provide to user script
+#define ColorRGB(r, g, b) ((uint32_t)(r) << 16 | (uint32_t)(g) << 8 | (uint32_t)(b)) 
 
 
 struct CfgXmoduleLED : public CfgJsonInterface {
@@ -47,10 +50,16 @@ struct CfgXmoduleLED : public CfgJsonInterface {
 };
 
 
+
+/**
+ * @brief Xmodule for controlling a LED strip.
+ * 
+ * @param ledPin The pin the LED strip is connected to.
+ * @param ledCount The number of LED in the strip.
+ */
 class XmoduleLED : public _Xmodule {
 
     public:
-
         XmoduleLED(uint8_t ledPin, uint8_t ledCount) : _Xmodule("LED-Xmodule", "/led") {
             cfgXmoduleLED.ledPin = ledPin;
             cfgXmoduleLED.ledCount = ledCount;
@@ -108,6 +117,15 @@ class XmoduleLED : public _Xmodule {
         void setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect);
 
         /**
+         * @brief Select a predefined color effect for the LED strip and override the runEndless setting.
+         * 
+         * @param duration_ms Duration of the effect in milliseconds.
+         * @param runEndless Overrides the effect default. If true, the effect runs endlessly. If false, the effect stops after a single cycle.
+         * @param effect The pre-defined effect to use.
+         */
+        void setColorEffect(uint16_t duration_ms, boolean runEndless, XledFx::COLORFX effect);
+
+        /**
          * @brief Set a custom color effect for the LED strip.
          * 
          * @param duration_ms Duration of the effect in milliseconds.
@@ -133,11 +151,6 @@ class XmoduleLED : public _Xmodule {
         void setFixedColorSync(uint32_t color);
 
         /**
-         * @brief Set the color of each LED individually to a random color.
-         */
-        void setFixedColorRandom();
-
-        /**
          * @brief Use a photoresistor to automatically adapt the global brightness of the LED strip. This overrides the global brightness setting.
          * 
          * @param analogPin The analog pin to read the ambient light from.
@@ -161,12 +174,12 @@ class XmoduleLED : public _Xmodule {
     private:
 
         enum XLED_STATE: uint8_t {
-            ONDEMAND = 0,
+            NOFX = 0,
             FXCOLOR = 1,
             FXBRIGHT = 2,
             FXFULL = 3,
         };
-        XLED_STATE xledState = XLED_STATE::ONDEMAND;
+        XLED_STATE xledState = XLED_STATE::NOFX;
         void appendXledState(XLED_STATE state);
         void removeXledState(XLED_STATE state);
 

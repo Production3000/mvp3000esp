@@ -28,6 +28,27 @@ void XmoduleLED::setup() {
     mvp.config.readCfg(cfgXmoduleLED);
     mvp.net.netWeb.registerCfg(&cfgXmoduleLED, std::bind(&XmoduleLED::saveCfgCallback, this));
 
+    // Register action
+    mvp.net.netWeb.registerAction("brightnessEffect", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
+        // argKey(0) is the action name
+        if (argValue(0).toInt() == -1) {
+            removeXledState(XLED_STATE::FXBRIGHT);
+        } else {
+            setBrightnessEffect(argValue(1).toInt(), static_cast<XledFx::BRIGHTNESSFX>(argValue(0).toInt()));
+        }
+        return true;
+    }, "Brightness FX set.");
+
+    mvp.net.netWeb.registerAction("colorEffect", [&](int args, WebArgKeyValue argKey, WebArgKeyValue argValue) {
+        // argKey(0) is the action name
+        if (argValue(0).toInt() == -1) {
+            removeXledState(XLED_STATE::FXCOLOR);
+        } else {
+            setColorEffect(argValue(1).toInt(), static_cast<XledFx::COLORFX>(argValue(0).toInt()));
+        }
+        return true;
+    }, "Color FX set.");
+
     pixels = new Adafruit_NeoPixel(cfgXmoduleLED.ledCount, cfgXmoduleLED.ledPin, NEO_GRB + NEO_KHZ800);
 
     pixels->begin();
@@ -60,12 +81,12 @@ void XmoduleLED::loop() {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, XledFx::BRIGHTNESSFX effect) {
-    FxContainer fx = xledFx.brightnessFx[effect];
+    FxBrightnessContainer fx = xledFx.brightnessFx[effect];
     setBrightnessEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx));
 }
 
 void XmoduleLED::setBrightnessEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, FxBrightnessSetter brightnessSetter) {
-    brightnessFxCalculator = XledFx::FxCalculator(duration_ms, runEndless, useFrames, brightnessSetter);
+    brightnessFxCalculator = XledFx::FxCalculator(duration_ms, useFrames, runEndless, brightnessSetter);
     appendXledState(XLED_STATE::FXBRIGHT);
     resetTimer();
 }
@@ -79,10 +100,10 @@ void XmoduleLED::setFixedBrightnessIndividual(uint8_t *brightness) {
 }
 
 void XmoduleLED::setFixedBrightnessSync(uint8_t brightness){
-            removeXledState(XLED_STATE::FXBRIGHT);
-            std::fill_n(currentBrightness, cfgXmoduleLED.ledCount, brightness);
-            resetTimer();
-        }
+    removeXledState(XLED_STATE::FXBRIGHT);
+    std::fill_n(currentBrightness, cfgXmoduleLED.ledCount, brightness);
+    resetTimer();
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -92,8 +113,13 @@ void XmoduleLED::setColorEffect(uint16_t duration_ms, XledFx::COLORFX effect) {
     setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
 }
 
+void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean runEndless, XledFx::COLORFX effect) {
+    FxColorContainer fx = xledFx.colorFx[effect];
+    setColorEffect(duration_ms, std::get<0>(fx), runEndless, std::get<2>(fx), std::get<3>(fx));
+}
+
 void XmoduleLED::setColorEffect(uint16_t duration_ms, boolean useFrames, boolean runEndless, boolean colorWheel, FxColorSetter colorSetter) {
-    colorFxCalculator = XledFx::FxCalculator(duration_ms, colorWheel, runEndless, useFrames, colorSetter);
+    colorFxCalculator = XledFx::FxCalculator(duration_ms, useFrames, runEndless, colorWheel, colorSetter);
     appendXledState(XLED_STATE::FXCOLOR);
     resetTimer();
 }
@@ -102,14 +128,6 @@ void XmoduleLED::setFixedColorIndividual(uint32_t *colors) {
     removeXledState(XLED_STATE::FXCOLOR);
     for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
         currentColors[i] = colors[i];
-    }
-    resetTimer();
-}
-
-void XmoduleLED::setFixedColorRandom(){ 
-    removeXledState(XLED_STATE::FXCOLOR);
-    for (uint8_t i = 0; i < cfgXmoduleLED.ledCount; i++) {
-        currentColors[i] = Adafruit_NeoPixel::ColorHSV(random(65536), 255, 255);
     }
     resetTimer();
 }
@@ -137,13 +155,13 @@ void XmoduleLED::drawLed() {
 }
 
 void XmoduleLED::appendXledState(XLED_STATE state) {
-    if ((xledState == state) || (state == XLED_STATE::FXFULL)) // nothing to do
+    if ((xledState == state) || (xledState == XLED_STATE::FXFULL)) // Nothing to do
         return;
     xledState = static_cast<XLED_STATE>(xledState + state);
 }
 
 void XmoduleLED::removeXledState(XLED_STATE state) {
-    if (xledState == XLED_STATE::ONDEMAND)
+    if (xledState == XLED_STATE::NOFX) // Nothing to do
         return;
     if ((xledState == state) || (xledState == XLED_STATE::FXFULL)){
         xledState = static_cast<XLED_STATE>(xledState - state);
@@ -151,7 +169,7 @@ void XmoduleLED::removeXledState(XLED_STATE state) {
 }
 
 void XmoduleLED::resetTimer() {
-    if (xledState == XLED_STATE::ONDEMAND) {
+    if (xledState == XLED_STATE::NOFX) {
         frameTimer.restart(cfgXmoduleLED.refreshRateStatic_s * 1000);
     } else {
         frameTimer.restart(1000/cfgXmoduleLED.refreshRateFx_Hz);
@@ -193,11 +211,13 @@ void XmoduleLED::fixedGlobalBrightness(uint8_t globalBrightness) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void XmoduleLED::saveCfgCallback() {
-    // mvp.logger.write(CfgLogger::INFO, "The config was changed via the web interface.");
-    // setLed();
+    mvp.logger.write(CfgLogger::INFO, "The LED config was changed via the web interface.");
+    pixels->setBrightness(cfgXmoduleLED.globalBrightness);
+    pixels->show();
 }
 
 String XmoduleLED::webPageProcessor(uint8_t var) {
+    String str;
     switch (var) {
         case 100:
             return description;
@@ -207,16 +227,25 @@ String XmoduleLED::webPageProcessor(uint8_t var) {
             return String(cfgXmoduleLED.globalBrightness);
 
         case 110: // The fx modes
-            // for (uint8_t i = 0; i < MODE_COUNT; i++) {
-            //     str += "<option value='" + String(i) + "'";
-            //     if (i == cfgXmoduleLED.fxMode) {
-            //         str += " selected";
-            //     }
-            //     str += ">" + String(ws2812fx->getModeName(i)) + "</option>";
-            // }
-            return "";
+            for (auto const& fx : xledFx.brightnessFxNames) {
+                str += "<option value='" + String(fx.first) + "'>";
+                str += String(fx.second) + "</option>";
+            }
+            return str;
+        case 112:
+            return String(brightnessFxCalculator.duration_ms);
+
+        case 120: // The fx modes
+            for (auto const& fx : xledFx.colorFxNames) {
+                str += "<option value='" + String(fx.first) + "'>";
+                str += String(fx.second) + "</option>";
+            }
+            return str;
+        case 122:
+            return String(colorFxCalculator.duration_ms);
 
         default:
             return "";
+
     }
 }
