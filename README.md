@@ -1,8 +1,42 @@
 # MVP3000 ESP32/ESP8266
 
-Welcome to the **MVP3000 ESP32/ESP8266** repository, an integral part of the **MVP3000** rapid prototyping framework.
+Welcome to the **MVP3000 ESP32/ESP8266** repository, an integral part of the [**MVP3000**](https://www.production3000.com/mvp3000/) rapid prototyping framework.
 
-The MVP3000 framework is written for and by very early stage startup projects/companies. It aims to streamline the development and testing of new sensor or manipulation hardware and the consecutive transfer from the basic concept to a minimum viable product (MVP), a demonstrator device, or an independent setup for applications like manufacturing process control. It is build around readily available low-cost hardware and open software solutions.
+## <a name='Contents'></a>Contents
+
+<!-- vscode-markdown-toc -->
+* [Contents](#Contents)
+* [Introduction](#Introduction)
+* [Getting Started](#GettingStarted)
+	* [Installation](#Installation)
+	* [First Steps](#FirstSteps)
+	* [LED Status Indication](#LEDStatusIndication)
+	* [Web Interface](#WebInterface)
+	* [WebSockets](#WebSockets)
+	* [MQTT Communication](#MQTTCommunication)
+	* [UDP Auto Discovery](#UDPAutoDiscovery)
+* [Modules](#Modules)
+* [Implementation](#Implementation)
+	* [General Functionality](#GeneralFunctionality)
+	* [No Blocking delay() on ESP](#NoBlockingdelayonESP)
+	* [Public Methods and Options](#PublicMethodsandOptions)
+	* [Helper Functions and Classes](#HelperFunctionsandClasses)
+	* [Custom Modules](#CustomModules)
+* [Application Note: CO2-Lights (CO2-Ampel)](#ApplicationNote:CO2-LightsCO2-Ampel)
+* [Troubleshooting](#Troubleshooting)
+* [Contribute](#Contribute)
+* [License](#License)
+
+<!-- vscode-markdown-toc-config
+	numbering=false
+	autoSave=true
+	/vscode-markdown-toc-config -->
+<!-- /vscode-markdown-toc -->
+
+
+## <a name='Introduction'></a>Introduction
+
+The MVP3000 framework is built to streamline the implementation of sensor and actuator hardware. It facilitates a seamless transitions between all development stages and thus speeds up the implementation cycle. It allows the rapid development of a MVP (minimum viable product) for demonstration purposes. It allows the rapid deployment in fabrication for the purpose of deskilling and improving process reliability. Designed around low-cost hardware and open-source software, its modular structure promotes fast, flexible, and agile hardware development.
 
 A key feature of the framework is the seamless transition between the different development stages. Starting with the initial proof-of-concept script on the engineers laptop with a serial connection to perform first data analysis, moving to a laptop-independent data collection via wireless network allowing longer-term studies, towards a control device using a handheld Raspberry Pi with touchscreen.
 
@@ -14,39 +48,6 @@ A key feature of the framework is the seamless transition between the different 
     4.2. Gain independence from wiring using WebSocket.  
     4.3. Remote data recording using an MQTT broker.  
 5.  Use WebSocket or MQTT on an RaspberryPi to become laptop-independent and build an MVP
-
-More code will be shared in the future, mainly regarding data evaluation and setting up a MVP using a RaspberryPi with touch display.
-
-
-## <a name='Contents'></a>Contents
-
-<!-- vscode-markdown-toc -->
-* [Contents](#Contents)
-* [Getting Started](#GettingStarted)
-	* [Installation](#Installation)
-	* [First Steps](#FirstSteps)
-	* [LED Status Indication](#LEDStatusIndication)
-	* [Web Interface](#WebInterface)
-	* [WebSockets](#WebSockets)
-	* [MQTT Communication](#MQTTCommunication)
-	* [UDP Auto Discovery](#UDPAutoDiscovery)
-* [Modules](#Modules)
-* [Custom Implementation](#CustomImplementation)
-	* [General Functionality](#GeneralFunctionality)
-	* [No Blocking delay() on ESP](#NoBlockingdelayonESP)
-	* [Public Methods and Options](#PublicMethodsandOptions)
-	* [Helper Functions and Classes](#HelperFunctionsandClasses)
-	* [Custom Modules](#CustomModules)
-	* [Contribute](#Contribute)
-* [Troubleshooting](#Troubleshooting)
-* [License](#License)
-
-<!-- vscode-markdown-toc-config
-	numbering=false
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
-
 
 ## <a name='GettingStarted'></a>Getting Started
 
@@ -140,7 +141,7 @@ Typical use cases are available as modules to be loaded into the framework. Firs
  *  Manipulator Module (planned)
 
 
-## <a name='CustomImplementation'></a>Custom Implementation
+## <a name='Implementation'></a>Implementation
 
 ### <a name='GeneralFunctionality'></a>General Functionality
 
@@ -207,11 +208,10 @@ Most users will not need to create a custom module, particularly if a similar on
 
 In order to develop and integrate a new module into the MVP 3000 framework please follow the documentation to [Custom Modules](/doc/custom_modules.md). 
 
-### <a name='Contribute'></a>Contribute
 
-We are looking forward to your input on this project, be it bug reports, feature requests, or a successful implementation that does something cool. In the latter case we will gladly link you.
+## <a name='ApplicationNote:CO2-LightsCO2-Ampel'></a>Application Note: CO2-Lights (CO2-Ampel)
 
-Please follow the [GitHub guide](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project) on how to contribute code to this project.
+The [CO2-Lights](https://github.com/Production3000/co2ampel) serves as a showcase application that highlights the versatility of the MVP3000 framework. This implementation uses the sensor module and the LED module. It features a custom landing page accessible via any smartphone or browser. The page provides real-time ambient CO2 concentration data alongside a historical graph, which updates automatically through WebSocket.
 
 
 ## <a name='Troubleshooting'></a>Troubleshooting
@@ -224,6 +224,13 @@ A: Please check if there is any blocking delay or while in the loop. This signif
 
 Q: Some settings in my custom code are ignored?  
 A: The value set during compile time is overwritten by stored values (if stored) during initialization. Possibly factory reset the device.
+
+
+## <a name='Contribute'></a>Contribute
+
+We are looking forward to your input on this project, be it bug reports, feature requests, or a successful implementation that does something cool. In the latter case we will gladly link you.
+
+Please follow the [GitHub guide](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project) on how to contribute code to this project.
 
 
 ## <a name='License'></a>License
