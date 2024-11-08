@@ -22,7 +22,7 @@ Welcome to the **MVP3000 ESP32/ESP8266** repository, an integral part of the [**
 	* [Public Methods and Options](#PublicMethodsandOptions)
 	* [Helper Functions and Classes](#HelperFunctionsandClasses)
 	* [Custom Modules](#CustomModules)
-* [Application Note: CO2-Lights (CO2-Ampel)](#ApplicationNote:CO2-LightsCO2-Ampel)
+* [Application Note CO2-Lights (CO2-Ampel)](#ApplicationNoteCO2-LightsCO2-Ampel)
 * [Troubleshooting](#Troubleshooting)
 * [Contribute](#Contribute)
 * [License](#License)
@@ -145,7 +145,7 @@ Typical use cases are available as modules to be loaded into the framework. Firs
 
 ### <a name='GeneralFunctionality'></a>General Functionality
 
-A bare-bone implementation of the framework looks as follows. Without a [module](#modules) its usefulness is limited.
+A bare-bone implementation of the framework looks as follows. However, without a [module](#modules) its usefulness is limited.
 
     #include <MVP3000.h>
     extern MVP3000 mvp;
@@ -209,7 +209,7 @@ Most users will not need to create a custom module, particularly if a similar on
 In order to develop and integrate a new module into the MVP 3000 framework please follow the documentation to [Custom Modules](/doc/custom_modules.md). 
 
 
-## <a name='ApplicationNote:CO2-LightsCO2-Ampel'></a>Application Note: CO2-Lights (CO2-Ampel)
+## <a name='ApplicationNoteCO2-LightsCO2-Ampel'></a>Application Note CO2-Lights (CO2-Ampel)
 
 The [CO2-Lights](https://github.com/Production3000/co2ampel) serves as a showcase application that highlights the versatility of the MVP3000 framework. This implementation uses the sensor module and the LED module. It features a custom landing page accessible via any smartphone or browser. The page provides real-time ambient CO2 concentration data alongside a historical graph, which updates automatically through WebSocket.
 
