@@ -1,0 +1,150 @@
+/*
+Copyright Production 3000
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// #ifndef XMODULELED_PIXELGROUP
+// #define XMODULELED_PIXELGROUP
+
+// struct PixelGroup {
+//     PixelGroup(uint8_t ledCount, uint8_t start, uint8_t end) : ledCount(ledCount) {
+//         bitarray[0] = 0;
+//         bitarray[1] = 0;
+//         bitarray[2] = 0;
+//         bitarray[3] = 0;
+
+//         for (uint8_t i = start; i <= end; i++) {
+//             setBit(i, 1);
+//         }
+//     }
+
+//     uint8_t ledCount;
+
+//     char bitarray[4]; // since 4*8 this array actually contains 32 bits
+
+//     char getBit(int index) {
+//         return (bitarray[index/8] >> 7-(index & 0x7)) & 0x1;
+//     }
+
+//     void setBit(int index, int value) {
+//         bitarray[index/8] = bitarray[index/8] | (value & 0x1) << 7-(index & 0x7);
+//     }
+// };
+
+
+
+    // PixelGroup* pixelGroup;
+
+
+
+    // pixelGroup = new PixelGroup(cfgXmoduleLED.ledCount, 0, cfgXmoduleLED.ledCount - 1);
+    // pixelGroup = new PixelGroup(cfgXmoduleLED.ledCount, 0, 5);
+
+
+// #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//         void setColorXXXEffect(uint16_t duration_ms, XledFx::COLORXXXFX effect);
+
+//         XledFx::FxCalculator colorXXXFxCalculator;
+
+// void XmoduleLED::setColorXXXEffect(uint16_t duration_ms, XledFx::COLORXXXFX effect) {
+//     FxColorXXXContainer fx = xledFx.colorXXXFx[effect];
+//     // setColorEffect(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx));
+
+//     colorXXXFxCalculator = XledFx::FxCalculator(duration_ms, std::get<0>(fx), std::get<1>(fx), std::get<2>(fx), std::get<3>(fx), ColorRGB(255,255,0), ColorRGB(0,255,255));
+//     appendXledState(XLED_STATE::FXCOLOR);
+//     resetTimer();
+
+// }
+
+
+
+//             if (!colorXXXFxCalculator.calculate(cfgXmoduleLED.refreshRateFx_Hz, &currentColors, cfgXmoduleLED.ledCount)) {
+//                 removeXledState(XLED_STATE::FXCOLOR);
+//             }
+
+
+
+
+
+
+// typedef std::function<uint32_t(uint8_t, uint8_t, uint16_t, uint32_t**, uint32_t, uint32_t)> FxColorXXXSetter;
+
+
+// typedef std::tuple<boolean, boolean, boolean, FxColorXXXSetter> FxColorXXXContainer;
+
+
+//     enum COLORXXXFX: uint8_t {
+//         FIRE = 0,
+//         TRANSITION = 1,
+//         RAINBOWXXX_SYNC = 6,
+//     };
+
+
+//     // useFrames, runEndless, colorWheel, setter function
+//     std::map<COLORXXXFX, FxColorXXXContainer> colorXXXFx = {
+//         { FIRE, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t** currentColor, uint32_t colorA, uint32_t colorB) {
+//             // Sync flames to not average the effect away
+//             if (led != 0) 
+//                 return (*currentColor)[0];
+//             // Duration flickering
+//             if (random(0, 3) == 0) 
+//                 return (*currentColor)[0];
+//             // Color flickering
+//             int16_t baseR = colorA >> 16;                   // Orange flames baseR = 255, baseG = 95, baseB = 31;
+//             int16_t baseG = colorA >> 8;
+//             int16_t baseB = colorA;
+//             uint8_t flicker = random(-64, 16);
+//             return Adafruit_NeoPixel::Color(constrain(baseR + flicker, 0, 255), constrain(baseG + flicker, 0, 255), constrain(baseB + flicker, 0, 255)); }) },
+//         { TRANSITION, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t** currentColor, uint32_t colorA, uint32_t colorB) {
+//             uint8_t r1 = colorA >> 16;
+//             uint8_t g1 = colorA >> 8;
+//             uint8_t b1 = colorA;
+//             uint8_t r2 = colorB >> 16;
+//             uint8_t g2 = colorB >> 8;
+//             uint8_t b2 = colorB;
+//             uint8_t r = r1 + (r2 - r1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//             uint8_t g = g1 + (g2 - g1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//             uint8_t b = b1 + (b2 - b1) * abs(float_t(timingPosition) / 65535 - 0.5) *2;
+//             return Adafruit_NeoPixel::Color(r ,g, b); }) },
+
+//         { RAINBOWXXX_SYNC, std::make_tuple(true, true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t** currentColor, uint32_t colorA, uint32_t colorB) { return Adafruit_NeoPixel::ColorHSV(timingPosition); }) },
+//     };
+
+
+
+//         FxColorXXXSetter colorXXXSetter = nullptr;
+
+//         FxCalculator(uint16_t duration_ms, boolean useFrames, boolean runEndless, boolean colorWheel, FxColorXXXSetter colorXXXSetter, uint32_t colorA, uint32_t colorB) : duration_ms(duration_ms), colorWheel(colorWheel), runEndless(runEndless), useFrames(useFrames),
+//             colorSetter(nullptr), colorXXXSetter(colorXXXSetter), colorA(colorA), colorB(colorB) {};
+
+
+//             if (colorXXXSetter != nullptr)
+//                 (*currentColor)[i] = colorXXXSetter(i, ledCount, timingPosition, currentColor, colorA, colorB);
