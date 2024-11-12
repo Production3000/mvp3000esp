@@ -53,7 +53,7 @@ A key feature of the framework is the seamless transition between the different 
 
 ### <a name='Installation'></a>Installation
 
-The MVP3000 framweoork is available via the Arduino Library Manager. Search for 'MVP3000' and install the latest version.
+The MVP3000 framework is available via the Arduino Library Manager. Search for 'MVP3000' and install the latest version.
 
 To manually install it please clone or [download](https://github.com/Production3000/mvp3000esp/archive/refs/heads/main.zip) this repository and follow the instructions for either [manual installation](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries/#manual-installation), using the [Arduino IDE](https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries/#importing-a-zip-library), or in [PlatformIO](https://docs.platformio.org/en/latest/librarymanager/dependencies.html).
 
