@@ -69,18 +69,6 @@ struct XledFx {
         WAVE_BWD = 9,
     };
 
-    enum COLORFX: uint8_t {
-        RND_SYNC_LOUD = 0,
-        RND_SYNC_PASTEL = 1,
-        RND_SPARKLE_LOUD = 2,
-        RND_SPARKLE_PASTEL = 3,
-        RND_WALK_LOUD = 4,
-        RND_WALK_PASTEL = 5,
-        RAINBOW_SYNC = 6,
-        RAINBOW_WAVE_FWD = 7,
-        RAINBOW_WAVE_BWD = 8,
-    };
-
     std::map<BRIGHTNESSFX, const __FlashStringHelper*> brightnessFxNames = {
         { BRIGHTNESSFX::BLINK, FPSTR(brfx_name_0) },
         { BRIGHTNESSFX::FADE_IN, FPSTR(brfx_name_1) },
@@ -94,23 +82,11 @@ struct XledFx {
         { BRIGHTNESSFX::WAVE_BWD, FPSTR(brfx_name_9) },
     };
 
-    std::map<COLORFX, const __FlashStringHelper*> colorFxNames = {
-        { COLORFX::RND_SYNC_LOUD, FPSTR(cfx_name_0) },
-        { COLORFX::RND_SYNC_PASTEL, FPSTR(cfx_name_1) },
-        { COLORFX::RND_SPARKLE_LOUD, FPSTR(cfx_name_2) },
-        { COLORFX::RND_SPARKLE_PASTEL, FPSTR(cfx_name_3) },
-        { COLORFX::RND_WALK_LOUD, FPSTR(cfx_name_4) },
-        { COLORFX::RND_WALK_PASTEL, FPSTR(cfx_name_5) },
-        { COLORFX::RAINBOW_SYNC, FPSTR(cfx_name_6) },
-        { COLORFX::RAINBOW_WAVE_FWD, FPSTR(cfx_name_7) },
-        { COLORFX::RAINBOW_WAVE_BWD, FPSTR(cfx_name_8) },
-    };
-
     // useFrames, runEndless, setter function
     std::map<BRIGHTNESSFX, FxBrightnessContainer> brightnessFx = {
+        { BLINK, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return (timingPosition > 32767) ? 0 : 255; }) },
         { FADE_IN, std::make_tuple(true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return timingPosition / 256; }) },
         { FADE_OUT, std::make_tuple(true, false, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return 255 - timingPosition / 256; }) },
-        { BLINK, std::make_tuple(false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return (timingPosition > 32767) ? 0 : 255; }) },
         { PULSE_FULL, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return 2 * (uint8_t)abs((0.5 + (int16_t)timingPosition) / 256); }) },
         { PULSE_HALF, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return 255 - (uint8_t)abs((0.5 + (int16_t)timingPosition) / 256); }) },
         { RND_SYNC, std::make_tuple(false, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) {
@@ -121,6 +97,30 @@ struct XledFx {
             return constrain(temp, 0, 255); }) },
         { WAVE_FWD, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return nearbyintf( 255.0/2 * ( 1 + sin(2 * PI * led / (ledcount - 1) - 2 * PI * timingPosition / 65535) ) ); }) },
         { WAVE_BWD, std::make_tuple(true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint8_t** currentBrightness) { return nearbyintf( 255.0/2 * ( 1 + sin(2 * PI * led / (ledcount - 1) + 2 * PI * timingPosition / 65535) ) ); }) },
+    };
+
+    enum COLORFX: uint8_t {
+        RND_SYNC_LOUD = 0,
+        RND_SYNC_PASTEL = 1,
+        RND_SPARKLE_LOUD = 2,
+        RND_SPARKLE_PASTEL = 3,
+        RND_WALK_LOUD = 4,
+        RND_WALK_PASTEL = 5,
+        RAINBOW_SYNC = 6,
+        RAINBOW_WAVE_FWD = 7,
+        RAINBOW_WAVE_BWD = 8,
+    };
+
+    std::map<COLORFX, const __FlashStringHelper*> colorFxNames = {
+        { COLORFX::RND_SYNC_LOUD, FPSTR(cfx_name_0) },
+        { COLORFX::RND_SYNC_PASTEL, FPSTR(cfx_name_1) },
+        { COLORFX::RND_SPARKLE_LOUD, FPSTR(cfx_name_2) },
+        { COLORFX::RND_SPARKLE_PASTEL, FPSTR(cfx_name_3) },
+        { COLORFX::RND_WALK_LOUD, FPSTR(cfx_name_4) },
+        { COLORFX::RND_WALK_PASTEL, FPSTR(cfx_name_5) },
+        { COLORFX::RAINBOW_SYNC, FPSTR(cfx_name_6) },
+        { COLORFX::RAINBOW_WAVE_FWD, FPSTR(cfx_name_7) },
+        { COLORFX::RAINBOW_WAVE_BWD, FPSTR(cfx_name_8) },
     };
 
     // useFrames, runEndless, colorWheel, setter function
@@ -144,7 +144,6 @@ struct XledFx {
         { RAINBOW_WAVE_FWD, std::make_tuple(true, true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t** currentColor) { return Adafruit_NeoPixel::ColorHSV(65535 * led / (ledcount - 1) + timingPosition); }) },
         { RAINBOW_WAVE_BWD, std::make_tuple(true, true, true, [](uint8_t led, uint8_t ledcount, uint16_t timingPosition, uint32_t** currentColor) { return Adafruit_NeoPixel::ColorHSV(65535 * led / (ledcount - 1) - timingPosition); }) },
     };
-
 
 
     struct FxCalculator {
@@ -178,9 +177,9 @@ struct XledFx {
             // Omitting check to see if brightnessSetter/colorSetter is actually set
 
             // Limited resolution for short durations: 40 * 140 / 1000 = 5 --> 125 ms instead of the targeted 140 ms
-            uint16_t frameCount = refreshRateFx_Hz * duration_ms / 1000 - 1;
+            uint16_t frameCount = refreshRateFx_Hz * duration_ms / 1000;
             // Some color effects work best as a wheel (65535 = 0) and others need the full range (0 to 255)
-            uint16_t dividingFrameCount = (colorWheel) ? frameCount + 1: frameCount;
+            uint16_t dividingFrameCount = (colorWheel) ? frameCount: frameCount - 1;
 
             // Effects can either be many gradual steps per duration cycle (fade, wheel) or have a single change per duration cycle (blink, random color change).
             if (useFrames || (frame == 0)) {
